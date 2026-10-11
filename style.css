@@ -1,0 +1,449 @@
+/* ==========================================================================
+   Intrinsic — editorial dark theme
+   Serif headings, monospace numbers, ruled rows instead of cards.
+
+   Page state is driven by a data attribute on <body>:
+     (none)    -> everything visible
+     "idle"    -> only the search section is shown
+     "loading" -> results visible, button disabled
+     "results" -> everything visible, fades in
+
+   Optional: add class "positive" or "negative" to a .metric-value
+   from JS to colour growth figures green / red.
+   ========================================================================== */
+
+/* ---------- Tokens ---------- */
+:root {
+    --bg: #111110;
+    --surface: #181816;
+    --border: #2a2926;
+    --border-strong: #3b3a35;
+
+    --text: #ebe7df;
+    --text-muted: #9a958a;
+    --text-faint: #646056;
+
+    --gold: #c8a45c;
+    --gold-hover: #d8b872;
+    --gold-ink: #17130a;
+
+    --positive: #7fb58a;
+    --negative: #d27b72;
+
+    --radius: 4px;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2.5rem;
+    --space-7: 4rem;
+    --space-8: 5.5rem;
+
+    --header-height: 60px;
+    --content-width: 1080px;
+
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ---------- Reset / base ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+
+
+
+/* ---------- Layout ---------- */
+.dashboard {
+    flex: 1;
+    width: 100%;
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5) var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+}
+
+.dashboard-title {
+    font-family: var(--font-sans);
+    font-size: 4rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    text-align: center;
+    margin-bottom: -1.5rem;
+}
+
+.dashboard-section,
+.company-header {
+    scroll-margin-top: calc(var(--header-height) + var(--space-5));
+}
+
+/* ---------- Typography ---------- */
+h1,
+h2,
+h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+}
+
+h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+
+h3 {
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+}
+
+
+/* ---------- Search ---------- */
+.search-section {
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.search-form label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.search-controls {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.search-controls input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 var(--space-4);
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: border-color 0.15s ease;
+}
+
+.search-controls input::placeholder {
+    font-family: var(--font-sans);
+    color: var(--text-faint);
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.95rem;
+}
+
+.search-controls input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.search-controls button {
+    height: 52px;
+    padding: 0 var(--space-6);
+    background: var(--gold);
+    color: var(--gold-ink);
+    border: 0;
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.search-controls button:hover {
+    background: var(--gold-hover);
+}
+
+.search-controls button:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+/* ---------- Company overview ---------- */
+.company-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5) var(--space-6);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.company-header h2 {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+.company-ticker {
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.company-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.summary-item .metric-value {
+    font-size: 1.15rem;
+}
+
+/* ---------- Section headings ---------- */
+.section-heading {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.section-heading .eyebrow {
+    margin-bottom: var(--space-1);
+}
+
+
+.metrics-subsection + .metrics-subsection {
+    margin-top: var(--space-6);
+}
+
+/* ---------- Metrics: ruled rows ---------- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    column-gap: var(--space-7);
+    border-top: 1px solid var(--border);
+}
+
+.metric-card {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.metric-value {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.metric-value.positive {
+    color: var(--positive);
+}
+
+.metric-value.negative {
+    color: var(--negative);
+}
+
+/* ---------- Valuation: the big numbers ---------- */
+.valuation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.valuation-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 2px solid var(--gold);
+}
+
+.valuation-card .metric-label {
+    font-size: 0.85rem;
+}
+
+.valuation-value {
+    font-family: var(--font-serif);
+    font-size: clamp(2.8rem, 6vw, 4rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.valuation-note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-width: 38ch;
+}
+
+/* ---------- Status message ---------- */
+.status-message {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.status-message.is-error {
+    color: var(--negative);
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+    padding: var(--space-5);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+}
+
+.site-footer p + p {
+    margin-top: var(--space-1);
+}
+
+/* ==========================================================================
+   Page states
+   ========================================================================== */
+
+
+body[data-state="idle"] .dashboard > :not(.search-section):not(.status-message) {
+    display: none;
+}
+
+body[data-state="idle"] .main-nav {
+    visibility: hidden;
+}
+
+/* Results fade in once revealed */
+body[data-state="results"] .dashboard > :not(.search-section) {
+    animation: reveal 0.35s ease both;
+}
+
+@keyframes reveal {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 720px) {
+    
+
+    .dashboard {
+        padding: var(--space-6) var(--space-4) var(--space-7);
+        gap: var(--space-6);
+    }
+
+    .search-controls {
+        flex-direction: column;
+    }
+
+    .search-controls button {
+        width: 100%;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .company-summary {
+        gap: var(--space-5);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intrinsic — Investment Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    
+
+    <main class="dashboard">
+
+        <h1 class="dashboard-title">Intrinsic</h1>
+
+        <!-- Search -->
+        <section class="search-section">
+            <form id="search-form" class="search-form">
+                <label for="ticker-input">Company ticker</label>
+
+                <div class="search-controls">
+                    <input
+                        type="text"
+                        id="ticker-input"
+                        name="ticker"
+                        placeholder="Enter a ticker, e.g. AAPL"
+                        value="AAPL"
+                        autocomplete="off"
+                        required
+                    >
+                    <button type="submit" id="analyze-button">Analyze</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Company Overview -->
+        <section id="company-overview" class="company-header">
+            <div class="company-identity">
+                <div>
+                    <h2 id="company-name">Apple Inc.</h2>
+                    <p id="company-ticker" class="company-ticker">NASDAQ: AAPL</p>
+                </div>
+            </div>
+
+            <div class="company-summary">
+                <div class="summary-item">
+                    <span class="metric-label">Price</span>
+                    <span class="metric-value" id="share-price">$336.64</span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="metric-label">Market Capitalization</span>
+                    <span class="metric-value" id="market-cap">$4.94T</span>
+                </div>
+
+                <div class="summary-item">
+                    <span class="metric-label">CEO</span>
+                    <span class="metric-value" id="company-ceo">John Ternus</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Financial Strength -->
+        <section id="financial-strength" class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Financial Strength</h2>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Cash</span>
+                    <span class="metric-value" id="cash">$39.54B</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Total Debt</span>
+                    <span class="metric-value" id="total-debt">$84.31B</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Net Debt</span>
+                    <span class="metric-value" id="net-debt">$44.76B</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Debt / Equity</span>
+                    <span class="metric-value" id="debt-equity">0.78x</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Current Ratio</span>
+                    <span class="metric-value" id="current-ratio">1.00x</span>
+                </div>
+
+                <div class="metric-card">
+                    <span class="metric-label">Interest Coverage</span>
+                    <span class="metric-value" id="interest-coverage">N/A</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profitability and Growth -->
+        <section id="profitability-growth" class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Profitability &amp; Growth</h2>
+                </div>
+            </div>
+
+            <div class="metrics-subsection">
+                <h3>Revenue Growth</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Revenue CAGR — 4Y</span>
+                        <span class="metric-value" id="revenue-cagr-4y">3.28%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Revenue CAGR — 2Y</span>
+                        <span class="metric-value" id="revenue-cagr-2y">4.20%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Revenue Growth — YoY</span>
+                        <span class="metric-value" id="revenue-yoy">14.24%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-subsection">
+                <h3>Earnings Growth</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">EPS CAGR — 4Y</span>
+                        <span class="metric-value" id="eps-cagr-4y">7.39%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">EPS CAGR — 2Y</span>
+                        <span class="metric-value" id="eps-cagr-2y">10.32%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">EPS Growth — YoY</span>
+                        <span class="metric-value" id="eps-yoy">31.93%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-subsection">
+                <h3>Profitability &amp; Returns</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Gross Margin</span>
+                        <span class="metric-value" id="gross-margin">48.65%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Operating Margin</span>
+                        <span class="metric-value" id="operating-margin">33.17%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Free Cash Flow</span>
+                        <span class="metric-value" id="free-cash-flow">$136.68B</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">FCF Margin</span>
+                        <span class="metric-value" id="fcf-margin">29.28%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">FCF Growth — YoY</span>
+                        <span class="metric-value" id="fcf-yoy">42.11%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Return on Equity (ROE)</span>
+                        <span class="metric-value" id="roe">148.75%</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Return on Invested Capital (ROIC)</span>
+                        <span class="metric-value" id="roic">90.33%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Valuation -->
+    
+
+        <section id="valuation" class="dashboard-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Valuation</h2>
+                </div>
+            </div>
+
+            <div class="metrics-subsection">
+                <h3>Valuation Multiples</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Price / Earnings (P/E)</span>
+                        <span class="metric-value" id="pe-ratio">38.42x</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Price / Free Cash Flow</span>
+                        <span class="metric-value" id="p-fcf">36.17x</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Enterprise Value / EBITDA</span>
+                        <span class="metric-value" id="ev-ebitda">29.70x</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-label">Price / Book (P/B)</span>
+                        <span class="metric-value" id="p-b">45.99x</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-subsection">
+                <h3>Intrinsic Value Estimates</h3>
+
+                <div class="valuation-grid">
+                    <div class="valuation-card">
+                        <span class="metric-label">Normalized Earnings Value</span>
+                        <span class="valuation-value" id="normalized-earnings-value">
+                            $170.65
+                        </span>
+                        <p class="valuation-note">
+                            Based on normalized earnings and a historical P/E multiple.
+                        </p>
+                    </div>
+
+                    <div class="valuation-card">
+                        <span class="metric-label">Discounted Cash Flow (DCF)</span>
+                        <span class="valuation-value" id="dcf-value">$125.50</span>
+                        <p class="valuation-note">
+                            Estimated value per share based on projected future cash flows.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Status and errors for future interactivity -->
+        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <p>Intrinsic — Independent Investment Analysis</p>
+        <p>For informational purposes only. Not investment advice.</p>
+    </footer>
+
+</body>
+</html>
