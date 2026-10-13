@@ -3,14 +3,30 @@ import config
 import statistics
 
 
+
+
+
 def main():
     ticker = input("Ticker: ").strip().upper()
+    results = analyze_company(ticker)
+
+    if results is None:
+        print("Unable to retrieve company data.")
+        return
+
+    print_profile(results["profile"])
+    print_financial_strength(results["financial_strength"])
+    print_profitability(results["profitability"])
+    print_valuation(results["valuation"])
+
+
+def analyze_company(ticker):
+    ticker = ticker.strip().upper()
     urls = construct_urls(ticker)
 
     company_data = get_company_data(urls)
     if company_data is None:
-        print("Invalid ticker.")
-        return
+        return None
 
     profile = extract_profile_data(company_data["profile"][0])
     income_annual = extract_income_data(company_data["income"])
@@ -21,32 +37,25 @@ def main():
     ratios_annual = extract_ratios_data(company_data["ratios_historical"])
 
     financial_strength = calculate_financial_strength(
-        balance_quarter,
-        income_ttm
+        balance_quarter, income_ttm
     )
 
     profitability = calculate_profitability(
-        income_annual,
-        income_ttm,
-        balance_quarter,
-        cashflow_ttm
+        income_annual, income_ttm, balance_quarter, cashflow_ttm
     )
 
     valuation = calculate_valuation(
-        profile, 
-        income_ttm, 
-        income_annual, 
-        cashflow_ttm, 
-        cashflow_annual, 
-        balance_quarter, 
-        ratios_annual )
+        profile, income_ttm, income_annual, cashflow_ttm,
+        cashflow_annual, balance_quarter, ratios_annual
+    )
 
-    print_profile(profile)
-    print_financial_strength(financial_strength)
-    print_profitability(profitability)
-    print_valuation(valuation)
-
-
+    return {
+        "ticker": ticker,
+        "profile": profile,
+        "financial_strength": financial_strength,
+        "profitability": profitability,
+        "valuation": valuation
+    }
     
 
 def construct_urls(ticker):

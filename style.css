@@ -202,7 +202,7 @@ h3 {
 
 .search-controls button {
     height: 52px;
-    padding: 0 var(--space-6);
+    padding: 0 var(--space-4);
     background: var(--gold);
     color: var(--gold-ink);
     border: 0;
@@ -265,7 +265,7 @@ h3 {
 .company-summary {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-6);
+    gap: var(--space-5);
 }
 
 .summary-item {
@@ -280,14 +280,12 @@ h3 {
 
 /* ---------- Section headings ---------- */
 .section-heading {
+    margin-top: var(--space-6);
     margin-bottom: var(--space-5);
     padding-bottom: var(--space-4);
     border-bottom: 1px solid var(--border-strong);
 }
 
-.section-heading .eyebrow {
-    margin-bottom: var(--space-1);
-}
 
 
 .metrics-subsection + .metrics-subsection {
