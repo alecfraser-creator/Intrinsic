@@ -1,8 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from main import analyze_company
+from fastapi.middleware.cors import CORSMiddleware
+
 
 api = FastAPI()
-
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 @api.get("/")
 def home():

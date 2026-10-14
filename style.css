@@ -263,9 +263,14 @@ h3 {
 }
 
 .company-summary {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-5);
+    flex: 1;
+}
+
+.company-summary .metric-value {
+    text-align: left;
 }
 
 .summary-item {

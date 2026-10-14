@@ -97,24 +97,18 @@ def get_company_data(urls):
         "ratios_historical": ratios_data
     }
 
+
 def get_data(url):
     try:
         response = requests.get(url, timeout=10)
-
-    except requests.exceptions.Timeout:
-        return None, "api_error"
-
-    except requests.exceptions.ConnectionError:
-        return None, "api_error"
+        response.raise_for_status()
+        return response.json(), None
 
     except requests.exceptions.RequestException:
         return None, "api_error"
 
-    if response.status_code != 200:
+    except ValueError:
         return None, "api_error"
-
-    return response.json(), None
-
 
 
 def extract_profile_data(data):
