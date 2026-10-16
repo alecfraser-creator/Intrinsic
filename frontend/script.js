@@ -19,7 +19,8 @@ function displayValue(elementId, value) {
 
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-
+    analysisContent.hidden = true;
+    
     welcomeMessage.hidden = true;
     statusMessage.textContent = "Analyzing company...";
     statusMessage.hidden = false;

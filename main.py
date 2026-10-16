@@ -1,9 +1,9 @@
-import requests 
-import config
 import statistics
-
-
-
+import config
+from providers.fmp import get_fmp_data, get_data
+from providers.businessquant import get_businessquant_data
+from providers.sec import get_sec_data
+from providers.finazon import get_finazon_data
 
 
 def main():
@@ -19,22 +19,41 @@ def main():
     print_profitability(results["profitability"])
     print_valuation(results["valuation"])
 
-
 def analyze_company(ticker):
     ticker = ticker.strip().upper()
-    urls = construct_urls(ticker)
 
-    company_data = get_company_data(urls)
-    if company_data is None:
-        return None
+    if config.DATA_PROVIDER == "free":
+        fmp_data = get_fmp_data(ticker)
 
-    profile = extract_profile_data(company_data["profile"][0])
-    income_annual = extract_income_data(company_data["income"])
-    income_ttm = extract_income_ttm_data(company_data["income_ttm"])
-    balance_quarter = extract_balance_quarter(company_data["balance_quarter"])
-    cashflow_annual = extract_cashflow_data(company_data["cashflow"])
-    cashflow_ttm = extract_cashflow_ttm_history(company_data["cashflow_ttm"])
-    ratios_annual = extract_ratios_data(company_data["ratios_historical"])
+        if fmp_data is None:
+            return None
+
+        bq_data = get_businessquant_data(ticker)
+
+        # Map the data into the variables your analysis uses.
+        profile = fmp_data["profile"]
+        income_annual = fmp_data["income"]
+        income_ttm = bq_data["income_ttm"]
+        balance_quarter = fmp_data["balance_quarter"]
+        cashflow_annual = fmp_data["cashflow"]
+        cashflow_ttm = bq_data["cashflow_ttm"]
+        ratios_annual = fmp_data["ratios_annual"]
+
+    elif config.DATA_PROVIDER == "sec_finazon":
+        # These functions must return compatible data.
+        data = get_sec_data(ticker)
+        market_data = get_finazon_data(ticker)
+
+        if data is None or market_data is None:
+            return None
+
+        # Map SEC and Finazon results into the same variables here.
+
+    else:
+        raise ValueError(
+            f"Unknown data provider: {config.DATA_PROVIDER}"
+        )
+
 
     financial_strength = calculate_financial_strength(
         balance_quarter, income_ttm
@@ -57,17 +76,6 @@ def analyze_company(ticker):
         "valuation": valuation
     }
     
-
-def construct_urls(ticker):
-    return {
-        "profile": f"https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={config.API_KEY_FMP}",
-        "income_historical": f"https://financialmodelingprep.com/stable/income-statement?symbol={ticker}&apikey={config.API_KEY_FMP}",
-        "cashflow_historical": f"https://financialmodelingprep.com/stable/cash-flow-statement?symbol={ticker}&apikey={config.API_KEY_FMP}",
-        "income_ttm": f"https://data.businessquant.com/statements?ticker={ticker}&statement=IS&frequency=TTM&period=3y&api_key={config.API_KEY_QUANT}",
-        "balance_quarter": f"https://financialmodelingprep.com/stable/balance-sheet-statement?symbol={ticker}&period=quarter&apikey={config.API_KEY_FMP}",
-        "cashflow_ttm": f"https://data.businessquant.com/statements?ticker={ticker}&statement=CF&frequency=TTM&period=3y&api_key={config.API_KEY_QUANT}",
-        "ratios_historical": f"https://financialmodelingprep.com/stable/ratios?symbol={ticker}&apikey={config.API_KEY_FMP}"
-    }
 
 
 def get_company_data(urls):
@@ -97,262 +105,6 @@ def get_company_data(urls):
         "ratios_historical": ratios_data
     }
 
-
-def get_data(url):
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        return response.json(), None
-
-    except requests.exceptions.RequestException:
-        return None, "api_error"
-
-    except ValueError:
-        return None, "api_error"
-
-
-def extract_profile_data(data):
-    if data is None:
-        return {}
-
-    return {
-        "name": data.get("companyName"),
-        "price": data.get("price"),
-        "market_cap": data.get("marketCap"),
-        "description": data.get("description"),
-        "ceo": data.get("ceo")
-    }
-
-
-def extract_income_data(data):
-    if data is None:
-        return []
-     
-    income = []
-
-    for year in data:
-        income.append({
-            "year": year.get("fiscalYear"),
-            "revenue": year.get("revenue"),
-            "cost_of_revenue": year.get("costOfRevenue"),
-            "operating_income": year.get("operatingIncome"),
-            "ebit": year.get("ebit"),
-            "ebitda": year.get("ebitda"),
-            "interest_expense": year.get("interestExpense"),
-            "net_income": year.get("netIncome"),
-            "eps": year.get("epsDiluted"),
-            "taxes": year.get("incomeTaxExpense"),
-        })
-    return income
-
-
-
-
-def extract_balance_quarter(data):
-    if data is None:
-            return []
-    
-    balance = []
-
-    for year in data:
-        balance.append({
-            "date": year.get("date"),
-            "cash": year.get("cashAndCashEquivalents"),
-            "total_debt": year.get("totalDebt"),
-            "net_debt": year.get("netDebt"),
-            "equity": year.get("totalEquity"),
-            "current_assets": year.get("totalCurrentAssets"),
-            "current_liabilities": year.get("totalCurrentLiabilities")
-        })
-
-    return balance
-
-
-def extract_cashflow_data(data):
-    if data is None:
-            return []
-
-    cashflow = []
-    for year in data:
-        capex = year.get("capitalExpenditure")
-        cashflow.append({
-            "year": year.get("fiscalYear"),
-            "operating_cash_flow": year.get("operatingCashFlow"),
-            "capital_expenditure": abs(capex) if capex is not None else None,
-            "free_cash_flow": year.get("freeCashFlow"),
-            "acquisitions": year.get("acquisitionsNet"),
-            "buybacks": year.get("commonStockRepurchased"),
-            "dividends": year.get("commonDividendsPaid"),
-            "net_debt_issuance": year.get("netDebtIssuance"),
-        })
-
-    return cashflow
-
-
-def extract_income_ttm_data(data):
-    if data is None:
-        return []
-
-    sections = data.get("data", {})
-
-    fields = {
-        "revenue": ("Revenue & cost", "Revenue (TTM)"),
-        "gross_profit": ("Revenue & cost", "Gross Profit (TTM)"),
-        "ebit": ("Operating items", "EBIT (TTM)"),
-        "net_income": (
-            "Net income details",
-            "Net Income towards Common Stockholders (TTM)"
-        ),
-        "eps_diluted": (
-            "Additional items",
-            "EPS (Diluted) (TTM)"
-        ),
-        "interest_expense": (
-            "Additional items",
-            "Interest Expenses (TTM)"
-        ),
-        "tax_rate": (
-            "Additional items",
-            "Tax Rate (TTM)"
-        ),
-        "diluted_shares": (
-            "Additional items",
-            "Shares Outstanding (Diluted) (TTM)"
-        )
-    }
-
-    extracted = {}
-
-    for name, (category, section) in fields.items():
-        values = (
-            sections
-            .get(category, {})
-            .get("sections", {})
-            .get(section, {})
-            .get("values", [])
-        )
-
-        extracted[name] = {
-            item.get("date"): item.get("reportedValue", {}).get("raw")
-            for item in values
-        }
-
-    dates = extracted["revenue"].keys()
-
-    income_ttm = []
-
-    for date in dates:
-        income_ttm.append({
-            "date": date,
-            **{
-                name: values.get(date)
-                for name, values in extracted.items()
-            }
-        })
-
-    return income_ttm
-
-
-def extract_cashflow_ttm_history(data):
-    if data is None:
-        return []
-
-    sections = data.get("data", {})
-
-    fields = {
-        "net_income": (
-            "Operating Activities",
-            "Net Income (TTM)"
-        ),
-        "cash_from_operations": (
-            "Operating Activities",
-            "Cash from Operations (TTM)"
-        ),
-        "depreciation_amortization": (
-            "Operating Activities",
-            "Depreciation, Depletion & Amortization",
-            "Depreciation & Amortization (CF) (TTM)"
-        ),
-        "capex": (
-            "Investing Activities",
-            "Capital Expenditures (TTM)"
-        ),
-        "free_cash_flow": (
-            "Additional items",
-            "Free Cash Flow (TTM)"
-        ),
-        "change_in_cash": (
-            "Additional items",
-            "Change in Cash (TTM)"
-        )
-    }
-
-    extracted = {}
-
-    for name, path in fields.items():
-
-        if len(path) == 2:
-            category, section = path
-
-            values = (
-                sections
-                .get(category, {})
-                .get("sections", {})
-                .get(section, {})
-                .get("values", [])
-            )
-
-        else:
-            category, subsection, section = path
-
-            values = (
-                sections
-                .get(category, {})
-                .get("sections", {})
-                .get(subsection, {})
-                .get("sections", {})
-                .get(section, {})
-                .get("values", [])
-            )
-
-        extracted[name] = {
-            item.get("date"): item.get("reportedValue", {}).get("raw")
-            for item in values
-        }
-
-    dates = extracted["net_income"].keys()
-
-    cashflow_ttm = []
-
-    for date in dates:
-        cashflow_ttm.append({
-            "date": date,
-            **{
-                name: values.get(date)
-                for name, values in extracted.items()
-            }
-        })
-
-    return cashflow_ttm
-
-
-
-def extract_ratios_data(data):
-    if data is None:
-        return []
-
-    ratios = []
-
-    for year in data:
-        ratios.append({
-            "year": year.get("fiscalYear"),
-            "pe": year.get("priceToEarningsDilutedRatio"),
-            "p_fcf": year.get("priceToFreeCashFlowRatio"),
-            "ev_ebitda": year.get("enterpriseValueMultiple"),
-            "pb": year.get("priceToBookRatio"),
-        })
-
-    return ratios
 
 
 def to_float(value):
