@@ -1,10 +1,7 @@
-#fix ratios annual empty list by retrieving historical prices in finazon to calculate normalized earnings value
-
-
 import statistics
 import config
+
 from providers.fmp import get_fmp_data, get_data
-from providers.businessquant import get_businessquant_data
 from providers.sec import get_sec_data
 from providers.finazon import get_latest_price, get_fiscal_year_end_prices
 
@@ -25,55 +22,64 @@ def main():
 def analyze_company(ticker):
     ticker = ticker.strip().upper()
 
+   
+    sec_data = get_sec_data(ticker)
+
+    if sec_data is None:
+        return None
+
+    profile = sec_data["profile"]
+    income_annual = sec_data["income"]
+    income_ttm = sec_data["income_ttm"]
+    balance_quarter = sec_data["balance_quarter"]
+    cashflow_annual = sec_data["cashflow"]
+    cashflow_ttm = sec_data["cashflow_ttm"]
+
+   
+
     if config.DATA_PROVIDER == "free":
+
+        # FMP provides the current price and historical ratios.
         fmp_data = get_fmp_data(ticker)
 
         if fmp_data is None:
             return None
 
-        bq_data = get_businessquant_data(ticker)
+        fmp_profile = fmp_data["profile"]
+        price_latest = to_float(fmp_profile.get("price"))
 
-        # Map the data into the variables your analysis uses.
-        profile = fmp_data["profile"]
-        income_annual = fmp_data["income"]
-        income_ttm = bq_data["income_ttm"]
-        balance_quarter = fmp_data["balance_quarter"]
-        cashflow_annual = fmp_data["cashflow"]
-        cashflow_ttm = bq_data["cashflow_ttm"]
         ratios_annual = fmp_data["ratios_annual"]
 
     elif config.DATA_PROVIDER == "sec_finazon":
-        data = get_sec_data(ticker)
+
+        # Finazon provides the current price.
         price_latest = get_latest_price(ticker)
 
-        if data is None or price_latest is None:
+        if price_latest is None:
             return None
 
+        # Calculate historical P/E from historical prices and SEC EPS.
         fiscal_year_ends = {
-            r["year"]: data["fiscal_year_ends"][r["year"]]
-            for r in data["income"]
-            if r["year"] in data["fiscal_year_ends"]
+            row["year"]: sec_data["fiscal_year_ends"][row["year"]]
+            for row in income_annual
+            if row["year"] in sec_data["fiscal_year_ends"]
         }
-        prices_historical = get_fiscal_year_end_prices(ticker, fiscal_year_ends)
+
+        prices_historical = get_fiscal_year_end_prices(
+            ticker, fiscal_year_ends
+        )
 
         ratios_annual = []
-        for r in data["income"]:
-            price = prices_historical.get(r["year"])
-            eps = to_float(r.get("eps"))
+
+        for row in income_annual:
+            price = prices_historical.get(row["year"])
+            eps = to_float(row.get("eps"))
+
             if price is not None and eps is not None and eps > 0:
-                ratios_annual.append({"year": r["year"], "pe": price / eps})
-
-        profile = data["profile"]
-        income_annual = data["income"]
-        income_ttm = data["income_ttm"]
-        balance_quarter = data["balance_quarter"]
-        cashflow_annual = data["cashflow"]
-        cashflow_ttm = data["cashflow_ttm"]
-
-        shares = profile.get("shares_outstanding")
-        profile["price"] = price_latest
-        profile["ticker"] = ticker
-        profile["market_cap"] = price_latest * shares if shares else None
+                ratios_annual.append({
+                    "year": row["year"],
+                    "pe": price / eps
+                })
 
     else:
         raise ValueError(
@@ -81,17 +87,37 @@ def analyze_company(ticker):
         )
 
 
+    profile["ticker"] = ticker
+    profile["price"] = price_latest
+
+    shares = to_float(profile.get("shares_outstanding"))
+
+    profile["market_cap"] = (
+        price_latest * shares
+        if price_latest is not None and shares is not None
+        else None
+    )
+
+
     financial_strength = calculate_financial_strength(
         balance_quarter, income_ttm
     )
 
     profitability = calculate_profitability(
-        income_annual, income_ttm, balance_quarter, cashflow_ttm
+        income_annual,
+        income_ttm,
+        balance_quarter,
+        cashflow_ttm
     )
 
     valuation = calculate_valuation(
-        profile, income_ttm, income_annual, cashflow_ttm,
-        cashflow_annual, balance_quarter, ratios_annual
+        profile,
+        income_ttm,
+        income_annual,
+        cashflow_ttm,
+        cashflow_annual,
+        balance_quarter,
+        ratios_annual
     )
 
     return {

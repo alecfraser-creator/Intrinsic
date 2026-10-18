@@ -1,5 +1,5 @@
-import os
 import config
+import re
 import pandas as pd
 from edgar import Company, set_identity
 
@@ -57,18 +57,23 @@ def get_sec_data(ticker):
     except Exception as error:
         print(f"SEC data retrieval failed for {ticker}: {error}")
         return None
+
     
+
 def extract_ceo(company):
     try:
         filing = company.get_filings(form="DEF 14A").latest()
         proxy = filing.obj()
 
-        return proxy.peo_name
+        name = getattr(proxy, "peo_name", None)
+        if isinstance(name, str) and name.strip():
+            return name.strip()
+
+        return None
 
     except Exception as error:
         print(f"CEO extraction failed: {error}")
         return None
-
 
 def extract_profile_data(company):
     try:
@@ -549,7 +554,7 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    data = get_sec_data("TSLA")
+    data = get_sec_data("GOOG")
     
 
     
