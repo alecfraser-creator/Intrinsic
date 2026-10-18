@@ -1,5 +1,3 @@
-#next step: handling share splits. There is an edgartools endpoint for this
-
 import statistics
 import config
 
@@ -221,6 +219,34 @@ def calculate_financial_strength(balance_quarter, income_ttm):
     }
 
 
+def annual_cagr(income_annual, field, years):
+    """CAGR (en %) entre l'exercice le plus récent et celui d'il y a `years` ans.
+
+    income_annual est trié du plus récent au plus ancien. Il faut years + 1 exercices
+    (6 pour un CAGR sur 5 ans). Renvoie None si une valeur manque, n'est pas > 0,
+    ou si un exercice manque dans la liste (l'écart d'années ne vaut plus `years`).
+    """
+    if len(income_annual) <= years:
+        return None
+
+    latest_row = income_annual[0]
+    old_row = income_annual[years]
+
+    try:
+        if int(latest_row["year"]) - int(old_row["year"]) != years:
+            return None
+    except (KeyError, TypeError, ValueError):
+        pass
+
+    latest = to_float(latest_row.get(field))
+    old = to_float(old_row.get(field))
+
+    if latest is None or old is None or latest <= 0 or old <= 0:
+        return None
+
+    return ((latest / old) ** (1 / years) - 1) * 100
+
+
 def calculate_profitability(
     income_annual,
     income_ttm,
@@ -232,23 +258,9 @@ def calculate_profitability(
     # REVENUE GROWTH
     # =========================
 
-    revenue_4y_cagr = None
-    revenue_2y_cagr = None
+    revenue_5y_cagr = annual_cagr(income_annual, "revenue", 5)
+    revenue_3y_cagr = annual_cagr(income_annual, "revenue", 3)
     revenue_yoy_growth = None
-
-    if len(income_annual) >= 5:
-        latest = to_float(income_annual[0].get("revenue"))
-        old = to_float(income_annual[4].get("revenue"))
-
-        if latest is not None and old not in (None, 0):
-            revenue_4y_cagr = ((latest / old) ** (1 / 4) - 1) * 100
-
-    if len(income_annual) >= 3:
-        latest = to_float(income_annual[0].get("revenue"))
-        old = to_float(income_annual[2].get("revenue"))
-
-        if latest is not None and old not in (None, 0):
-            revenue_2y_cagr = ((latest / old) ** (1 / 2) - 1) * 100
 
     if len(income_ttm) >= 5:
         latest = to_float(income_ttm[0].get("revenue"))
@@ -262,33 +274,9 @@ def calculate_profitability(
     # EPS GROWTH
     # =========================
 
-    eps_4y_cagr = None
-    eps_2y_cagr = None
+    eps_5y_cagr = annual_cagr(income_annual, "eps", 5)
+    eps_3y_cagr = annual_cagr(income_annual, "eps", 3)
     eps_yoy_growth = None
-
-    if len(income_annual) >= 5:
-        latest = to_float(income_annual[0].get("eps"))
-        old = to_float(income_annual[4].get("eps"))
-
-        if (
-            latest is not None
-            and old is not None
-            and latest > 0
-            and old > 0
-        ):
-            eps_4y_cagr = ((latest / old) ** (1 / 4) - 1) * 100
-
-    if len(income_annual) >= 3:
-        latest = to_float(income_annual[0].get("eps"))
-        old = to_float(income_annual[2].get("eps"))
-
-        if (
-            latest is not None
-            and old is not None
-            and latest > 0
-            and old > 0
-        ):
-            eps_2y_cagr = ((latest / old) ** (1 / 2) - 1) * 100
 
     if len(income_ttm) >= 5:
         latest = to_float(income_ttm[0].get("eps_diluted"))
@@ -446,12 +434,12 @@ def calculate_profitability(
 
 
     return {
-        "Revenue 4Y CAGR": revenue_4y_cagr,
-        "Revenue 2Y CAGR": revenue_2y_cagr,
+        "Revenue 5Y CAGR": revenue_5y_cagr,
+        "Revenue 3Y CAGR": revenue_3y_cagr,
         "Revenue YoY Growth": revenue_yoy_growth,
 
-        "EPS 4Y CAGR": eps_4y_cagr,
-        "EPS 2Y CAGR": eps_2y_cagr,
+        "EPS 5Y CAGR": eps_5y_cagr,
+        "EPS 3Y CAGR": eps_3y_cagr,
         "EPS YoY Growth": eps_yoy_growth,
 
         "Gross Margin": gross_margin,
@@ -776,12 +764,12 @@ def print_profitability(profitability):
     print("PROFITABILITY & GROWTH")
     print("=" * 60)
 
-    print(f"Revenue 4Y CAGR:    {format_value(profitability.get('Revenue 4Y CAGR'), suffix='%')}")
-    print(f"Revenue 2Y CAGR:    {format_value(profitability.get('Revenue 2Y CAGR'), suffix='%')}")
+    print(f"Revenue 5Y CAGR:    {format_value(profitability.get('Revenue 5Y CAGR'), suffix='%')}")
+    print(f"Revenue 3Y CAGR:    {format_value(profitability.get('Revenue 3Y CAGR'), suffix='%')}")
     print(f"Revenue YoY Growth: {format_value(profitability.get('Revenue YoY Growth'), suffix='%')}")
 
-    print(f"\nEPS 4Y CAGR:        {format_value(profitability.get('EPS 4Y CAGR'), suffix='%')}")
-    print(f"EPS 2Y CAGR:        {format_value(profitability.get('EPS 2Y CAGR'), suffix='%')}")
+    print(f"\nEPS 5Y CAGR:        {format_value(profitability.get('EPS 5Y CAGR'), suffix='%')}")
+    print(f"EPS 3Y CAGR:        {format_value(profitability.get('EPS 3Y CAGR'), suffix='%')}")
     print(f"EPS YoY Growth:     {format_value(profitability.get('EPS YoY Growth'), suffix='%')}")
 
     print(f"\nGross Margin:       {format_value(profitability.get('Gross Margin'), suffix='%')}")
@@ -817,4 +805,3 @@ def print_valuation(valuation):
 
 if __name__ == "__main__":
     main()
-    

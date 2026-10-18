@@ -8,6 +8,10 @@ from edgar.ttm import apply_split_adjustments, detect_splits
 
 set_identity(config.EDGAR_IDENTITY)
 
+# 6 exercices annuels = 5 intervalles, ce qu'il faut pour un CAGR sur 5 ans.
+ANNUAL_PERIODS = 6
+QUARTERLY_PERIODS = 8
+
 
 def get_sec_data(ticker):
     ticker = ticker.strip().upper()
@@ -28,14 +32,20 @@ def get_sec_data(ticker):
         split_adjusted_facts, splits = build_split_adjusted_facts(company)
 
         income_annual_raw = get_income_statement(
-            company, split_adjusted_facts, periods=5, annual=True
+            company, split_adjusted_facts, periods=ANNUAL_PERIODS, annual=True
         )
         income_quarter_raw = get_income_statement(
-            company, split_adjusted_facts, periods=8, annual=False
+            company, split_adjusted_facts, periods=QUARTERLY_PERIODS, annual=False
         )
-        balance_quarter_raw = company.balance_sheet(periods=8, annual=False, as_dataframe=True)
-        cashflow_annual_raw = company.cash_flow_statement(periods=5, as_dataframe=True)
-        cashflow_quarter_raw = company.cash_flow_statement(periods=8, annual=False, as_dataframe=True)
+        balance_quarter_raw = company.balance_sheet(
+            periods=QUARTERLY_PERIODS, annual=False, as_dataframe=True
+        )
+        cashflow_annual_raw = company.cash_flow_statement(
+            periods=ANNUAL_PERIODS, as_dataframe=True
+        )
+        cashflow_quarter_raw = company.cash_flow_statement(
+            periods=QUARTERLY_PERIODS, annual=False, as_dataframe=True
+        )
 
         commercial_paper_by_period = extract_commercial_paper(company)
 
@@ -832,5 +842,8 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    data = get_sec_data("TSLA")
-    print(data)
+    data = get_sec_data("AAPL")
+
+    if data:
+        for row in data["balance_quarter"][:4]:
+            print(row)
