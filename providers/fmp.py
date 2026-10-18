@@ -12,6 +12,7 @@ def get_data(url):
 
     except ValueError:
         return None, "api_error"
+    
 
 def construct_urls(ticker):
     return {

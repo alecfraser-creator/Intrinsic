@@ -1,9 +1,12 @@
+#fix ratios annual empty list by retrieving historical prices in finazon to calculate normalized earnings value
+
+
 import statistics
 import config
 from providers.fmp import get_fmp_data, get_data
 from providers.businessquant import get_businessquant_data
 from providers.sec import get_sec_data
-from providers.finazon import get_finazon_data
+from providers.finazon import get_latest_price, get_fiscal_year_end_prices
 
 
 def main():
@@ -40,14 +43,37 @@ def analyze_company(ticker):
         ratios_annual = fmp_data["ratios_annual"]
 
     elif config.DATA_PROVIDER == "sec_finazon":
-        # These functions must return compatible data.
         data = get_sec_data(ticker)
-        market_data = get_finazon_data(ticker)
+        price_latest = get_latest_price(ticker)
 
-        if data is None or market_data is None:
+        if data is None or price_latest is None:
             return None
 
-        # Map SEC and Finazon results into the same variables here.
+        fiscal_year_ends = {
+            r["year"]: data["fiscal_year_ends"][r["year"]]
+            for r in data["income"]
+            if r["year"] in data["fiscal_year_ends"]
+        }
+        prices_historical = get_fiscal_year_end_prices(ticker, fiscal_year_ends)
+
+        ratios_annual = []
+        for r in data["income"]:
+            price = prices_historical.get(r["year"])
+            eps = to_float(r.get("eps"))
+            if price is not None and eps is not None and eps > 0:
+                ratios_annual.append({"year": r["year"], "pe": price / eps})
+
+        profile = data["profile"]
+        income_annual = data["income"]
+        income_ttm = data["income_ttm"]
+        balance_quarter = data["balance_quarter"]
+        cashflow_annual = data["cashflow"]
+        cashflow_ttm = data["cashflow_ttm"]
+
+        shares = profile.get("shares_outstanding")
+        profile["price"] = price_latest
+        profile["ticker"] = ticker
+        profile["market_cap"] = price_latest * shares if shares else None
 
     else:
         raise ValueError(
@@ -148,6 +174,7 @@ def calculate_financial_strength(balance_quarter, income_ttm):
         and current_liabilities not in (None, 0)
         else None
     )
+
 
     interest_coverage = (
         ebit / abs(interest_expense)
@@ -389,9 +416,6 @@ def calculate_profitability(
                 ) * 100
 
 
-    # =========================
-    # RETURN
-    # =========================
 
     return {
         "Revenue 4Y CAGR": revenue_4y_cagr,
@@ -554,12 +578,6 @@ def calculate_valuation(
     # =========================
     # DCF
     # =========================
-
-    # Uses:
-    # - TTM FCF
-    # - Historical annual FCF
-    # - Latest balance sheet debt/cash
-    # - Current market data
 
     if (
         profile
