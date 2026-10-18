@@ -21,19 +21,23 @@ def get_sec_data(ticker):
                 year = str(period_end)[:4]
                 fiscal_year_ends[year] = str(period_end)
 
-       
         profile = extract_profile_data(company)
 
         income_annual_raw = company.income_statement(periods=5, as_dataframe=True)
         income_quarter_raw = company.income_statement(periods=8, annual=False, as_dataframe=True)
-        balance_quarter_raw = company.balance_sheet(periods=8,annual=False, as_dataframe=True)
+        balance_quarter_raw = company.balance_sheet(periods=8, annual=False, as_dataframe=True)
         cashflow_annual_raw = company.cash_flow_statement(periods=5, as_dataframe=True)
         cashflow_quarter_raw = company.cash_flow_statement(periods=8, annual=False, as_dataframe=True)
 
+        commercial_paper_by_period = extract_commercial_paper(company)
 
         income_annual = extract_income_data(income_annual_raw)
         income_quarter = extract_income_data(income_quarter_raw)
-        balance_quarter = extract_balance_quarter(balance_quarter_raw)
+        balance_quarter = extract_balance_quarter(
+            balance_quarter_raw,
+            commercial_paper_by_period
+        )
+
         cashflow_annual = extract_cashflow_data(cashflow_annual_raw)
         cashflow_quarter = extract_cashflow_data(cashflow_quarter_raw)
 
@@ -58,7 +62,6 @@ def get_sec_data(ticker):
         print(f"SEC data retrieval failed for {ticker}: {error}")
         return None
 
-    
 
 def extract_ceo(company):
     try:
@@ -74,6 +77,7 @@ def extract_ceo(company):
     except Exception as error:
         print(f"CEO extraction failed: {error}")
         return None
+
 
 def extract_profile_data(company):
     try:
@@ -154,31 +158,125 @@ def get_periods(data, prefix):
     ]
 
 
-def get_commercial_paper_from_filing(filing, date):
+# ---------------------------------------------------------------------------
+# Commercial paper (absent du bilan reconstruit par edgartools)
+#
+# On lit les faits bruts de l'API Company Facts (company.get_facts()).
+# Piège : dans ces faits, fiscal_year / fiscal_period décrivent le DÉPÔT, pas la
+# date du bilan. Un 10-Q reprend aussi la clôture annuelle précédente en
+# comparatif, donc une même valeur apparaît sous plusieurs étiquettes de période.
+# On rattache donc chaque étiquette à sa vraie date de bilan (période_end).
+# ---------------------------------------------------------------------------
+
+def get_instant_usd_facts(facts, concept):
+    if facts is None:
+        return []
+
     try:
-        bs = filing.obj().balance_sheet.to_dataframe()
+        found = facts.query().by_concept(concept, exact=True).execute()
+    except Exception as error:
+        print(f"Facts query failed for {concept}: {error}")
+        return []
 
-        rows = bs[
-            (bs["concept"] == "us-gaap_CommercialPaper")
-            & (~bs["dimension"].fillna(False).astype(bool))
-            & (~bs["abstract"].fillna(False).astype(bool))
-        ]
+    return [
+        fact for fact in found
+        if getattr(fact, "period_type", None) == "instant"
+        and getattr(fact, "unit", "USD") == "USD"
+        and fact.numeric_value is not None
+    ]
 
 
-        if rows.empty or date not in bs.columns:
-            return None
+def build_period_end_map(
+    facts,
+    anchors=("us-gaap:Assets", "us-gaap:LiabilitiesAndStockholdersEquity")
+):
+    """{"Q3 2026": date(2026, 6, 27), "FY 2025": date(2025, 9, 27), ...}
 
-        value = rows.iloc[0][date]
+    La vraie date de bilan d'un dépôt est la plus récente de ses faits Assets
+    (les autres sont des comparatifs plus anciens).
+    """
+    for anchor in anchors:
+        own_end = {}
 
-        if pd.isna(value):
-            return None
+        for fact in get_instant_usd_facts(facts, anchor):
+            label = f"{fact.fiscal_period} {fact.fiscal_year}"
 
-        return value
+            if label not in own_end or fact.period_end > own_end[label]:
+                own_end[label] = fact.period_end
+
+        if own_end:
+            # Le bilan de fin d'exercice peut être étiqueté "Q4 YYYY" côté colonnes.
+            for label, end in list(own_end.items()):
+                if label.startswith("FY "):
+                    own_end.setdefault("Q4 " + label[3:], end)
+
+            return own_end
+
+    return {}
+
+
+def get_balance_series(facts, concept, period_end_map):
+    """{"Q3 2026": valeur, ...} pour un concept de bilan, rattaché à la vraie date."""
+    latest_by_end = {}
+
+    for fact in get_instant_usd_facts(facts, concept):
+        previous = latest_by_end.get(fact.period_end)
+
+        # En cas de restatement, le dépôt le plus récent gagne.
+        if previous is None or fact.filing_date > previous.filing_date:
+            latest_by_end[fact.period_end] = fact
+
+    return {
+        label: latest_by_end[end].numeric_value
+        for label, end in period_end_map.items()
+        if end in latest_by_end
+    }
+
+
+def extract_commercial_paper(company):
+    try:
+        facts = company.get_facts()
+        period_end_map = build_period_end_map(facts)
+
+        return get_balance_series(
+            facts,
+            "us-gaap:CommercialPaper",
+            period_end_map
+        )
 
     except Exception as error:
         print(f"Commercial paper extraction failed: {error}")
+        return {}
+
+
+def combine_debt(current_maturities, short_term_borrowings, commercial_paper, long_term_debt):
+    """Somme de la dette sans double comptage.
+
+    Certaines sociétés présentent "Short-term borrowings" au bilan et détaillent
+    le CP en note : le CP est alors déjà inclus. Heuristique : si
+    CP <= ShortTermBorrowings, on le considère inclus. Apple n'a pas de ligne
+    ShortTermBorrowings, donc le CP est ajouté.
+    """
+    cp = commercial_paper
+
+    if (
+        cp is not None
+        and short_term_borrowings is not None
+        and cp <= short_term_borrowings
+    ):
+        cp = None
+
+    components = [
+        current_maturities,
+        short_term_borrowings,
+        cp,
+        long_term_debt
+    ]
+
+    if all(value is None for value in components):
         return None
 
+    return sum(value for value in components if value is not None)
 
 
 def calculate_tax_rate(taxes, income_before_taxes):
@@ -268,7 +366,6 @@ def extract_income_period(data, period, period_key):
         income["taxes"],
         income["income_before_taxes"]
     )
-    
 
     return income
 
@@ -293,10 +390,11 @@ def extract_income_data(data):
     return income
 
 
-def extract_balance_quarter(data):
+def extract_balance_quarter(data, commercial_paper_by_period=None):
     if data is None:
         return []
 
+    commercial_paper_by_period = commercial_paper_by_period or {}
     balance = []
 
     for period in get_periods(data, "Q"):
@@ -340,16 +438,13 @@ def extract_balance_quarter(data):
             period
         )
 
-        debt_components = [
+        commercial_paper = commercial_paper_by_period.get(period)
+
+        total_debt = combine_debt(
             current_maturities,
             short_term_borrowings,
+            commercial_paper,
             long_term_debt
-        ]
-
-        total_debt = (
-            sum(value for value in debt_components if value is not None)
-            if any(value is not None for value in debt_components)
-            else None
         )
 
         equity = get_first_value(
@@ -365,6 +460,7 @@ def extract_balance_quarter(data):
         balance.append({
             "date": period,
             "cash": cash,
+            "commercial_paper": commercial_paper,
             "total_debt": total_debt,
             "net_debt": (
                 total_debt - cash
@@ -554,7 +650,8 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    data = get_sec_data("GOOG")
-    
+    data = get_sec_data("AAPL")
 
-    
+    if data:
+        for row in data["balance_quarter"][:4]:
+            print(row)
