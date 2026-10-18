@@ -1,5 +1,4 @@
 #next step: handling share splits. There is an edgartools endpoint for this
-#also find a way of fixing total debt and commercial paper
 
 import statistics
 import config

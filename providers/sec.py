@@ -63,20 +63,108 @@ def get_sec_data(ticker):
         return None
 
 
-def extract_ceo(company):
+# ---------------------------------------------------------------------------
+# CEO. Proxy updates yearly so CEO needs to be retrieved from form_4
+# ---------------------------------------------------------------------------
+
+FORM4_NAMES_ARE_LAST_FIRST = True
+FORM4_LOOKBACK = 25
+
+_CEO_TITLE = re.compile(r"chief executive officer|ceo")
+_CEO_COTITLE_WORDS = re.compile(
+    r"\b(and|director|chairman|chair|president|founder|co|executive|of|the|"
+    r"board|interim|principal)\b"
+)
+
+
+def is_ceo_position(position):
+    if not isinstance(position, str):
+        return False
+
+    text = position.lower()
+
+    if "former" in text or "retired" in text:
+        return False
+
+    if not _CEO_TITLE.search(text):
+        return False
+
+    rest = _CEO_TITLE.sub("", text)
+    rest = _CEO_COTITLE_WORDS.sub("", rest)
+    rest = re.sub(r"[\s,;/&\-()]+", "", rest)
+
+    return rest == ""
+
+
+def format_insider_name(name):
+    name = " ".join(str(name).split())
+
+    if FORM4_NAMES_ARE_LAST_FIRST and "," not in name:
+        parts = name.split(" ")
+        if len(parts) >= 2:
+            return " ".join(parts[1:] + parts[:1])
+
+    return name
+
+
+def extract_ceo_from_proxy(company):
     try:
         filing = company.get_filings(form="DEF 14A").latest()
         proxy = filing.obj()
 
         name = getattr(proxy, "peo_name", None)
         if isinstance(name, str) and name.strip():
-            return name.strip()
-
-        return None
+            return name.strip(), filing.filing_date
 
     except Exception as error:
-        print(f"CEO extraction failed: {error}")
-        return None
+        print(f"CEO proxy extraction failed: {error}")
+
+    return None, None
+
+
+def extract_ceo_from_form4(company):
+    try:
+        filings = list(company.get_filings(form="4").head(FORM4_LOOKBACK))
+        filings.sort(key=lambda filing: filing.filing_date, reverse=True)
+
+        for filing in filings:
+            try:
+                summary = filing.obj().get_ownership_summary()
+                df = summary.to_dataframe()
+            except Exception:
+                continue
+
+            if df is None or "Insider" not in df.columns or "Position" not in df.columns:
+                continue
+
+            for _, row in df.iterrows():
+                if is_ceo_position(row["Position"]):
+                    return format_insider_name(row["Insider"]), filing.filing_date
+
+    except Exception as error:
+        print(f"CEO Form 4 extraction failed: {error}")
+
+    return None, None
+
+
+def extract_ceo_with_source(company):
+    proxy_name, proxy_date = extract_ceo_from_proxy(company)
+    form4_name, form4_date = extract_ceo_from_form4(company)
+
+    if form4_name and (proxy_date is None or str(form4_date) >= str(proxy_date)):
+        return {"name": form4_name, "source": f"Form 4 ({form4_date})"}
+
+    if proxy_name:
+        return {"name": proxy_name, "source": f"DEF 14A ({proxy_date})"}
+
+    if form4_name:
+        return {"name": form4_name, "source": f"Form 4 ({form4_date})"}
+
+    return {"name": None, "source": None}
+
+
+def extract_ceo(company):
+    return extract_ceo_with_source(company)["name"]
 
 
 def extract_profile_data(company):
@@ -90,12 +178,15 @@ def extract_profile_data(company):
     except Exception:
         public_float = None
 
+    ceo = extract_ceo_with_source(company)
+
     return {
         "name": getattr(company, "name", None),
         "price": None,
         "market_cap": None,
         "description": None,
-        "ceo": extract_ceo(company),
+        "ceo": ceo["name"],
+        "ceo_source": ceo["source"],
         "ticker": getattr(company, "ticker", None),
         "industry": getattr(company, "industry", None),
         "shares_outstanding": shares_outstanding,
@@ -159,13 +250,7 @@ def get_periods(data, prefix):
 
 
 # ---------------------------------------------------------------------------
-# Commercial paper (absent du bilan reconstruit par edgartools)
-#
-# On lit les faits bruts de l'API Company Facts (company.get_facts()).
-# Piège : dans ces faits, fiscal_year / fiscal_period décrivent le DÉPÔT, pas la
-# date du bilan. Un 10-Q reprend aussi la clôture annuelle précédente en
-# comparatif, donc une même valeur apparaît sous plusieurs étiquettes de période.
-# On rattache donc chaque étiquette à sa vraie date de bilan (période_end).
+# Commercial paper (not in edgar tools' balance sheet, so needs to be fetched through facts.query)
 # ---------------------------------------------------------------------------
 
 def get_instant_usd_facts(facts, concept):
