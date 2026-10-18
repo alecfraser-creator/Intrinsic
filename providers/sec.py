@@ -2,6 +2,8 @@ import config
 import re
 import pandas as pd
 from edgar import Company, set_identity
+from edgar.entity.entity_facts import EntityFacts
+from edgar.ttm import apply_split_adjustments, detect_splits
 
 
 set_identity(config.EDGAR_IDENTITY)
@@ -23,8 +25,14 @@ def get_sec_data(ticker):
 
         profile = extract_profile_data(company)
 
-        income_annual_raw = company.income_statement(periods=5, as_dataframe=True)
-        income_quarter_raw = company.income_statement(periods=8, annual=False, as_dataframe=True)
+        split_adjusted_facts, splits = build_split_adjusted_facts(company)
+
+        income_annual_raw = get_income_statement(
+            company, split_adjusted_facts, periods=5, annual=True
+        )
+        income_quarter_raw = get_income_statement(
+            company, split_adjusted_facts, periods=8, annual=False
+        )
         balance_quarter_raw = company.balance_sheet(periods=8, annual=False, as_dataframe=True)
         cashflow_annual_raw = company.cash_flow_statement(periods=5, as_dataframe=True)
         cashflow_quarter_raw = company.cash_flow_statement(periods=8, annual=False, as_dataframe=True)
@@ -55,7 +63,11 @@ def get_sec_data(ticker):
             "cashflow_ttm": cashflow_ttm,
             "balance_quarter": balance_quarter,
             "ratios_annual": [],
-            "fiscal_year_ends": fiscal_year_ends
+            "fiscal_year_ends": fiscal_year_ends,
+            "splits": [
+                {"date": str(split["date"]), "ratio": split["ratio"]}
+                for split in splits
+            ]
         }
 
     except Exception as error:
@@ -64,7 +76,83 @@ def get_sec_data(ticker):
 
 
 # ---------------------------------------------------------------------------
-# CEO. Proxy updates yearly so CEO needs to be retrieved from form_4
+# Stock splits (EPS)
+#
+# Les splits sont détectés dans les faits XBRL (StockSplitConversionRatio) par
+# edgar.ttm.detect_splits, puis apply_split_adjustments divise les montants par
+# action (EPS) par le ratio cumulé des splits postérieurs à la période. Règle de
+# la librairie : un fait déposé APRÈS le split est considéré déjà ajusté.
+#
+# Dans edgartools, company.income_statement(annual=False) passe déjà par des faits
+# ajustés, mais pas la version annuelle. On construit donc un EntityFacts ajusté
+# pour l'annuel. Piège : ne JAMAIS lui demander le trimestriel quand la librairie
+# ajuste elle-même (les faits ajustés gardent leur date de dépôt, ils seraient
+# ajustés une 2e fois). D'où LIBRARY_ADJUSTS_QUARTERLY.
+#
+# Limite documentée : un split non tagué en XBRL n'est pas détecté.
+# ---------------------------------------------------------------------------
+
+LIBRARY_ADJUSTS_QUARTERLY = hasattr(EntityFacts, "_get_split_adjusted_facts")
+
+
+def build_split_adjusted_facts(company):
+    """(EntityFacts ajusté ou None, liste des splits détectés)."""
+    try:
+        entity_facts = company.facts
+
+        if not entity_facts:
+            return None, []
+
+        raw_facts = entity_facts.get_all_facts()
+        splits = detect_splits(raw_facts)
+
+        if not splits:
+            return None, []
+
+        adjusted = EntityFacts(
+            cik=entity_facts.cik,
+            name=entity_facts.name,
+            facts=apply_split_adjustments(raw_facts, splits)
+        )
+
+        # Même chose que ce que fait la librairie quand elle copie un EntityFacts :
+        # garde la résolution SIC/ticker (statements spécifiques par industrie).
+        for attr in ("_sic_code", "_ticker", "_sic_resolver"):
+            setattr(adjusted, attr, getattr(entity_facts, attr, None))
+
+        return adjusted, splits
+
+    except Exception as error:
+        print(f"Split adjustment failed: {error}")
+        return None, []
+
+
+def get_income_statement(company, split_adjusted_facts, periods, annual):
+    use_adjusted = (
+        split_adjusted_facts is not None
+        and (annual or not LIBRARY_ADJUSTS_QUARTERLY)
+    )
+
+    source = split_adjusted_facts if use_adjusted else company
+
+    return source.income_statement(
+        periods=periods,
+        annual=annual,
+        as_dataframe=True
+    )
+
+
+# ---------------------------------------------------------------------------
+# CEO
+#
+# Le DEF 14A (proxy) est annuel : peo_name est le dirigeant de la période couverte
+# par ce proxy, donc périmé après un changement de CEO. Les Form 4 (déposés dès
+# qu'un dirigeant transige, souvent plusieurs fois par an) donnent la fonction
+# actuelle de chaque insider (colonne "Position"). On prend la source la plus
+# récente : Form 4 si plus récent que le proxy, sinon le proxy.
+#
+# Les noms des Form 4 sont au format SEC "Nom Prénom" (ex. "Cook Timothy D").
+# Mets FORM4_NAMES_ARE_LAST_FIRST = False si le test AAPL affiche déjà "Prénom Nom".
 # ---------------------------------------------------------------------------
 
 FORM4_NAMES_ARE_LAST_FIRST = True
@@ -78,6 +166,8 @@ _CEO_COTITLE_WORDS = re.compile(
 
 
 def is_ceo_position(position):
+    """Vrai pour "CEO", "Chairman and CEO", "Chief Executive Officer and Director"...
+    Faux pour "CEO, Google Cloud" (CEO d'une filiale/division), "Former CEO", etc."""
     if not isinstance(position, str):
         return False
 
@@ -123,6 +213,7 @@ def extract_ceo_from_proxy(company):
 
 
 def extract_ceo_from_form4(company):
+    """CEO d'après les Form 4 les plus récents : (nom, date de dépôt) ou (None, None)."""
     try:
         filings = list(company.get_filings(form="4").head(FORM4_LOOKBACK))
         filings.sort(key=lambda filing: filing.filing_date, reverse=True)
@@ -250,7 +341,13 @@ def get_periods(data, prefix):
 
 
 # ---------------------------------------------------------------------------
-# Commercial paper (not in edgar tools' balance sheet, so needs to be fetched through facts.query)
+# Commercial paper (absent du bilan reconstruit par edgartools)
+#
+# On lit les faits bruts de l'API Company Facts (company.get_facts()).
+# Piège : dans ces faits, fiscal_year / fiscal_period décrivent le DÉPÔT, pas la
+# date du bilan. Un 10-Q reprend aussi la clôture annuelle précédente en
+# comparatif, donc une même valeur apparaît sous plusieurs étiquettes de période.
+# On rattache donc chaque étiquette à sa vraie date de bilan (période_end).
 # ---------------------------------------------------------------------------
 
 def get_instant_usd_facts(facts, concept):
@@ -735,8 +832,5 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    data = get_sec_data("AAPL")
-
-    if data:
-        for row in data["balance_quarter"][:4]:
-            print(row)
+    data = get_sec_data("TSLA")
+    print(data)
