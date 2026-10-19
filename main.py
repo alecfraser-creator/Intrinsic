@@ -1,6 +1,8 @@
 import statistics
 import config
 
+
+from database.companies import insert_company
 from providers.fmp import get_fmp_data, get_data
 from providers.sec import get_sec_data
 from providers.finazon import get_latest_price, get_fiscal_year_end_prices
@@ -9,6 +11,8 @@ from providers.finazon import get_latest_price, get_fiscal_year_end_prices
 def main():
     ticker = input("Ticker: ").strip().upper()
     results = analyze_company(ticker)
+
+    insert_company(ticker, results)
 
     if results is None:
         print("Unable to retrieve company data.")
@@ -396,12 +400,12 @@ def calculate_profitability(
             balance_quarter[4].get("equity")
         )
 
-        ending_net_debt = to_float(
-            balance_quarter[0].get("net_debt")
+        ending_debt = to_float(
+            balance_quarter[0].get("total_debt")
         )
 
-        beginning_net_debt = to_float(
-            balance_quarter[4].get("net_debt")
+        beginning_debt = to_float(
+            balance_quarter[4].get("total_debt")
         )
 
         if (
@@ -409,8 +413,8 @@ def calculate_profitability(
             and tax_rate is not None
             and ending_equity is not None
             and beginning_equity is not None
-            and ending_net_debt is not None
-            and beginning_net_debt is not None
+            and ending_debt is not None
+            and beginning_debt is not None
         ):
             nopat = ebit * (1 - tax_rate / 100)
 
@@ -418,12 +422,16 @@ def calculate_profitability(
                 beginning_equity + ending_equity
             ) / 2
 
-            average_net_debt = (
-                beginning_net_debt + ending_net_debt
+            average_debt = (
+                beginning_debt + ending_debt
             ) / 2
 
+            # Capital investi = fonds propres + dette totale (la trésorerie n'est PAS
+            # déduite). Avec fonds propres + dette nette, le dénominateur devient une
+            # petite différence de grands nombres chez les sociétés très riches en
+            # trésorerie, et le ROIC explose ou devient instable.
             average_invested_capital = (
-                average_equity + average_net_debt
+                average_equity + average_debt
             )
 
             if average_invested_capital > 0:

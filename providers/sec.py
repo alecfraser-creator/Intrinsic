@@ -12,6 +12,22 @@ set_identity(config.EDGAR_IDENTITY)
 ANNUAL_PERIODS = 6
 QUARTERLY_PERIODS = 8
 
+# Définition fixe du "cash" utilisé pour la dette nette, l'EV, le DCF et le ROIC :
+#   cash & équivalents + placements court terme + titres négociables non courants.
+# Les titres négociables (MarketableSecuritiesNoncurrent) sont liquides par définition :
+# le classement "non courant" reflète l'intention de les garder > 1 an, pas leur liquidité.
+# Ne sont PAS inclus : LongTermInvestments (peut contenir des participations non cotées
+# ou mises en équivalence) et les restricted cash.
+
+SHORT_TERM_INVESTMENT_CONCEPTS = [
+    "us-gaap:MarketableSecuritiesCurrent",
+    "us-gaap:ShortTermInvestments",
+    "us-gaap:AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+]
+LONG_TERM_SECURITY_CONCEPTS = [
+    "us-gaap:MarketableSecuritiesNoncurrent",
+]
+
 
 def get_sec_data(ticker):
     ticker = ticker.strip().upper()
@@ -47,13 +63,13 @@ def get_sec_data(ticker):
             periods=QUARTERLY_PERIODS, annual=False, as_dataframe=True
         )
 
-        commercial_paper_by_period = extract_commercial_paper(company)
+        balance_extras = extract_balance_extras(company)
 
         income_annual = extract_income_data(income_annual_raw)
         income_quarter = extract_income_data(income_quarter_raw)
         balance_quarter = extract_balance_quarter(
             balance_quarter_raw,
-            commercial_paper_by_period
+            balance_extras
         )
 
         cashflow_annual = extract_cashflow_data(cashflow_annual_raw)
@@ -425,20 +441,48 @@ def get_balance_series(facts, concept, period_end_map):
     }
 
 
-def extract_commercial_paper(company):
+def get_first_balance_series(facts, concepts, period_end_map):
+    """Comme get_balance_series, mais plusieurs concepts équivalents par ordre de
+    priorité : pour chaque période, le premier concept qui a une valeur gagne.
+    (Pas de somme : AvailableForSaleSecurities... détaille souvent MarketableSecurities...
+    en note, donc additionner compterait deux fois.)"""
+    merged = {}
+
+    for concept in concepts:
+        series = get_balance_series(facts, concept, period_end_map)
+
+        for label, value in series.items():
+            merged.setdefault(label, value)
+
+    return merged
+
+
+def extract_balance_extras(company):
+    """Postes de bilan absents de company.balance_sheet() : lus dans les faits bruts."""
+    extras = {
+        "commercial_paper": {},
+        "short_term_investments": {},
+        "long_term_securities": {}
+    }
+
     try:
-        facts = company.get_facts()
+        facts = company.facts
         period_end_map = build_period_end_map(facts)
 
-        return get_balance_series(
-            facts,
-            "us-gaap:CommercialPaper",
-            period_end_map
+        extras["commercial_paper"] = get_balance_series(
+            facts, "us-gaap:CommercialPaper", period_end_map
+        )
+        extras["short_term_investments"] = get_first_balance_series(
+            facts, SHORT_TERM_INVESTMENT_CONCEPTS, period_end_map
+        )
+        extras["long_term_securities"] = get_first_balance_series(
+            facts, LONG_TERM_SECURITY_CONCEPTS, period_end_map
         )
 
     except Exception as error:
-        print(f"Commercial paper extraction failed: {error}")
-        return {}
+        print(f"Balance extras extraction failed: {error}")
+
+    return extras
 
 
 def combine_debt(current_maturities, short_term_borrowings, commercial_paper, long_term_debt):
@@ -582,11 +626,14 @@ def extract_income_data(data):
     return income
 
 
-def extract_balance_quarter(data, commercial_paper_by_period=None):
+def extract_balance_quarter(data, extras=None):
     if data is None:
         return []
 
-    commercial_paper_by_period = commercial_paper_by_period or {}
+    extras = extras or {}
+    commercial_paper_by_period = extras.get("commercial_paper") or {}
+    short_term_investments_by_period = extras.get("short_term_investments") or {}
+    long_term_securities_by_period = extras.get("long_term_securities") or {}
     balance = []
 
     for period in get_periods(data, "Q"):
@@ -631,6 +678,25 @@ def extract_balance_quarter(data, commercial_paper_by_period=None):
         )
 
         commercial_paper = commercial_paper_by_period.get(period)
+        short_term_investments = short_term_investments_by_period.get(period)
+        long_term_securities = long_term_securities_by_period.get(period)
+
+        # "cash" = cash & équivalents + placements court terme + titres négociables
+        # non courants. C'est cette valeur que main.py utilise pour net_debt,
+        # EV/EBITDA, DCF et ROIC.
+        cash_and_equivalents = cash
+
+        liquid_parts = [
+            cash_and_equivalents,
+            short_term_investments,
+            long_term_securities
+        ]
+
+        cash = (
+            sum(value for value in liquid_parts if value is not None)
+            if cash_and_equivalents is not None
+            else None
+        )
 
         total_debt = combine_debt(
             current_maturities,
@@ -652,6 +718,9 @@ def extract_balance_quarter(data, commercial_paper_by_period=None):
         balance.append({
             "date": period,
             "cash": cash,
+            "cash_and_equivalents": cash_and_equivalents,
+            "short_term_investments": short_term_investments,
+            "long_term_securities": long_term_securities,
             "commercial_paper": commercial_paper,
             "total_debt": total_debt,
             "net_debt": (

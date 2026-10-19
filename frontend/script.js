@@ -85,12 +85,12 @@ searchForm.addEventListener("submit", async (event) => {
 
         /* Profitability and growth */
         displayValue(
-            "revenue-cagr-4y",
-            formatMetric(data.profitability["Revenue 4Y CAGR"], "%")
+            "revenue-cagr-5y",
+            formatMetric(data.profitability["Revenue 5Y CAGR"], "%")
         );
         displayValue(
-            "revenue-cagr-2y",
-            formatMetric(data.profitability["Revenue 2Y CAGR"], "%")
+            "revenue-cagr-3y",
+            formatMetric(data.profitability["Revenue 3Y CAGR"], "%")
         );
         displayValue(
             "revenue-yoy",
@@ -98,12 +98,12 @@ searchForm.addEventListener("submit", async (event) => {
         );
 
         displayValue(
-            "eps-cagr-4y",
-            formatMetric(data.profitability["EPS 4Y CAGR"], "%")
+            "eps-cagr-5y",
+            formatMetric(data.profitability["EPS 5Y CAGR"], "%")
         );
         displayValue(
-            "eps-cagr-2y",
-            formatMetric(data.profitability["EPS 2Y CAGR"], "%")
+            "eps-cagr-3y",
+            formatMetric(data.profitability["EPS 3Y CAGR"], "%")
         );
         displayValue(
             "eps-yoy",

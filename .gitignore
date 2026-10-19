@@ -5,3 +5,4 @@ archive/
 .venv/
 venv/
 .DS_Store
+data/intrinsic.db
