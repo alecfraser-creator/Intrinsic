@@ -45,13 +45,19 @@
 
 
         <div id="analysis-content" hidden>
+
             <!-- Company Overview -->
             <section id="company-overview" class="company-header">
-                <div class="company-identity">
-                    <div>
+                <div class="company-top">
+                    <div class="company-identity">
                         <h2 id="company-name"></h2>
                         <p id="company-ticker" class="company-ticker"></p>
                     </div>
+
+                    <button type="button" id="save_watchlist">
+                        <i data-lucide="bookmark-plus"></i>
+                        Add to watchlist
+                    </button>
                 </div>
 
                 <div class="company-summary">
@@ -276,5 +282,6 @@
         <p>For informational purposes only. Not investment advice.</p>
     </footer>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
 </body>
 </html>

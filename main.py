@@ -2,7 +2,7 @@ import statistics
 import config
 
 
-from database.companies import insert_company
+
 from providers.fmp import get_fmp_data, get_data
 from providers.sec import get_sec_data
 from providers.finazon import get_latest_price, get_fiscal_year_end_prices
@@ -12,7 +12,6 @@ def main():
     ticker = input("Ticker: ").strip().upper()
     results = analyze_company(ticker)
 
-    insert_company(ticker, results)
 
     if results is None:
         print("Unable to retrieve company data.")

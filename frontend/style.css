@@ -138,7 +138,7 @@ h2 {
 h3 {
     font-size: 1.15rem;
     font-style: italic;
-    color: var(--text-muted);
+    color: var(--text);
     margin-bottom: var(--space-3);
 }
 
@@ -241,18 +241,31 @@ h3 {
 /* ---------- Company overview ---------- */
 .company-header {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-5) var(--space-6);
+    flex-direction: column;
+    gap: var(--space-5);
     padding-bottom: var(--space-5);
     border-bottom: 1px solid var(--border-strong);
 }
 
+.company-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+
+
+
+.company-identity {
+    min-width: 0;
+}
+
 .company-header h2 {
-    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-size: clamp(2.2rem, 4.5vw, 3rem);
     line-height: 1.05;
     letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
 }
 
 .company-ticker {
@@ -264,9 +277,8 @@ h3 {
 
 .company-summary {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-5);
-    flex: 1;
 }
 
 .company-summary .metric-value {
@@ -282,6 +294,43 @@ h3 {
 .summary-item .metric-value {
     font-size: 1.15rem;
 }
+
+
+/* ---------- Watchlist button ---------- */
+#save_watchlist {
+    padding: var(--space-3) var(--space-5);
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+#save_watchlist:hover {
+    background: var(--surface);
+    border-color: var(--gold);
+    color: var(--gold-hover);
+}
+
+#save_watchlist:active {
+    background: var(--border);
+}
+
+#save_watchlist:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 
 /* ---------- Section headings ---------- */
 .section-heading {
@@ -454,6 +503,10 @@ body[data-state="results"] .dashboard > :not(.search-section) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .company-header {
+        flex-wrap: wrap;
+    }
+
     html {
         scroll-behavior: auto;
     }

@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 
 def insert_company(ticker, analysis):
     connection = connect()
-    print(connection.execute("PRAGMA table_info(Companies)").fetchall())
 
     date = datetime.now(timezone.utc)
     date = date.isoformat()
@@ -17,3 +16,25 @@ def insert_company(ticker, analysis):
 
     connection.commit()
     connection.close()
+
+
+
+def get_saved_company(ticker):
+    connection = connect()
+
+    cursor = connection.execute(
+        "SELECT Ticker, Analysis, Updated_at FROM Companies WHERE Ticker = (?)",
+        (ticker,),
+    )
+
+    company = cursor.fetchone()
+    connection.close()
+
+    if company is None:
+        return None
+
+    return {
+        "ticker": company[0],
+        "analysis": json.loads(company[1]),
+        "updated_at": company[2]
+    }

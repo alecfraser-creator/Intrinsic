@@ -1,9 +1,12 @@
+let currentAnalysis = null;
+
 const searchForm = document.querySelector("#search-form");
 const tickerInput = document.querySelector("#ticker-input");
 const analyzeButton = document.querySelector("#analyze-button");
 const analysisContent = document.querySelector("#analysis-content");
 const welcomeMessage = document.querySelector("#welcome-message");
 const statusMessage = document.querySelector("#status-message");
+const saveCompany = document.querySelector("#save_watchlist")
 
 function formatMetric(value, suffix = "") {
     if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -16,6 +19,7 @@ function formatMetric(value, suffix = "") {
 function displayValue(elementId, value) {
     document.querySelector(`#${elementId}`).textContent = value;
 }
+
 
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -38,6 +42,7 @@ searchForm.addEventListener("submit", async (event) => {
         }
 
         const data = await response.json();
+        currentAnalysis = data
 
         /* Company overview */
         displayValue("company-name", data.profile.name ?? "N/A");
@@ -157,9 +162,10 @@ searchForm.addEventListener("submit", async (event) => {
                 : "N/A"
         );
 
-        console.log(data);
+    
         analysisContent.hidden = false;
         statusMessage.hidden = true;
+
     } catch (error) {
         statusMessage.textContent =
             "Unable to analyze this company. Check the ticker and try again.";
@@ -169,3 +175,26 @@ searchForm.addEventListener("submit", async (event) => {
         analyzeButton.disabled = false;
     }
 });
+
+
+
+saveCompany.addEventListener("click", async () => {
+    const response = await fetch(
+    `http://127.0.0.1:8000/watchlist/${currentAnalysis.ticker}`,
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(currentAnalysis)
+        
+    })
+    
+    if (!response.ok) {
+        throw new Error("Unable to add company to watchlist.");
+    }
+});
+
+
+
+lucide.createIcons();
