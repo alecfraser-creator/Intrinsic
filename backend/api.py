@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from .main import analyze_company
 from fastapi.middleware.cors import CORSMiddleware
-from .database.companies import get_saved_company, insert_company, delete_company
+from .database.companies import get_saved_company, insert_company, delete_company, get_all_companies
 
 
 
@@ -67,3 +67,9 @@ def update_database(ticker: str, analysis: dict):
 @app.delete("/watchlist/{ticker}")
 def delete_in_database(ticker:str):
     delete_company(ticker)
+
+
+
+@app.get("/watchlist")
+def get_watchlist():
+    return get_all_companies()

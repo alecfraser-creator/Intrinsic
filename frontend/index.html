@@ -9,295 +9,301 @@
 </head>
 <body>
 
-    <!-- Navigation -->
-    
-
     <main class="dashboard">
 
         <h1 class="dashboard-title">Intrinsic</h1>
 
-        <!-- Search -->
-        <section class="search-section">
-            <form id="search-form" class="search-form">
-                <label for="ticker-input">Company ticker</label>
+        <div class="dashboard-layout">
 
-                <div class="search-controls">
-                    <input
-                        type="text"
-                        id="ticker-input"
-                        name="ticker"
-                        placeholder="Enter a ticker, e.g. AAPL"
-                        autocomplete="off"
-                        required
+
+            <!-- Watchlist Sidebar -->
+            <aside class="watchlist-sidebar">
+                <h2>Watchlist</h2>
+
+                <div id="watchlist-companies">
+                    <p class="watchlist-empty">
+                    </p>
+                </div>
+            </aside>
+
+
+            <!-- Main Dashboard -->
+            <div class="dashboard-main">
+
+                <!-- Search -->
+                <section class="search-section">
+                    <form id="search-form" class="search-form">
+                        <label for="ticker-input">Company ticker</label>
+
+                        <div class="search-controls">
+                            <input
+                                type="text"
+                                id="ticker-input"
+                                name="ticker"
+                                placeholder="Enter a ticker, e.g. AAPL"
+                                autocomplete="off"
+                                required
+                            >
+
+                            <button type="submit" id="analyze-button">
+                                Analyze
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Welcome Message -->
+                <div id="welcome-message">
+                    <p>
+                        Enter a ticker to explore a company's financial strength,
+                        growth, and intrinsic value.
+                    </p>
+                </div>
+
+                <!-- Status Messages -->
+                <p id="status-message" aria-live="polite"></p>
+
+                <!-- Company Analysis -->
+                <div id="analysis-content" hidden>
+
+                    <!-- Company Overview -->
+                    <section id="company-overview" class="company-header">
+
+                        <div class="company-top">
+                            <div class="company-identity">
+                                <h2 id="company-name"></h2>
+                                <p id="company-ticker" class="company-ticker"></p>
+                            </div>
+
+                            <div class="watchlist-controls">
+
+                                <button type="button" id="save_watchlist">
+                                    <i data-lucide="bookmark-plus"></i>
+                                    Add to watchlist
+                                </button>
+
+                                <div id="watchlist-actions">
+
+                                    <button
+                                        type="button"
+                                        id="in_watchlist"
+                                        disabled
+                                    >
+                                        <i data-lucide="bookmark-check"></i>
+                                        In watchlist
+                                    </button>
+
+                                    <button type="button" id="update_analysis">
+                                        <i data-lucide="refresh-cw"></i>
+                                        Update analysis
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        id="remove_watchlist"
+                                        aria-label="Remove from watchlist"
+                                        title="Remove from watchlist"
+                                    >
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="company-summary">
+
+                            <div class="summary-item">
+                                <span class="metric-label">Price</span>
+                                <span class="metric-value" id="share-price"></span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="metric-label">
+                                    Market Capitalization
+                                </span>
+                                <span class="metric-value" id="market-cap"></span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="metric-label">CEO</span>
+                                <span class="metric-value" id="company-ceo"></span>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- Financial Strength -->
+                    <section
+                        id="financial-strength"
+                        class="dashboard-section"
                     >
-                    <button type="submit" id="analyze-button">Analyze</button>
+                        <h2 class="section-heading">Financial Strength</h2>
+
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-label">Cash</span>
+                                <span class="metric-value" id="cash"></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Total debt</span>
+                                <span class="metric-value" id="total-debt"></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Net debt</span>
+                                <span class="metric-value" id="net-debt"></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Debt / equity</span>
+                                <span class="metric-value" id="debt-equity"></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Current ratio</span>
+                                <span class="metric-value" id="current-ratio"></span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-label">Interest coverage</span>
+                                <span class="metric-value" id="interest-coverage"></span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Profitability and Growth -->
+                    <section
+                        id="profitability-growth"
+                        class="dashboard-section"
+                    >
+                        <h2 class="section-heading">Profitability and Growth</h2>
+
+                        <div class="metrics-subsection">
+                            <h3>Revenue growth</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">5-year CAGR</span>
+                                    <span class="metric-value" id="revenue-cagr-5y"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">3-year CAGR</span>
+                                    <span class="metric-value" id="revenue-cagr-3y"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Year over year</span>
+                                    <span class="metric-value" id="revenue-yoy"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-subsection">
+                            <h3>EPS growth</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">5-year CAGR</span>
+                                    <span class="metric-value" id="eps-cagr-5y"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">3-year CAGR</span>
+                                    <span class="metric-value" id="eps-cagr-3y"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Year over year</span>
+                                    <span class="metric-value" id="eps-yoy"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-subsection">
+                            <h3>Margins and cash flow</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Gross margin</span>
+                                    <span class="metric-value" id="gross-margin"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Operating margin</span>
+                                    <span class="metric-value" id="operating-margin"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Free cash flow</span>
+                                    <span class="metric-value" id="free-cash-flow"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">FCF margin</span>
+                                    <span class="metric-value" id="fcf-margin"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">FCF year over year</span>
+                                    <span class="metric-value" id="fcf-yoy"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-subsection">
+                            <h3>Returns</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Return on equity (ROE)</span>
+                                    <span class="metric-value" id="roe"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Return on invested capital (ROIC)</span>
+                                    <span class="metric-value" id="roic"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Valuation -->
+                    <section id="valuation" class="dashboard-section">
+                        <h2 class="section-heading">Valuation</h2>
+
+                        <div class="metrics-subsection">
+                            <h3>Multiples</h3>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">P/E</span>
+                                    <span class="metric-value" id="pe-ratio"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">P/FCF</span>
+                                    <span class="metric-value" id="p-fcf"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">EV/EBITDA</span>
+                                    <span class="metric-value" id="ev-ebitda"></span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">P/B</span>
+                                    <span class="metric-value" id="p-b"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metrics-subsection">
+                            <h3>Intrinsic value</h3>
+                            <div class="valuation-grid">
+                                <div class="valuation-card">
+                                    <span class="metric-label">Normalized earnings valuation</span>
+                                    <p class="valuation-value" id="normalized-earnings-value"></p>
+                                </div>
+                                <div class="valuation-card">
+                                    <span class="metric-label">Discounted cash flow (DCF) valuation</span>
+                                    <p class="valuation-value" id="dcf-value"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <p
+                        class="status-message"
+                        role="status"
+                        aria-live="polite"
+                    ></p>
+
                 </div>
-            </form>
-        </section>
-        <div id="welcome-message">
-            <p>
-                Enter a ticker to explore a company's financial
-                strength, growth, and intrinsic value.
-            </p>
+            </div>
         </div>
-
-        <p id="status-message" aria-live="polite"></p>
-
-
-        <div id="analysis-content" hidden>
-
-            <!-- Company Overview -->
-            <section id="company-overview" class="company-header">
-                <div class="company-top">
-                    <div class="company-identity">
-                        <h2 id="company-name"></h2>
-                        <p id="company-ticker" class="company-ticker"></p>
-                    </div>
-                    
-                    <div class="watchlist-controls">
-                        <button type="button" id="save_watchlist">
-                            <i data-lucide="bookmark-plus"></i>
-                            Add to watchlist
-                        </button>
-
-                        <div id="watchlist-actions">
-                            <button type="button" id="in_watchlist" disabled>
-                                <i data-lucide="bookmark-check"></i>
-                                In watchlist
-                            </button>
-
-                            <button type="button" id="update_analysis">
-                                <i data-lucide="refresh-cw"></i>
-                                Update analysis
-                            </button>
-
-                            <button type="button" id="remove_watchlist"
-                                    aria-label="Remove from watchlist"
-                                    title="Remove from watchlist">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="company-summary">
-                    <div class="summary-item">
-                        <span class="metric-label">Price</span>
-                        <span class="metric-value" id="share-price"></span>
-                    </div>
-
-                    <div class="summary-item">
-                        <span class="metric-label">Market Capitalization</span>
-                        <span class="metric-value" id="market-cap"></span>
-                    </div>
-
-                    <div class="summary-item">
-                        <span class="metric-label">CEO</span>
-                        <span class="metric-value" id="company-ceo"></span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Financial Strength -->
-            <section id="financial-strength" class="dashboard-section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Financial Strength</h2>
-                    </div>
-                </div>
-
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <span class="metric-label">Cash</span>
-                        <span class="metric-value" id="cash"></span>
-                    </div>
-
-                    <div class="metric-card">
-                        <span class="metric-label">Total Debt</span>
-                        <span class="metric-value" id="total-debt"></span>
-                    </div>
-
-                    <div class="metric-card">
-                        <span class="metric-label">Net Debt</span>
-                        <span class="metric-value" id="net-debt"></span>
-                    </div>
-
-                    <div class="metric-card">
-                        <span class="metric-label">Debt / Equity</span>
-                        <span class="metric-value" id="debt-equity"></span>
-                    </div>
-
-                    <div class="metric-card">
-                        <span class="metric-label">Current Ratio</span>
-                        <span class="metric-value" id="current-ratio"></span>
-                    </div>
-
-                    <div class="metric-card">
-                        <span class="metric-label">Interest Coverage</span>
-                        <span class="metric-value" id="interest-coverage"></span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Profitability and Growth -->
-            <section id="profitability-growth" class="dashboard-section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Profitability &amp; Growth</h2>
-                    </div>
-                </div>
-
-                <div class="metrics-subsection">
-                    <h3>Revenue Growth</h3>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Revenue CAGR — 5Y</span>
-                            <span class="metric-value" id="revenue-cagr-5y"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Revenue CAGR — 3Y</span>
-                            <span class="metric-value" id="revenue-cagr-3y"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Revenue Growth — YoY</span>
-                            <span class="metric-value" id="revenue-yoy"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metrics-subsection">
-                    <h3>Earnings Growth</h3>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">EPS CAGR — 5Y</span>
-                            <span class="metric-value" id="eps-cagr-5y"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">EPS CAGR — 3Y</span>
-                            <span class="metric-value" id="eps-cagr-3y"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">EPS Growth — YoY</span>
-                            <span class="metric-value" id="eps-yoy"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metrics-subsection">
-                    <h3>Profitability &amp; Returns</h3>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Gross Margin</span>
-                            <span class="metric-value" id="gross-margin"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Operating Margin</span>
-                            <span class="metric-value" id="operating-margin"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Free Cash Flow</span>
-                            <span class="metric-value" id="free-cash-flow"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">FCF Margin</span>
-                            <span class="metric-value" id="fcf-margin"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">FCF Growth — YoY</span>
-                            <span class="metric-value" id="fcf-yoy"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Return on Equity (ROE)</span>
-                            <span class="metric-value" id="roe"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Return on Invested Capital (ROIC)</span>
-                            <span class="metric-value" id="roic"></span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Valuation -->
-        
-
-            <section id="valuation" class="dashboard-section">
-                <div class="section-heading">
-                    <div>
-                        <h2>Valuation</h2>
-                    </div>
-                </div>
-
-                <div class="metrics-subsection">
-                    <h3>Valuation Multiples</h3>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Price / Earnings (P/E)</span>
-                            <span class="metric-value" id="pe-ratio"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Price / Free Cash Flow</span>
-                            <span class="metric-value" id="p-fcf"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Enterprise Value / EBITDA</span>
-                            <span class="metric-value" id="ev-ebitda"></span>
-                        </div>
-
-                        <div class="metric-card">
-                            <span class="metric-label">Price / Book (P/B)</span>
-                            <span class="metric-value" id="p-b"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="metrics-subsection">
-                    <h3>Intrinsic Value Estimates</h3>
-
-                    <div class="valuation-grid">
-                        <div class="valuation-card">
-                            <span class="metric-label">Normalized Earnings Value</span>
-                            <span class="valuation-value" id="normalized-earnings-value"></span>
-                            <p class="valuation-note">
-                                Based on normalized earnings and a historical P/E multiple.
-                            </p>
-                        </div>
-
-                        <div class="valuation-card">
-                            <span class="metric-label">Discounted Cash Flow (DCF)</span>
-                            <span class="valuation-value" id="dcf-value"></span>
-                            <p class="valuation-note">
-                                Estimated value per share based on projected future cash flows.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Status and errors for future interactivity -->
-            <p class="status-message" role="status" aria-live="polite"></p>
-        </div>
-
     </main>
 
-    <!-- Footer -->
     <footer class="site-footer">
         <p>Intrinsic — Independent Investment Analysis</p>
         <p>For informational purposes only. Not investment advice.</p>

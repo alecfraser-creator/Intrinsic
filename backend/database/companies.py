@@ -48,4 +48,27 @@ def delete_company(ticker):
     )
     connection.commit()
     connection.close()
+
+
+def get_all_companies ():
+    connection = connect()
+    
+    cursor = connection.execute(
+        "SELECT * FROM Companies"
+    )
+
+    companies = cursor.fetchall()
+    connection.close()
+    
+    results = []
+
+    for company in companies: 
+        analysis = json.loads(company[1])
+        results.append({
+            "ticker": company[0],
+            "name": analysis["profile"]["name"],
+            })
+
+    return results
+    
     

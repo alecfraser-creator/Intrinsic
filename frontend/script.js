@@ -1,5 +1,6 @@
 let currentAnalysis = null;
 
+/*Initial search form and buttons when loading the page and analysing a company*/
 const searchForm = document.querySelector("#search-form");
 const tickerInput = document.querySelector("#ticker-input");
 const analyzeButton = document.querySelector("#analyze-button");
@@ -7,10 +8,55 @@ const analysisContent = document.querySelector("#analysis-content");
 const welcomeMessage = document.querySelector("#welcome-message");
 const statusMessage = document.querySelector("#status-message");
 
+/*Watchlist elements and buttons*/
+const watchlistCompanies = document.querySelector("#watchlist-companies");
+const watchlistEmpty = document.querySelector(".watchlist-empty"); 
+
+/*Watchlist related buttons in the analysis*/
 const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");
 const updateCompany = document.querySelector("#update_analysis");
 const removeCompany = document.querySelector("#remove_watchlist");
+
+
+
+async function loadWatchlist() {
+    watchlistCompanies.replaceChildren()
+
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/watchlist`
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to retrieve watchlist data.");
+        }
+
+        const watchlist = await response.json()
+        
+        if (watchlist.length === 0) {
+            watchlistCompanies.appendChild(watchlistEmpty)
+            watchlistEmpty.textContent = "Your watchlist is empty. Analyze a company and add it to your watchlist to keep its analysis saved here."
+        }
+        else {
+            for (const company of watchlist) {
+                const ticker = company.ticker
+                const name = company.name
+                const companyElement = document.createElement("div")
+                companyElement.classList.add("watchlist-item")
+                companyElement.textContent = `${ticker} - ${name}`
+                watchlistCompanies.appendChild(companyElement);
+            }
+        }
+
+
+
+    } catch (error) {
+        console.error(error);}
+}
+
+
+
 
 
 function formatMetric(value, suffix = "") {
@@ -322,6 +368,6 @@ removeCompany.addEventListener("click", async (event) => {
 
 })
 
-
+loadWatchlist()
 
 lucide.createIcons();
