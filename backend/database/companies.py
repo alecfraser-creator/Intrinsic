@@ -1,5 +1,5 @@
 import json
-from database.connection import connect
+from .connection import connect
 from datetime import datetime, timezone
 
 def insert_company(ticker, analysis):
@@ -38,3 +38,14 @@ def get_saved_company(ticker):
         "analysis": json.loads(company[1]),
         "updated_at": company[2]
     }
+
+
+def delete_company(ticker):
+    connection = connect()
+    connection.execute(
+        "DELETE FROM Companies WHERE Ticker = ?",
+        (ticker,)
+    )
+    connection.commit()
+    connection.close()
+    

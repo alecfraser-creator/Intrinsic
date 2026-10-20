@@ -1,6 +1,6 @@
 
 import requests
-import config
+from backend import config
 
 
 def get_data(url):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import config
+from backend import config
 import requests
 
 def get_fiscal_year_end_prices(ticker, fiscal_year_ends):

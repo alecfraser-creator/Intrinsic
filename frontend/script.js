@@ -6,7 +6,12 @@ const analyzeButton = document.querySelector("#analyze-button");
 const analysisContent = document.querySelector("#analysis-content");
 const welcomeMessage = document.querySelector("#welcome-message");
 const statusMessage = document.querySelector("#status-message");
-const saveCompany = document.querySelector("#save_watchlist")
+
+const saveCompany = document.querySelector("#save_watchlist");
+const watchlistActions = document.querySelector("#watchlist-actions");
+const updateCompany = document.querySelector("#update_analysis");
+const removeCompany = document.querySelector("#remove_watchlist");
+
 
 function formatMetric(value, suffix = "") {
     if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -20,9 +25,131 @@ function displayValue(elementId, value) {
     document.querySelector(`#${elementId}`).textContent = value;
 }
 
+function displayAnalysis(currentAnalysis) {
+    /* Company overview */
+        displayValue("company-name", currentAnalysis.profile.name ?? "N/A");
+        displayValue("company-ticker", currentAnalysis.ticker ?? "N/A");
+        displayValue("share-price", `$${formatMetric(currentAnalysis.profile.price)}`);
+        displayValue(
+            "market-cap",
+            currentAnalysis.profile.market_cap != null
+                ? `$${formatMetric(currentAnalysis.profile.market_cap / 1e12, "T")}`
+                : "N/A"
+        );
+        displayValue("company-ceo", currentAnalysis.profile.ceo ?? "N/A");
+
+        /* Financial strength */
+        displayValue(
+            "cash",
+            currentAnalysis.financial_strength.cash != null
+                ? `$${formatMetric(currentAnalysis.financial_strength.cash / 1e9, "B")}`
+                : "N/A"
+        );
+        displayValue(
+            "total-debt",
+            currentAnalysis.financial_strength.total_debt != null
+                ? `$${formatMetric(currentAnalysis.financial_strength.total_debt / 1e9, "B")}`
+                : "N/A"
+        );
+        displayValue(
+            "net-debt",
+            currentAnalysis.financial_strength.net_debt != null
+                ? `$${formatMetric(currentAnalysis.financial_strength.net_debt / 1e9, "B")}`
+                : "N/A"
+        );
+        displayValue(
+            "debt-equity",
+            formatMetric(currentAnalysis.financial_strength.debt_to_equity, "x")
+        );
+        displayValue(
+            "current-ratio",
+            formatMetric(currentAnalysis.financial_strength.current_ratio, "x")
+        );
+        displayValue(
+            "interest-coverage",
+            formatMetric(currentAnalysis.financial_strength.interest_coverage, "x")
+        );
+
+        /* Profitability and growth */
+        displayValue(
+            "revenue-cagr-5y",
+            formatMetric(currentAnalysis.profitability["Revenue 5Y CAGR"], "%")
+        );
+        displayValue(
+            "revenue-cagr-3y",
+            formatMetric(currentAnalysis.profitability["Revenue 3Y CAGR"], "%")
+        );
+        displayValue(
+            "revenue-yoy",
+            formatMetric(currentAnalysis.profitability["Revenue YoY Growth"], "%")
+        );
+
+        displayValue(
+            "eps-cagr-5y",
+            formatMetric(currentAnalysis.profitability["EPS 5Y CAGR"], "%")
+        );
+        displayValue(
+            "eps-cagr-3y",
+            formatMetric(currentAnalysis.profitability["EPS 3Y CAGR"], "%")
+        );
+        displayValue(
+            "eps-yoy",
+            formatMetric(currentAnalysis.profitability["EPS YoY Growth"], "%")
+        );
+
+        displayValue(
+            "gross-margin",
+            formatMetric(currentAnalysis.profitability["Gross Margin"], "%")
+        );
+        displayValue(
+            "operating-margin",
+            formatMetric(currentAnalysis.profitability["Operating Margin"], "%")
+        );
+        displayValue(
+            "free-cash-flow",
+            currentAnalysis.profitability["Free Cashflow"] != null
+                ? `$${formatMetric(currentAnalysis.profitability["Free Cashflow"] / 1e9, "B")}`
+                : "N/A"
+        );
+        displayValue(
+            "fcf-margin",
+            formatMetric(currentAnalysis.profitability["FCF Margin"], "%")
+        );
+        displayValue(
+            "fcf-yoy",
+            formatMetric(currentAnalysis.profitability["FCF YoY Growth"], "%")
+        );
+        displayValue("roe", formatMetric(currentAnalysis.profitability["ROE"], "%"));
+        displayValue("roic", formatMetric(currentAnalysis.profitability["ROIC"], "%"));
+
+        /* Valuation */
+        displayValue("pe-ratio", formatMetric(currentAnalysis.valuation["P/E"], "x"));
+        displayValue("p-fcf", formatMetric(currentAnalysis.valuation["P/FCF"], "x"));
+        displayValue(
+            "ev-ebitda",
+            formatMetric(currentAnalysis.valuation["EV/EBITDA"], "x")
+        );
+        displayValue("p-b", formatMetric(currentAnalysis.valuation["P/B"], "x"));
+
+        displayValue(
+            "normalized-earnings-value",
+            currentAnalysis.valuation["Normalized Earnings Valuation"] != null
+                ? `$${formatMetric(currentAnalysis.valuation["Normalized Earnings Valuation"])}`
+                : "N/A"
+        );
+        displayValue(
+            "dcf-value",
+            currentAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"] != null
+                ? `$${formatMetric(currentAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"])}`
+                : "N/A"
+        );
+}
 
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (event.submitter !== analyzeButton) {
+        return;
+    }
     analysisContent.hidden = true;
     
     welcomeMessage.hidden = true;
@@ -42,127 +169,17 @@ searchForm.addEventListener("submit", async (event) => {
         }
 
         const data = await response.json();
-        currentAnalysis = data
+        currentAnalysis = data.analysis;
+        if (data.in_watchlist) {
+            saveCompany.classList.add("is-hidden");
+            watchlistActions.hidden = false
+        } else {
+            saveCompany.hidden = false;
+            watchlistActions.hidden = true;
+        }
 
-        /* Company overview */
-        displayValue("company-name", data.profile.name ?? "N/A");
-        displayValue("company-ticker", data.ticker ?? "N/A");
-        displayValue("share-price", `$${formatMetric(data.profile.price)}`);
-        displayValue(
-            "market-cap",
-            data.profile.market_cap != null
-                ? `$${formatMetric(data.profile.market_cap / 1e12, "T")}`
-                : "N/A"
-        );
-        displayValue("company-ceo", data.profile.ceo ?? "N/A");
+        displayAnalysis(currentAnalysis)
 
-        /* Financial strength */
-        displayValue(
-            "cash",
-            data.financial_strength.cash != null
-                ? `$${formatMetric(data.financial_strength.cash / 1e9, "B")}`
-                : "N/A"
-        );
-        displayValue(
-            "total-debt",
-            data.financial_strength.total_debt != null
-                ? `$${formatMetric(data.financial_strength.total_debt / 1e9, "B")}`
-                : "N/A"
-        );
-        displayValue(
-            "net-debt",
-            data.financial_strength.net_debt != null
-                ? `$${formatMetric(data.financial_strength.net_debt / 1e9, "B")}`
-                : "N/A"
-        );
-        displayValue(
-            "debt-equity",
-            formatMetric(data.financial_strength.debt_to_equity, "x")
-        );
-        displayValue(
-            "current-ratio",
-            formatMetric(data.financial_strength.current_ratio, "x")
-        );
-        displayValue(
-            "interest-coverage",
-            formatMetric(data.financial_strength.interest_coverage, "x")
-        );
-
-        /* Profitability and growth */
-        displayValue(
-            "revenue-cagr-5y",
-            formatMetric(data.profitability["Revenue 5Y CAGR"], "%")
-        );
-        displayValue(
-            "revenue-cagr-3y",
-            formatMetric(data.profitability["Revenue 3Y CAGR"], "%")
-        );
-        displayValue(
-            "revenue-yoy",
-            formatMetric(data.profitability["Revenue YoY Growth"], "%")
-        );
-
-        displayValue(
-            "eps-cagr-5y",
-            formatMetric(data.profitability["EPS 5Y CAGR"], "%")
-        );
-        displayValue(
-            "eps-cagr-3y",
-            formatMetric(data.profitability["EPS 3Y CAGR"], "%")
-        );
-        displayValue(
-            "eps-yoy",
-            formatMetric(data.profitability["EPS YoY Growth"], "%")
-        );
-
-        displayValue(
-            "gross-margin",
-            formatMetric(data.profitability["Gross Margin"], "%")
-        );
-        displayValue(
-            "operating-margin",
-            formatMetric(data.profitability["Operating Margin"], "%")
-        );
-        displayValue(
-            "free-cash-flow",
-            data.profitability["Free Cashflow"] != null
-                ? `$${formatMetric(data.profitability["Free Cashflow"] / 1e9, "B")}`
-                : "N/A"
-        );
-        displayValue(
-            "fcf-margin",
-            formatMetric(data.profitability["FCF Margin"], "%")
-        );
-        displayValue(
-            "fcf-yoy",
-            formatMetric(data.profitability["FCF YoY Growth"], "%")
-        );
-        displayValue("roe", formatMetric(data.profitability["ROE"], "%"));
-        displayValue("roic", formatMetric(data.profitability["ROIC"], "%"));
-
-        /* Valuation */
-        displayValue("pe-ratio", formatMetric(data.valuation["P/E"], "x"));
-        displayValue("p-fcf", formatMetric(data.valuation["P/FCF"], "x"));
-        displayValue(
-            "ev-ebitda",
-            formatMetric(data.valuation["EV/EBITDA"], "x")
-        );
-        displayValue("p-b", formatMetric(data.valuation["P/B"], "x"));
-
-        displayValue(
-            "normalized-earnings-value",
-            data.valuation["Normalized Earnings Valuation"] != null
-                ? `$${formatMetric(data.valuation["Normalized Earnings Valuation"])}`
-                : "N/A"
-        );
-        displayValue(
-            "dcf-value",
-            data.valuation["Discounted Cash Flow (DCF) Valuation"] != null
-                ? `$${formatMetric(data.valuation["Discounted Cash Flow (DCF) Valuation"])}`
-                : "N/A"
-        );
-
-    
         analysisContent.hidden = false;
         statusMessage.hidden = true;
 
@@ -178,22 +195,132 @@ searchForm.addEventListener("submit", async (event) => {
 
 
 
-saveCompany.addEventListener("click", async () => {
-    const response = await fetch(
-    `http://127.0.0.1:8000/watchlist/${currentAnalysis.ticker}`,
-    {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(currentAnalysis)
+saveCompany.addEventListener("click", async (event) => {
+    event.preventDefault();
+
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/watchlist/${currentAnalysis.ticker}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(currentAnalysis)
+            }
+        );
+
+
+        if (!response.ok) {
+            throw new Error("Unable to add company to watchlist.");
+        }
+
+        /// S'assurer que le contenu reste visible
+        welcomeMessage.hidden = true;
+        analysisContent.hidden = false;
         
-    })
-    
-    if (!response.ok) {
-        throw new Error("Unable to add company to watchlist.");
+        // --- FORCER L'AFFICHAGE EN CSS DIRECTEMENT ---
+        // 1. Cache complètement le bouton "Add to watchlist"
+        // Pour cacher le bouton de sauvegarde et afficher les actions
+        saveCompany.classList.add("is-hidden");
+        watchlistActions.classList.remove("is-hidden");
+        
+        // 2. Affiche le bloc des actions de la watchlist
+        
+        if (watchlistActions) {
+            watchlistActions.style.display = "flex";
+        }
+
+    } catch (error) {
+        console.error("Error adding to watchlist:", error);
     }
 });
+
+
+updateCompany.addEventListener("click", async (event) => {
+    event.preventDefault();
+    
+    analysisContent.hidden = true;
+    
+    welcomeMessage.hidden = true;
+    statusMessage.textContent = "Updating analysis...";
+    statusMessage.hidden = false;
+    updateCompany.disabled = true;
+
+    const ticker = currentAnalysis.ticker
+
+    try {
+        const response = await fetch(
+        `http://127.0.0.1:8000/watchlist/${ticker}`,
+        {
+            method: "PUT"
+        }
+    );
+
+        if (!response.ok) {
+            throw new Error("Unable to retrieve company data.");
+        }
+
+        const data = await response.json();
+        currentAnalysis = data.analysis;
+
+        displayAnalysis(currentAnalysis)
+
+        analysisContent.hidden = false;
+        statusMessage.hidden = true;
+
+    } catch (error) {
+        statusMessage.textContent =
+            "Unable to update the company data.";
+        statusMessage.hidden = false;
+        console.error(error);
+    } finally {
+        updateCompany.disabled = false;
+    }
+
+});
+
+removeCompany.addEventListener("click", async (event) => {
+    const confirmed = confirm(
+    "Are you sure you want to remove this company from your watchlist? This will delete all your past analyses"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    removeCompany.disabled = true;
+    const ticker = currentAnalysis.ticker
+    
+    try {
+        const response = await fetch(
+        `http://127.0.0.1:8000/watchlist/${ticker}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+        if (!response.ok) {
+            throw new Error("Unable to delete company data.")
+        }
+        removeCompany.disabled = false;
+            saveCompany.classList.remove("is-hidden");
+            watchlistActions.classList.add("is-hidden");
+            analysisContent.hidden = true
+            statusMessage.textContent = "Company deleted from watchlist. Enter new ticker to research other companies";
+            statusMessage.hidden = false;
+
+    } catch (error) {
+        statusMessage.textContent =
+            "Unable to delete company data.";
+        statusMessage.hidden = false;
+        console.error(error);
+    }
+    finally {
+        removeCompany.disabled = false;
+    }
+
+})
 
 
 

@@ -1,5 +1,5 @@
 import statistics
-import config
+from . import config
 
 
 

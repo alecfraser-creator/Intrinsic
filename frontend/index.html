@@ -53,11 +53,32 @@
                         <h2 id="company-name"></h2>
                         <p id="company-ticker" class="company-ticker"></p>
                     </div>
+                    
+                    <div class="watchlist-controls">
+                        <button type="button" id="save_watchlist">
+                            <i data-lucide="bookmark-plus"></i>
+                            Add to watchlist
+                        </button>
 
-                    <button type="button" id="save_watchlist">
-                        <i data-lucide="bookmark-plus"></i>
-                        Add to watchlist
-                    </button>
+                        <div id="watchlist-actions">
+                            <button type="button" id="in_watchlist" disabled>
+                                <i data-lucide="bookmark-check"></i>
+                                In watchlist
+                            </button>
+
+                            <button type="button" id="update_analysis">
+                                <i data-lucide="refresh-cw"></i>
+                                Update analysis
+                            </button>
+
+                            <button type="button" id="remove_watchlist"
+                                    aria-label="Remove from watchlist"
+                                    title="Remove from watchlist">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="company-summary">
@@ -271,7 +292,7 @@
             </section>
 
             <!-- Status and errors for future interactivity -->
-            <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+            <p class="status-message" role="status" aria-live="polite"></p>
         </div>
 
     </main>

@@ -296,24 +296,48 @@ h3 {
 }
 
 
-/* ---------- Watchlist button ---------- */
-#save_watchlist {
-    padding: var(--space-3) var(--space-5);
-    background: transparent;
-    color: var(--gold);
+
+/* ---------- Watchlist controls ---------- */
+.watchlist-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* Shared button styling */
+#save_watchlist,
+#in_watchlist,
+#update_analysis,
+#remove_watchlist {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     font-family: var(--font-sans);
     font-size: 0.9rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    flex-shrink: 0;
     white-space: nowrap;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+#save_watchlist,
+#in_watchlist,
+#update_analysis {
+    padding: var(--space-2) var(--space-3);
+}
+
+/* Add to watchlist */
+#save_watchlist {
+    background: transparent;
+    color: var(--gold);
+    cursor: pointer;
 }
 
 #save_watchlist:hover {
@@ -330,6 +354,73 @@ h3 {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* Saved-state actions */
+#watchlist-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+#watchlist-actions[hidden] {
+    display: none;
+}
+
+#in_watchlist {
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: default;
+    opacity: 0.85;
+}
+
+#in_watchlist:disabled {
+    opacity: 0.85;
+}
+
+#update_analysis {
+    background: transparent;
+    color: var(--gold);
+    cursor: pointer;
+}
+
+#update_analysis:hover {
+    background: var(--surface);
+    border-color: var(--gold);
+    color: var(--gold-hover);
+}
+
+#update_analysis:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+/* Compact bin button */
+#remove_watchlist {
+    width: 40px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+#remove_watchlist:hover {
+    background: rgb(210 123 114 / 8%);
+    border-color: var(--negative);
+    color: var(--negative);
+}
+
+#remove_watchlist:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Keep Lucide icons consistent */
+.watchlist-controls svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
 
 
 /* ---------- Section headings ---------- */
@@ -462,6 +553,11 @@ body[data-state="idle"] .main-nav {
 body[data-state="results"] .dashboard > :not(.search-section) {
     animation: reveal 0.35s ease both;
 }
+
+.is-hidden {
+    display: none !important;
+}
+
 
 @keyframes reveal {
     from {

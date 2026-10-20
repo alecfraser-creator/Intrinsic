@@ -1,4 +1,4 @@
-import config
+from backend import config
 import re
 import pandas as pd
 from edgar import Company, set_identity
