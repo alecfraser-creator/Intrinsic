@@ -422,29 +422,60 @@ removeCompany.addEventListener("click", async (event) => {
 
 
 
-watchlistAdd.addEventListener("click", async (event) => {
-    watchlistHeader.innerHTML = '<input class="watchlist-input" placeholder="Ticker (e.g. AAPL)">';
-    const watchlistInput = document.querySelector(".watchlist-input");
+watchlistAdd.addEventListener("click", () => {
+
+    if (document.querySelector(".watchlist-input")) return;
+
+    const originalNodes = [...watchlistHeader.childNodes];
+
+    const watchlistInput = document.createElement("input");
+    watchlistInput.className = "watchlist-input";
+    watchlistInput.placeholder = "Ticker (e.g. AAPL)";
+
+    watchlistHeader.replaceChildren(watchlistInput);
+    watchlistInput.focus();
+
+    let loading = false;
+
+    function closeInput() {
+        document.removeEventListener("mousedown", onOutsideClick);
+        document.removeEventListener("keydown", onEscape);
+        watchlistHeader.replaceChildren(...originalNodes);
+    }
+
+    function onOutsideClick(event) {
+        if (loading) return; // don't close while the request is running
+        if (!watchlistInput.contains(event.target)) closeInput();
+    }
+
+    function onEscape(event) {
+        if (loading) return;
+        if (event.key === "Escape") closeInput();
+    }
+
+    document.addEventListener("mousedown", onOutsideClick);
+    document.addEventListener("keydown", onEscape);
 
     watchlistInput.addEventListener("keydown", async (event) => {
-        if (event.key !== "Enter") return;
+        if (event.key !== "Enter" || loading) return;
 
         const ticker = watchlistInput.value.trim().toUpperCase();
         if (!ticker) return;
 
+        loading = true;
         overlay.classList.remove("is-hidden");
 
         try {
             const data = await fetchAnalysis(ticker);
-            const analysis = data.analysis;
+            await addCompany(ticker, data.analysis);
 
-            await addCompany(ticker, analysis);
-
-            watchlistInput.value = "";
+            loading = false;
+            closeInput(); // success: input disappears
         } catch (error) {
             console.error("Error adding company to watchlist:", error);
             alert(`Unable to add ${ticker} to your watchlist. Please check the ticker and try again.`);
         } finally {
+            loading = false;
             overlay.classList.add("is-hidden");
         }
     });
