@@ -1,4 +1,3 @@
-#next: make the watchlist interactive, so that clicking on a company displays the analysis
 #next: add a little trash button when hovering on a company in the watchlist to delete
 #next: add a date div in the analysis to show last analysis date
 

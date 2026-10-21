@@ -43,7 +43,8 @@ async function loadWatchlist() {
             for (const company of watchlist) {
                 const ticker = company.ticker;
                 const name = company.name;
-                const companyElement = document.createElement("div");
+                const companyElement = document.createElement("div")
+                const companyElementDelete = document.createElement("button")
                 companyElement.classList.add("watchlist-item");
                 companyElement.textContent = `${ticker} - ${name}`;
                 companyElement.addEventListener("click", () => {
@@ -51,8 +52,39 @@ async function loadWatchlist() {
                     statusMessage.classList.add("is-hidden");
                     loadAnalysis(ticker);
                 });
+                companyElementDelete.classList.add("watchlistItem-delete")
+                companyElementDelete.innerHTML = '<i data-lucide="trash-2"></i>';
+                companyElementDelete.addEventListener("click", async (event) => {
+                    event.stopPropagation()
+                    event.preventDefault();
+
+                    const confirmed = confirm(
+                        "Are you sure you want to remove this company from your watchlist? This will delete all your past analyses"
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    try {
+                        await deleteCompany(ticker);
+
+                        saveCompany.classList.remove("is-hidden");
+                        watchlistActions.classList.add("is-hidden")
+
+                    } catch (error) {
+                        statusMessage.textContent =
+                            "Unable to delete company data.";
+                        statusMessage.classList.remove("is-hidden");
+                        console.error(error);
+                    }
+                });
+           
+                companyElement.appendChild(companyElementDelete);
                 watchlistCompanies.appendChild(companyElement);
+                
             }
+            lucide.createIcons();
         }
 
     } catch (error) {
@@ -373,10 +405,6 @@ removeCompany.addEventListener("click", async (event) => {
 
         saveCompany.classList.remove("is-hidden");
         watchlistActions.classList.add("is-hidden");
-        analysisContent.classList.add("is-hidden");
-        statusMessage.textContent = "Company deleted from watchlist. Enter new ticker to research other companies";
-        statusMessage.classList.remove("is-hidden");
-        currentAnalysis = null;
 
     } catch (error) {
         statusMessage.textContent =

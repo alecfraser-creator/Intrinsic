@@ -219,9 +219,43 @@ h3 {
     transition: background 0.15s ease;
 }
 
+.watchlistItem-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.watchlist-item:hover .watchlistItem-delete {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.watchlistItem-delete:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.watchlistItem-delete svg {
+    width: 16px;
+    height: 16px;
+}
+
 .watchlist-item:hover {
     background: rgb(255 255 255 / 3%);
+    opacity: 1;
 }
+
+
+
 
 .watchlist-item.is-active {
     background: rgb(200 164 92 / 6%);
@@ -350,6 +384,7 @@ h3 {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
+
 }
 
 .company-identity {
