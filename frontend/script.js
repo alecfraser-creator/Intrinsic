@@ -1,4 +1,3 @@
-
 let currentAnalysis = null;
 
 /*Initial search form and buttons when loading the page and analysing a company*/
@@ -13,12 +12,18 @@ const statusMessage = document.querySelector("#status-message");
 const watchlistCompanies = document.querySelector("#watchlist-companies");
 const watchlistEmpty = document.querySelector(".watchlist-empty");
 const watchlistElement = document.querySelector(".watchlist-item")
+const watchlistHeader = document.querySelector(".watchlist-header");
+const watchlistAdd = document.getElementById("watchlist-add");
 
 /*Watchlist related buttons in the analysis*/
 const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");
 const updateCompany = document.querySelector("#update_analysis");
 const removeCompany = document.querySelector("#remove_watchlist");
+
+
+/*Overlay*/
+const overlay = document.getElementById("loadingOverlay")
 
 
 async function loadWatchlist() {
@@ -47,10 +52,11 @@ async function loadWatchlist() {
                 const companyElementDelete = document.createElement("button")
                 companyElement.classList.add("watchlist-item");
                 companyElement.textContent = `${ticker} - ${name}`;
-                companyElement.addEventListener("click", () => {
+                companyElement.addEventListener("click", async () => {
                     welcomeMessage.classList.add("is-hidden");
                     statusMessage.classList.add("is-hidden");
-                    loadAnalysis(ticker);
+                    const data = await fetchAnalysis(ticker);
+                    displayAnalysis(data);  ;
                 });
                 companyElementDelete.classList.add("watchlistItem-delete")
                 companyElementDelete.innerHTML = '<i data-lucide="trash-2"></i>';
@@ -93,7 +99,7 @@ async function loadWatchlist() {
 }
 
 
-async function addCompany(ticker) {
+async function addCompany(ticker, analysis) {
 
     const response = await fetch(
         `http://127.0.0.1:8000/watchlist/${ticker}`,
@@ -102,7 +108,7 @@ async function addCompany(ticker) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(currentAnalysis)
+            body: JSON.stringify(analysis)
         }
     );
 
@@ -144,37 +150,37 @@ function displayValue(elementId, value) {
 }
 
 
-async function loadAnalysis(ticker) {
+async function fetchAnalysis(ticker) {
     const response = await fetch(
         `http://127.0.0.1:8000/company/${ticker}`
     );
 
-    const data = await response.json();
-
     if (!response.ok) {
         throw new Error("Unable to retrieve company data.");
     }
-    else {
-        currentAnalysis = data.analysis;
-        tickerInput.value = currentAnalysis.ticker;
 
-        if (data.in_watchlist) {
-            saveCompany.classList.add("is-hidden");
-            watchlistActions.classList.remove("is-hidden");
-        } else {
-            saveCompany.classList.remove("is-hidden");
-            watchlistActions.classList.add("is-hidden");
-        }
+    const data = await response.json();
 
-        displayAnalysis(currentAnalysis);
-
-        analysisContent.classList.remove("is-hidden");
-        statusMessage.classList.add("is-hidden");
-    }
+    return data;
 }
 
+function displayAnalysis(data) {
+    currentAnalysis = data.analysis;
 
-function displayAnalysis(currentAnalysis) {
+    tickerInput.value = currentAnalysis.ticker;
+
+    if (data.in_watchlist) {
+        saveCompany.classList.add("is-hidden");
+        watchlistActions.classList.remove("is-hidden");
+    } else {
+        saveCompany.classList.remove("is-hidden");
+        watchlistActions.classList.add("is-hidden");
+    }
+
+    analysisContent.classList.remove("is-hidden");
+    statusMessage.classList.add("is-hidden");
+
+
     /* Company overview */
     displayValue("company-name", currentAnalysis.profile.name ?? "N/A");
     displayValue("company-ticker", currentAnalysis.ticker ?? "N/A");
@@ -311,7 +317,8 @@ searchForm.addEventListener("submit", async (event) => {
     const ticker = tickerInput.value.trim().toUpperCase();
 
     try {
-        await loadAnalysis(ticker);
+        const data = await fetchAnalysis(ticker);
+        displayAnalysis(data);
     } catch (error) {
         statusMessage.textContent =
             "Unable to analyze this company. Check the ticker and try again.";
@@ -327,7 +334,7 @@ saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
-        await addCompany(currentAnalysis.ticker);
+        await addCompany(currentAnalysis.ticker, currentAnalysis);
 
         // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
@@ -367,12 +374,8 @@ updateCompany.addEventListener("click", async (event) => {
         }
 
         const data = await response.json();
-        currentAnalysis = data.analysis;
+        displayAnalysis(data);
 
-        displayAnalysis(currentAnalysis);
-
-        analysisContent.classList.remove("is-hidden");
-        statusMessage.classList.add("is-hidden");
 
     } catch (error) {
         statusMessage.textContent =
@@ -415,6 +418,36 @@ removeCompany.addEventListener("click", async (event) => {
     finally {
         removeCompany.disabled = false;
     }
+});
+
+
+
+watchlistAdd.addEventListener("click", async (event) => {
+    watchlistHeader.innerHTML = '<input class="watchlist-input" placeholder="Ticker (e.g. AAPL)">';
+    const watchlistInput = document.querySelector(".watchlist-input");
+
+    watchlistInput.addEventListener("keydown", async (event) => {
+        if (event.key !== "Enter") return;
+
+        const ticker = watchlistInput.value.trim().toUpperCase();
+        if (!ticker) return;
+
+        overlay.classList.remove("is-hidden");
+
+        try {
+            const data = await fetchAnalysis(ticker);
+            const analysis = data.analysis;
+
+            await addCompany(ticker, analysis);
+
+            watchlistInput.value = "";
+        } catch (error) {
+            console.error("Error adding company to watchlist:", error);
+            alert(`Unable to add ${ticker} to your watchlist. Please check the ticker and try again.`);
+        } finally {
+            overlay.classList.add("is-hidden");
+        }
+    });
 });
 
 

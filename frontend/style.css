@@ -195,6 +195,51 @@ h3 {
     color: var(--text);
 }
 
+.watchlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#watchlist-add {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: transparent;
+    color: #e5e7eb;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+#watchlist-add:hover {
+    background-color: #2a2a2a;
+    border-color: #555;
+}
+
+.watchlist-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    color: #f5f5f5;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    text-transform: uppercase;
+}
+
 .watchlist-empty {
     font-size: 0.85rem;
     line-height: 1.6;
@@ -643,6 +688,21 @@ h3 {
     color: var(--negative);
 }
 
+/* ---------- Overlay ---------- */
+#loadingOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(10, 10, 10, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#loadingOverlay.is-hidden {
+    display: none;
+}
+
 /* ---------- Footer ---------- */
 .site-footer {
     padding: var(--space-5);
@@ -673,6 +733,11 @@ body[data-state="idle"] .main-nav {
 /* Results fade in once revealed */
 body[data-state="results"] .dashboard-main > :not(.search-section) {
     animation: reveal 0.35s ease both;
+}
+
+
+#loadingOverlay.is-hidden {
+    display: none;
 }
 
 .is-hidden {

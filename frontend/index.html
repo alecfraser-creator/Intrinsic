@@ -18,7 +18,10 @@
 
             <!-- Watchlist Sidebar -->
             <aside class="watchlist-sidebar">
-                <h2>Watchlist</h2>
+                <div class="watchlist-header">
+                    <h2>Watchlist</h2>
+                    <button id="watchlist-add" type="button" aria-label="Add company">+</button>
+                </div>
 
                 <div id="watchlist-companies">
                     <p class="watchlist-empty"></p>
@@ -303,7 +306,11 @@
         </div>
     </main>
 
-    <footer class="site-footer">
+    <div id="loadingOverlay" class="is-hidden">
+        <p>Adding company to watchlist...</p>
+    </div>
+
+    <footer class="site-footer" >
         <p>Intrinsic — Independent Investment Analysis</p>
         <p>For informational purposes only. Not investment advice.</p>
     </footer>

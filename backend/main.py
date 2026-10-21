@@ -1,5 +1,6 @@
-#next: add a little trash button when hovering on a company in the watchlist to delete
-#next: add a date div in the analysis to show last analysis date
+#next: add a + button at the top of the watchlist to add any company to the watchlist. Use this opportunity to seperate fetching and displaying in loadAnalysis, which should not itself call displayAnalysis
+# next: add a date div in the analysis to show last analysis date
+
 
 
 import statistics
