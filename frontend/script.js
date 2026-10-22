@@ -819,7 +819,7 @@ metricInfoButtons.forEach((button) => {
         metricInfoContent.innerHTML = explanation.replace(
             /(What is [^?\n]+\?|Our formula:|What it means:)/g,
             "<strong>$1</strong>"
-        );;
+        );
 
        metricInfoOverlay.classList.remove("is-hidden");
        
@@ -828,8 +828,8 @@ metricInfoButtons.forEach((button) => {
         });
 
         enableDismiss(metricInfoModal, () => {
-            metricInfoOverlay.classList.add("is-hidden");
-});
+            metricInfoOverlay.classList.add("is-hidden")
+        });
     });
 });
 

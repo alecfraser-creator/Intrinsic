@@ -1,8 +1,3 @@
-# next: make the close button + click elsewhere close the info overlay
-# next: add a date div in the analysis to show last analysis date
-
-
-
 import statistics
 from . import config
 
@@ -64,28 +59,11 @@ def analyze_company(ticker):
         if price_latest is None:
             return None
 
-        # Calculate historical P/E from historical prices and SEC EPS.
-        fiscal_year_ends = {
-            row["year"]: sec_data["fiscal_year_ends"][row["year"]]
-            for row in income_annual
-            if row["year"] in sec_data["fiscal_year_ends"]
-        }
-
-        prices_historical = get_fiscal_year_end_prices(
-            ticker, fiscal_year_ends
+        ratios_annual = calculate_historical_pe(
+            ticker,
+            income_annual,
+            sec_data["fiscal_year_ends"]
         )
-
-        ratios_annual = []
-
-        for row in income_annual:
-            price = prices_historical.get(row["year"])
-            eps = to_float(row.get("eps"))
-
-            if price is not None and eps is not None and eps > 0:
-                ratios_annual.append({
-                    "year": row["year"],
-                    "pe": price / eps
-                })
 
     else:
         raise ValueError(
@@ -131,7 +109,12 @@ def analyze_company(ticker):
         "profile": profile,
         "financial_strength": financial_strength,
         "profitability": profitability,
-        "valuation": valuation
+        "valuation": valuation,
+        "history": calculate_history(
+            income_annual,
+            cashflow_annual,
+            ratios_annual
+        )
     }
     
 
@@ -734,6 +717,127 @@ def calculate_valuation(
 
     return valuation
 
+
+#calculation of historical pe for the fair earnings valuation
+def calculate_historical_pe(ticker, income_annual, fiscal_year_ends):
+    fiscal_year_ends = {
+        row["year"]: fiscal_year_ends[row["year"]]
+        for row in income_annual
+        if row["year"] in fiscal_year_ends
+    }
+
+    prices_historical = get_fiscal_year_end_prices(
+        ticker, fiscal_year_ends
+    )
+
+    ratios_annual = []
+
+    for row in income_annual:
+        price = prices_historical.get(row["year"])
+        eps = to_float(row.get("eps"))
+
+        if price is not None and eps is not None and eps > 0:
+            ratios_annual.append({
+                "year": row["year"],
+                "pe": price / eps
+            })
+
+    return ratios_annual
+
+
+
+# =========================
+# HISTORY (per-year series for the dashboard charts)
+# =========================
+
+HISTORY_YEARS = 6
+
+
+def percent(numerator, denominator):
+    if numerator is None or denominator in (None, 0):
+        return None
+
+    return numerator / denominator * 100
+
+
+def fiscal_year_key(value):
+    """'2025', 2025 or '2025-09-27' -> '2025'."""
+    return str(value)[:4]
+
+
+def calculate_history(income_annual, cashflow_annual, ratios_annual):
+    """Per-year series for the last HISTORY_YEARS fiscal years, OLDEST year first.
+
+    income_annual is sorted newest first, like everywhere else in this file.
+    A value that can't be computed is None (the chart draws a gap).
+
+    P/E is matched to each fiscal year by the "year" key of ratios_annual when
+    every row has one. Otherwise it is matched by position (newest first), the
+    same assumption calculate_valuation makes with ratios_annual[:5].
+    """
+    income_rows = income_annual[:HISTORY_YEARS]
+
+    cashflow_by_year = {
+        fiscal_year_key(row.get("year")): row
+        for row in cashflow_annual
+    }
+
+    ratios_have_years = bool(ratios_annual) and all(
+        row.get("year") is not None for row in ratios_annual
+    )
+
+    pe_by_year = (
+        {
+            fiscal_year_key(row["year"]): to_float(row.get("pe"))
+            for row in ratios_annual
+        }
+        if ratios_have_years
+        else {}
+    )
+
+    history = {
+        "years": [],
+        "revenue": [],
+        "fcf": [],
+        "eps": [],
+        "gross_margin": [],
+        "operating_margin": [],
+        "fcf_margin": [],
+        "pe": []
+    }
+
+    for index, row in enumerate(income_rows):
+        year = fiscal_year_key(row.get("year"))
+
+        revenue = to_float(row.get("revenue"))
+        gross_profit = to_float(row.get("gross_profit"))
+        ebit = to_float(row.get("ebit"))
+        eps = to_float(row.get("eps"))
+
+        cashflow_row = cashflow_by_year.get(year, {})
+        fcf = to_float(cashflow_row.get("free_cash_flow"))
+
+        if ratios_have_years:
+            pe = pe_by_year.get(year)
+        elif index < len(ratios_annual):
+            pe = to_float(ratios_annual[index].get("pe"))
+        else:
+            pe = None
+
+        history["years"].append(year)
+        history["revenue"].append(revenue)
+        history["fcf"].append(fcf)
+        history["eps"].append(eps)
+        history["gross_margin"].append(percent(gross_profit, revenue))
+        history["operating_margin"].append(percent(ebit, revenue))
+        history["fcf_margin"].append(percent(fcf, revenue))
+        history["pe"].append(pe)
+
+    # Charts read left to right, oldest to newest.
+    for series in history.values():
+        series.reverse()
+
+    return history
 
 
 def format_value(value, decimals=2, prefix="", suffix=""):
