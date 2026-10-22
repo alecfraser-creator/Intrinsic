@@ -805,6 +805,12 @@ function displayAnalysis(data) {
             ? `$${formatMetric(currentAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"])}`
             : "N/A"
     );
+
+    displayHistoricalRevenueChart(currentAnalysis.history);
+}
+
+function displayHistoricalRevenueChart(history) {
+    
 }
 
 // ==========================================

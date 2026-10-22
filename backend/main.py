@@ -33,9 +33,13 @@ def analyze_company(ticker):
     income_annual = sec_data["income"]
     income_ttm = sec_data["income_ttm"]
     balance_quarter = sec_data["balance_quarter"]
+    balance_annual = sec_data["balance_annual"]
     cashflow_annual = sec_data["cashflow"]
     cashflow_ttm = sec_data["cashflow_ttm"]
-
+    historical_prices = {}
+    shares_by_year = {}
+    print("Historical shares:", shares_by_year)
+    print("Historical prices:", historical_prices)
    
 
     if config.DATA_PROVIDER == "free":
@@ -59,10 +63,16 @@ def analyze_company(ticker):
         if price_latest is None:
             return None
 
-        ratios_annual = calculate_historical_pe(
+        historical_prices = get_fiscal_year_end_prices(
             ticker,
-            income_annual,
             sec_data["fiscal_year_ends"]
+        )
+        
+        shares_by_year = sec_data.get("shares_outstanding_annual", {})
+
+        ratios_annual = calculate_historical_pe(
+            income_annual,
+            historical_prices
         )
 
     else:
@@ -113,7 +123,10 @@ def analyze_company(ticker):
         "history": calculate_history(
             income_annual,
             cashflow_annual,
-            ratios_annual
+            ratios_annual,
+            balance_annual,
+            historical_prices,
+            shares_by_year
         )
     }
     
@@ -719,17 +732,7 @@ def calculate_valuation(
 
 
 #calculation of historical pe for the fair earnings valuation
-def calculate_historical_pe(ticker, income_annual, fiscal_year_ends):
-    fiscal_year_ends = {
-        row["year"]: fiscal_year_ends[row["year"]]
-        for row in income_annual
-        if row["year"] in fiscal_year_ends
-    }
-
-    prices_historical = get_fiscal_year_end_prices(
-        ticker, fiscal_year_ends
-    )
-
+def calculate_historical_pe(income_annual, prices_historical):
     ratios_annual = []
 
     for row in income_annual:
@@ -765,21 +768,32 @@ def fiscal_year_key(value):
     return str(value)[:4]
 
 
-def calculate_history(income_annual, cashflow_annual, ratios_annual):
-    """Per-year series for the last HISTORY_YEARS fiscal years, OLDEST year first.
-
-    income_annual is sorted newest first, like everywhere else in this file.
-    A value that can't be computed is None (the chart draws a gap).
-
-    P/E is matched to each fiscal year by the "year" key of ratios_annual when
-    every row has one. Otherwise it is matched by position (newest first), the
-    same assumption calculate_valuation makes with ratios_annual[:5].
-    """
+def calculate_history(
+    income_annual,
+    cashflow_annual,
+    ratios_annual,
+    balance_annual,
+    historical_prices,
+    shares_by_year
+):
+    """Build historical chart series, oldest year first."""
+    
+    shares_by_year = {
+            fiscal_year_key(year): to_float(shares)
+            for year, shares in shares_by_year.items()
+        }
+    
     income_rows = income_annual[:HISTORY_YEARS]
-
+    
     cashflow_by_year = {
         fiscal_year_key(row.get("year")): row
         for row in cashflow_annual
+    }
+
+    balance_by_year = {
+        fiscal_year_key(row.get("year")): row
+        for row in balance_annual
+        if row.get("year") is not None
     }
 
     ratios_have_years = bool(ratios_annual) and all(
@@ -803,7 +817,10 @@ def calculate_history(income_annual, cashflow_annual, ratios_annual):
         "gross_margin": [],
         "operating_margin": [],
         "fcf_margin": [],
-        "pe": []
+        "pe": [],
+        "p_fcf": [],
+        "ev_ebitda": [],
+        "p_b": []
     }
 
     for index, row in enumerate(income_rows):
@@ -815,7 +832,26 @@ def calculate_history(income_annual, cashflow_annual, ratios_annual):
         eps = to_float(row.get("eps"))
 
         cashflow_row = cashflow_by_year.get(year, {})
+        balance_row = balance_by_year.get(year, {})
+
         fcf = to_float(cashflow_row.get("free_cash_flow"))
+        depreciation = to_float(
+            cashflow_row.get("depreciation_amortization")
+        )
+
+        price = to_float(historical_prices.get(year))
+
+        shares = shares_by_year.get(year)
+
+        market_cap = (
+            price * shares
+            if price is not None and shares is not None
+            else None
+        )
+
+        cash = to_float(balance_row.get("cash"))
+        debt = to_float(balance_row.get("total_debt"))
+        equity = to_float(balance_row.get("equity"))
 
         if ratios_have_years:
             pe = pe_by_year.get(year)
@@ -823,6 +859,36 @@ def calculate_history(income_annual, cashflow_annual, ratios_annual):
             pe = to_float(ratios_annual[index].get("pe"))
         else:
             pe = None
+
+        p_fcf = (
+            market_cap / fcf
+            if market_cap is not None and fcf is not None and fcf > 0
+            else None
+        )
+
+        ebitda = (
+            ebit + depreciation
+            if ebit is not None and depreciation is not None
+            else None
+        )
+
+        ev_ebitda = (
+            (market_cap + debt - cash) / ebitda
+            if (
+                market_cap is not None
+                and debt is not None
+                and cash is not None
+                and ebitda is not None
+                and ebitda > 0
+            )
+            else None
+        )
+
+        p_b = (
+            market_cap / equity
+            if market_cap is not None and equity is not None and equity > 0
+            else None
+        )
 
         history["years"].append(year)
         history["revenue"].append(revenue)
@@ -832,8 +898,10 @@ def calculate_history(income_annual, cashflow_annual, ratios_annual):
         history["operating_margin"].append(percent(ebit, revenue))
         history["fcf_margin"].append(percent(fcf, revenue))
         history["pe"].append(pe)
+        history["p_fcf"].append(p_fcf)
+        history["ev_ebitda"].append(ev_ebitda)
+        history["p_b"].append(p_b)
 
-    # Charts read left to right, oldest to newest.
     for series in history.values():
         series.reverse()
 

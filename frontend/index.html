@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -193,6 +194,7 @@
                     <section id="profitability-growth" class="dashboard-section">
                         <h2 class="section-heading">Profitability and Growth</h2>
 
+                        <!-- Revenue Growth Metrics -->
                         <div class="metrics-subsection">
                             <h3>Revenue growth</h3>
 
@@ -225,6 +227,7 @@
                             </div>
                         </div>
 
+                        <!-- EPS Growth Metrics -->
                         <div class="metrics-subsection">
                             <h3>EPS growth</h3>
 
@@ -257,6 +260,7 @@
                             </div>
                         </div>
 
+                        <!-- Margins and Cash Flow Metrics -->
                         <div class="metrics-subsection">
                             <h3>Margins and cash flow</h3>
 
@@ -305,6 +309,7 @@
                             </div>
                         </div>
 
+                        <!-- Returns Metrics -->
                         <div class="metrics-subsection">
                             <h3>Returns</h3>
 
@@ -328,12 +333,76 @@
 
                             </div>
                         </div>
+
+                        <!-- Historical Profitability and Growth Charts -->
+                        <div class="metrics-subsection">
+                            <h3>Historical trends</h3>
+
+                            <div class="historical-chart-grid">
+
+                                <div class="historical-chart">
+                                    <h4>Revenue</h4>
+                                    <canvas
+                                        id="historical-revenue-chart"
+                                        role="img"
+                                        aria-label="Historical annual revenue"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Earnings per share (EPS)</h4>
+                                    <canvas
+                                        id="historical-eps-chart"
+                                        role="img"
+                                        aria-label="Historical annual earnings per share"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Gross margin</h4>
+                                    <canvas
+                                        id="historical-gross-margin-chart"
+                                        role="img"
+                                        aria-label="Historical gross margin"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Operating margin</h4>
+                                    <canvas
+                                        id="historical-operating-margin-chart"
+                                        role="img"
+                                        aria-label="Historical operating margin"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Free cash flow</h4>
+                                    <canvas
+                                        id="historical-fcf-chart"
+                                        role="img"
+                                        aria-label="Historical free cash flow"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>FCF margin</h4>
+                                    <canvas
+                                        id="historical-fcf-margin-chart"
+                                        role="img"
+                                        aria-label="Historical free cash flow margin"
+                                    ></canvas>
+                                </div>
+
+                            </div>
+                        </div>
                     </section>
 
                     <!-- Valuation -->
                     <section id="valuation" class="dashboard-section">
                         <h2 class="section-heading">Valuation</h2>
 
+                        <!-- Valuation Multiples -->
                         <div class="metrics-subsection">
                             <h3>Multiples</h3>
 
@@ -372,8 +441,50 @@
                                 </div>
 
                             </div>
+
+                            <!-- Historical Valuation Charts -->
+                            <div class="historical-chart-grid">
+
+                                <div class="historical-chart">
+                                    <h4>Historical P/E</h4>
+                                    <canvas
+                                        id="historical-pe-chart"
+                                        role="img"
+                                        aria-label="Historical price-to-earnings ratio"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Historical P/FCF</h4>
+                                    <canvas
+                                        id="historical-p-fcf-chart"
+                                        role="img"
+                                        aria-label="Historical price-to-free-cash-flow ratio"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Historical EV/EBITDA</h4>
+                                    <canvas
+                                        id="historical-ev-ebitda-chart"
+                                        role="img"
+                                        aria-label="Historical enterprise value to EBITDA ratio"
+                                    ></canvas>
+                                </div>
+
+                                <div class="historical-chart">
+                                    <h4>Historical P/B</h4>
+                                    <canvas
+                                        id="historical-p-b-chart"
+                                        role="img"
+                                        aria-label="Historical price-to-book ratio"
+                                    ></canvas>
+                                </div>
+
+                            </div>
                         </div>
 
+                        <!-- Intrinsic Value -->
                         <div class="metrics-subsection">
                             <h3>Intrinsic value</h3>
 
@@ -414,7 +525,7 @@
         <p>Adding company to watchlist...</p>
     </div>
 
-    <!-- Metric explanation modal -->
+    <!-- Metric Explanation Modal -->
     <div id="metric-info-overlay" class="is-hidden">
         <div
             id="metric-info-modal"
@@ -442,3 +553,4 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </body>
 </html>
+```

@@ -46,6 +46,11 @@ def get_sec_data(ticker):
         profile = extract_profile_data(company)
 
         split_adjusted_facts, splits = build_split_adjusted_facts(company)
+        shares_outstanding_annual = extract_historical_shares(
+            company,
+            fiscal_year_ends,
+            splits
+        )
 
         income_annual_raw = get_income_statement(
             company, split_adjusted_facts, periods=ANNUAL_PERIODS, annual=True
@@ -55,6 +60,11 @@ def get_sec_data(ticker):
         )
         balance_quarter_raw = company.balance_sheet(
             periods=QUARTERLY_PERIODS, annual=False, as_dataframe=True
+        )
+        balance_annual_raw = company.balance_sheet(
+            periods=ANNUAL_PERIODS,
+            annual=True,
+            as_dataframe=True
         )
         cashflow_annual_raw = company.cash_flow_statement(
             periods=ANNUAL_PERIODS, as_dataframe=True
@@ -70,6 +80,11 @@ def get_sec_data(ticker):
         balance_quarter = extract_balance_quarter(
             balance_quarter_raw,
             balance_extras
+        )
+        balance_annual = extract_balance_quarter(
+            balance_annual_raw,
+            balance_extras,
+            period_prefix="FY "
         )
 
         cashflow_annual = extract_cashflow_data(cashflow_annual_raw)
@@ -88,12 +103,14 @@ def get_sec_data(ticker):
             "cashflow": cashflow_annual,
             "cashflow_ttm": cashflow_ttm,
             "balance_quarter": balance_quarter,
+            "balance_annual": balance_annual,
             "ratios_annual": [],
             "fiscal_year_ends": fiscal_year_ends,
             "splits": [
                 {"date": str(split["date"]), "ratio": split["ratio"]}
                 for split in splits
-            ]
+            ],
+            "shares_outstanding_annual": shares_outstanding_annual,
         }
 
     except Exception as error:
@@ -166,6 +183,85 @@ def get_income_statement(company, split_adjusted_facts, periods, annual):
         annual=annual,
         as_dataframe=True
     )
+
+
+
+def extract_historical_shares(company, fiscal_year_ends, splits):
+    """Return split-adjusted balance-sheet shares outstanding by fiscal year."""
+    try:
+        facts = company.facts
+
+        if not facts:
+            return {}
+
+        reported_facts = facts.query().by_concept(
+            "us-gaap:CommonStockSharesOutstanding",
+            exact=True
+        ).execute()
+
+        # Keep the latest reported version of each balance-sheet date.
+        shares_by_date = {}
+
+        for fact in reported_facts:
+            if (
+                getattr(fact, "period_type", None) != "instant"
+                or getattr(fact, "unit", None) != "shares"
+                or fact.numeric_value is None
+                or fact.period_end is None
+            ):
+                continue
+
+            period_end = pd.Timestamp(fact.period_end).date()
+            filing_date = (
+                pd.Timestamp(fact.filing_date).date()
+                if fact.filing_date is not None
+                else period_end
+            )
+
+            previous = shares_by_date.get(period_end)
+
+            if previous is None or filing_date > previous["filing_date"]:
+                shares_by_date[period_end] = {
+                    "filing_date": filing_date,
+                    "shares": float(fact.numeric_value)
+                }
+
+        split_events = [
+            {
+                "date": pd.Timestamp(split["date"]).date(),
+                "ratio": float(split["ratio"])
+            }
+            for split in splits
+            if split.get("date") is not None
+            and split.get("ratio") is not None
+        ]
+
+        shares_by_year = {}
+
+        for year, year_end in fiscal_year_ends.items():
+            year_end = pd.Timestamp(year_end).date()
+
+            # Use only shares reported for this exact balance-sheet date.
+            observation = shares_by_date.get(year_end)
+
+            if observation is None:
+                continue
+
+            shares = observation["shares"]
+
+            # Match Finazon's split-adjusted historical prices.
+            # Apply only splits occurring after this balance-sheet date.
+            for split in split_events:
+                if split["date"] > year_end:
+                    shares *= split["ratio"]
+
+            shares_by_year[year] = shares
+
+        return shares_by_year
+
+    except Exception as error:
+        print(f"Historical shares extraction failed: {error}")
+        return {}
 
 
 # ---------------------------------------------------------------------------
@@ -626,7 +722,7 @@ def extract_income_data(data):
     return income
 
 
-def extract_balance_quarter(data, extras=None):
+def extract_balance_quarter(data, extras=None, period_prefix="Q"):
     if data is None:
         return []
 
@@ -636,7 +732,7 @@ def extract_balance_quarter(data, extras=None):
     long_term_securities_by_period = extras.get("long_term_securities") or {}
     balance = []
 
-    for period in get_periods(data, "Q"):
+    for period in get_periods(data, period_prefix):
         cash = get_first_value(
             data,
             [
@@ -717,6 +813,11 @@ def extract_balance_quarter(data, extras=None):
 
         balance.append({
             "date": period,
+            "year": (
+                period.replace("FY ", "")
+                if period.startswith("FY ")
+                else None
+            ),
             "cash": cash,
             "cash_and_equivalents": cash_and_equivalents,
             "short_term_investments": short_term_investments,
