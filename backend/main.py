@@ -1,4 +1,4 @@
-#next: add a + button at the top of the watchlist to add any company to the watchlist. Use this opportunity to seperate fetching and displaying in loadAnalysis, which should not itself call displayAnalysis
+# next: make the close button + click elsewhere close the info overlay
 # next: add a date div in the analysis to show last analysis date
 
 

@@ -15,7 +15,6 @@
 
         <div class="dashboard-layout">
 
-
             <!-- Watchlist Sidebar -->
             <aside class="watchlist-sidebar">
                 <div class="watchlist-header">
@@ -27,7 +26,6 @@
                     <p class="watchlist-empty"></p>
                 </div>
             </aside>
-
 
             <!-- Main Dashboard -->
             <div class="dashboard-main">
@@ -121,9 +119,7 @@
                             </div>
 
                             <div class="summary-item">
-                                <span class="metric-label">
-                                    Market Capitalization
-                                </span>
+                                <span class="metric-label">Market Capitalization</span>
                                 <span class="metric-value" id="market-cap"></span>
                             </div>
 
@@ -136,120 +132,199 @@
                     </section>
 
                     <!-- Financial Strength -->
-                    <section
-                        id="financial-strength"
-                        class="dashboard-section"
-                    >
+                    <section id="financial-strength" class="dashboard-section">
                         <h2 class="section-heading">Financial Strength</h2>
 
                         <div class="metrics-grid">
+
                             <div class="metric-card">
-                                <span class="metric-label">Cash</span>
+                                <span class="metric-label">
+                                    Cash
+                                    <button type="button" class="metric-info" data-metric="cash" aria-label="Explain cash">i</button>
+                                </span>
                                 <span class="metric-value" id="cash"></span>
                             </div>
+
                             <div class="metric-card">
-                                <span class="metric-label">Total debt</span>
+                                <span class="metric-label">
+                                    Total debt
+                                    <button type="button" class="metric-info" data-metric="total-debt" aria-label="Explain total debt">i</button>
+                                </span>
                                 <span class="metric-value" id="total-debt"></span>
                             </div>
+
                             <div class="metric-card">
-                                <span class="metric-label">Net debt</span>
+                                <span class="metric-label">
+                                    Net debt
+                                    <button type="button" class="metric-info" data-metric="net-debt" aria-label="Explain net debt">i</button>
+                                </span>
                                 <span class="metric-value" id="net-debt"></span>
                             </div>
+
                             <div class="metric-card">
-                                <span class="metric-label">Debt / equity</span>
+                                <span class="metric-label">
+                                    Debt / equity
+                                    <button type="button" class="metric-info" data-metric="debt-equity" aria-label="Explain debt to equity">i</button>
+                                </span>
                                 <span class="metric-value" id="debt-equity"></span>
                             </div>
+
                             <div class="metric-card">
-                                <span class="metric-label">Current ratio</span>
+                                <span class="metric-label">
+                                    Current ratio
+                                    <button type="button" class="metric-info" data-metric="current-ratio" aria-label="Explain current ratio">i</button>
+                                </span>
                                 <span class="metric-value" id="current-ratio"></span>
                             </div>
+
                             <div class="metric-card">
-                                <span class="metric-label">Interest coverage</span>
+                                <span class="metric-label">
+                                    Interest coverage
+                                    <button type="button" class="metric-info" data-metric="interest-coverage" aria-label="Explain interest coverage">i</button>
+                                </span>
                                 <span class="metric-value" id="interest-coverage"></span>
                             </div>
+
                         </div>
                     </section>
 
                     <!-- Profitability and Growth -->
-                    <section
-                        id="profitability-growth"
-                        class="dashboard-section"
-                    >
+                    <section id="profitability-growth" class="dashboard-section">
                         <h2 class="section-heading">Profitability and Growth</h2>
 
                         <div class="metrics-subsection">
                             <h3>Revenue growth</h3>
+
                             <div class="metrics-grid">
+
                                 <div class="metric-card">
-                                    <span class="metric-label">5-year CAGR</span>
+                                    <span class="metric-label">
+                                        5-year CAGR
+                                        <button type="button" class="metric-info" data-metric="revenue-cagr-5y" aria-label="Explain 5-year revenue CAGR">i</button>
+                                    </span>
                                     <span class="metric-value" id="revenue-cagr-5y"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">3-year CAGR</span>
+                                    <span class="metric-label">
+                                        3-year CAGR
+                                        <button type="button" class="metric-info" data-metric="revenue-cagr-3y" aria-label="Explain 3-year revenue CAGR">i</button>
+                                    </span>
                                     <span class="metric-value" id="revenue-cagr-3y"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Year over year</span>
+                                    <span class="metric-label">
+                                        Year over year
+                                        <button type="button" class="metric-info" data-metric="revenue-yoy" aria-label="Explain year-over-year revenue growth">i</button>
+                                    </span>
                                     <span class="metric-value" id="revenue-yoy"></span>
                                 </div>
+
                             </div>
                         </div>
 
                         <div class="metrics-subsection">
                             <h3>EPS growth</h3>
+
                             <div class="metrics-grid">
+
                                 <div class="metric-card">
-                                    <span class="metric-label">5-year CAGR</span>
+                                    <span class="metric-label">
+                                        5-year CAGR
+                                        <button type="button" class="metric-info" data-metric="eps-cagr-5y" aria-label="Explain 5-year EPS CAGR">i</button>
+                                    </span>
                                     <span class="metric-value" id="eps-cagr-5y"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">3-year CAGR</span>
+                                    <span class="metric-label">
+                                        3-year CAGR
+                                        <button type="button" class="metric-info" data-metric="eps-cagr-3y" aria-label="Explain 3-year EPS CAGR">i</button>
+                                    </span>
                                     <span class="metric-value" id="eps-cagr-3y"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Year over year</span>
+                                    <span class="metric-label">
+                                        Year over year
+                                        <button type="button" class="metric-info" data-metric="eps-yoy" aria-label="Explain year-over-year EPS growth">i</button>
+                                    </span>
                                     <span class="metric-value" id="eps-yoy"></span>
                                 </div>
+
                             </div>
                         </div>
 
                         <div class="metrics-subsection">
                             <h3>Margins and cash flow</h3>
+
                             <div class="metrics-grid">
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Gross margin</span>
+                                    <span class="metric-label">
+                                        Gross margin
+                                        <button type="button" class="metric-info" data-metric="gross-margin" aria-label="Explain gross margin">i</button>
+                                    </span>
                                     <span class="metric-value" id="gross-margin"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Operating margin</span>
+                                    <span class="metric-label">
+                                        Operating margin
+                                        <button type="button" class="metric-info" data-metric="operating-margin" aria-label="Explain operating margin">i</button>
+                                    </span>
                                     <span class="metric-value" id="operating-margin"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Free cash flow</span>
+                                    <span class="metric-label">
+                                        Free cash flow
+                                        <button type="button" class="metric-info" data-metric="free-cash-flow" aria-label="Explain free cash flow">i</button>
+                                    </span>
                                     <span class="metric-value" id="free-cash-flow"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">FCF margin</span>
+                                    <span class="metric-label">
+                                        FCF margin
+                                        <button type="button" class="metric-info" data-metric="fcf-margin" aria-label="Explain free cash flow margin">i</button>
+                                    </span>
                                     <span class="metric-value" id="fcf-margin"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">FCF year over year</span>
+                                    <span class="metric-label">
+                                        FCF year over year
+                                        <button type="button" class="metric-info" data-metric="fcf-yoy" aria-label="Explain year-over-year free cash flow growth">i</button>
+                                    </span>
                                     <span class="metric-value" id="fcf-yoy"></span>
                                 </div>
+
                             </div>
                         </div>
 
                         <div class="metrics-subsection">
                             <h3>Returns</h3>
+
                             <div class="metrics-grid">
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Return on equity (ROE)</span>
+                                    <span class="metric-label">
+                                        Return on equity (ROE)
+                                        <button type="button" class="metric-info" data-metric="roe" aria-label="Explain return on equity">i</button>
+                                    </span>
                                     <span class="metric-value" id="roe"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">Return on invested capital (ROIC)</span>
+                                    <span class="metric-label">
+                                        Return on invested capital (ROIC)
+                                        <button type="button" class="metric-info" data-metric="roic" aria-label="Explain return on invested capital">i</button>
+                                    </span>
                                     <span class="metric-value" id="roic"></span>
                                 </div>
+
                             </div>
                         </div>
                     </section>
@@ -260,37 +335,65 @@
 
                         <div class="metrics-subsection">
                             <h3>Multiples</h3>
+
                             <div class="metrics-grid">
+
                                 <div class="metric-card">
-                                    <span class="metric-label">P/E</span>
+                                    <span class="metric-label">
+                                        P/E
+                                        <button type="button" class="metric-info" data-metric="pe-ratio" aria-label="Explain price-to-earnings ratio">i</button>
+                                    </span>
                                     <span class="metric-value" id="pe-ratio"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">P/FCF</span>
+                                    <span class="metric-label">
+                                        P/FCF
+                                        <button type="button" class="metric-info" data-metric="p-fcf" aria-label="Explain price-to-free-cash-flow ratio">i</button>
+                                    </span>
                                     <span class="metric-value" id="p-fcf"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">EV/EBITDA</span>
+                                    <span class="metric-label">
+                                        EV/EBITDA
+                                        <button type="button" class="metric-info" data-metric="ev-ebitda" aria-label="Explain enterprise value to EBITDA">i</button>
+                                    </span>
                                     <span class="metric-value" id="ev-ebitda"></span>
                                 </div>
+
                                 <div class="metric-card">
-                                    <span class="metric-label">P/B</span>
+                                    <span class="metric-label">
+                                        P/B
+                                        <button type="button" class="metric-info" data-metric="p-b" aria-label="Explain price-to-book ratio">i</button>
+                                    </span>
                                     <span class="metric-value" id="p-b"></span>
                                 </div>
+
                             </div>
                         </div>
 
                         <div class="metrics-subsection">
                             <h3>Intrinsic value</h3>
+
                             <div class="valuation-grid">
+
                                 <div class="valuation-card">
-                                    <span class="metric-label">Normalized earnings valuation</span>
+                                    <span class="metric-label">
+                                        Normalized earnings valuation
+                                        <button type="button" class="metric-info" data-metric="normalized-earnings-value" aria-label="Explain normalized earnings valuation">i</button>
+                                    </span>
                                     <p class="valuation-value" id="normalized-earnings-value"></p>
                                 </div>
+
                                 <div class="valuation-card">
-                                    <span class="metric-label">Discounted cash flow (DCF) valuation</span>
+                                    <span class="metric-label">
+                                        Discounted cash flow (DCF) valuation
+                                        <button type="button" class="metric-info" data-metric="dcf-value" aria-label="Explain discounted cash flow valuation">i</button>
+                                    </span>
                                     <p class="valuation-value" id="dcf-value"></p>
                                 </div>
+
                             </div>
                         </div>
                     </section>
@@ -310,7 +413,27 @@
         <p>Adding company to watchlist...</p>
     </div>
 
-    <footer class="site-footer" >
+    <!-- Metric explanation modal -->
+    <div id="metric-info-overlay" class="is-hidden">
+        <div
+            id="metric-info-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="metric-info-title"
+        >
+            <button
+                id="close-metric-info"
+                type="button"
+                aria-label="Close explanation"
+            >&times;</button>
+
+            <h2 id="metric-info-title"></h2>
+
+            <div id="metric-info-content"></div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
         <p>Intrinsic — Independent Investment Analysis</p>
         <p>For informational purposes only. Not investment advice.</p>
     </footer>

@@ -603,6 +603,33 @@ h3 {
 }
 
 /* ---------- Metrics: ruled rows ---------- */
+.metric-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    margin-left: 8px;
+    padding: 0;
+    border-color: transparent;
+    border-radius: 50%;
+    background-color: #aaa;
+    color: var(--bg);
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.metric-info:hover {
+    background-color: #fff
+}
+
+.metric-info:focus-visible {
+    outline: 2px solid #aaa;
+    outline-offset: 2px;
+}
+
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -738,6 +765,63 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
 
 #loadingOverlay.is-hidden {
     display: none;
+}
+
+#metric-info-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+#metric-info-overlay.is-hidden {
+    display: none;
+}
+
+#metric-info-modal {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 32px;
+    background: #181818;
+    color: #f5f5f5;
+    border: 1px solid #333;
+    border-radius: 12px;
+}
+
+#close-metric-info {
+    display: block;
+    margin-bottom: 16px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#metric-info-title {
+    margin: 0 0 20px;
+}
+
+#metric-info-content {
+    white-space: pre-line;
+    line-height: 1.7;
+    color: #d0d0d0;
+}
+
+@media (max-width: 600px) {
+    #metric-info-modal {
+        padding: 24px;
+        max-height: 85vh;
+    }
 }
 
 .is-hidden {
