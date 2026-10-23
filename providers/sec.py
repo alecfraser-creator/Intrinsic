@@ -147,7 +147,7 @@ def build_split_adjusted_facts(company):
             return None, []
 
         raw_facts = entity_facts.get_all_facts()
-        splits = detect_splits(raw_facts)
+        splits = detect_splits_effective(raw_facts) 
 
         if not splits:
             return None, []
@@ -168,6 +168,34 @@ def build_split_adjusted_facts(company):
     except Exception as error:
         print(f"Split adjustment failed: {error}")
         return None, []
+
+
+MAX_SPLIT_LAG_DAYS = 280        # same limits as edgartools
+MAX_SPLIT_DURATION_DAYS = 31
+
+def detect_splits_effective(raw_facts):
+    """Like edgar's detect_splits, but keeps the LATEST date reported for each split
+    (the effective date), not the announcement date."""
+    found = set()
+    for fact in raw_facts:
+        if "StockSplitConversionRatio" not in fact.concept:
+            continue
+        if fact.numeric_value is None or fact.numeric_value <= 0 or fact.period_end is None:
+            continue
+        if fact.filing_date and (fact.filing_date - fact.period_end).days > MAX_SPLIT_LAG_DAYS:
+            continue
+        if fact.period_start is not None and (fact.period_end - fact.period_start).days > MAX_SPLIT_DURATION_DAYS:
+            continue
+        found.add((fact.period_end, fact.numeric_value))
+
+    splits = []
+    for end, ratio in sorted(found):
+        # same ratio reported again within a year = same split: keep the later date
+        if splits and splits[-1]["ratio"] == ratio and (end - splits[-1]["date"]).days <= 365:
+            splits[-1]["date"] = end
+        else:
+            splits.append({"date": end, "ratio": ratio})
+    return splits
 
 
 def get_income_statement(company, split_adjusted_facts, periods, annual):
@@ -252,7 +280,10 @@ def extract_historical_shares(company, fiscal_year_ends, splits):
             # Match Finazon's split-adjusted historical prices.
             # Apply only splits occurring after this balance-sheet date.
             for split in split_events:
-                if split["date"] > year_end:
+                if (
+                    split["date"] > year_end
+                    and observation["filing_date"] <= split["date"]
+                ):
                     shares *= split["ratio"]
 
             shares_by_year[year] = shares

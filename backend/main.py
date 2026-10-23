@@ -1,3 +1,5 @@
+#use the data passed in to the front end to create the chartss
+
 import statistics
 from . import config
 
