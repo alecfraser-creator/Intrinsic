@@ -76,26 +76,35 @@
                                     Add to watchlist
                                 </button>
 
+                                
                                 <div id="watchlist-actions">
-                                    <button type="button" id="in_watchlist" disabled>
-                                        <i data-lucide="bookmark-check"></i>
-                                        In watchlist
-                                    </button>
+                                    <div class="watchlist-status-controls">
+                                        <button type="button" id="in_watchlist" disabled>
+                                            <i data-lucide="bookmark-check"></i>
+                                            In watchlist
+                                        </button>
 
-                                    <button type="button" id="update_analysis">
-                                        <i data-lucide="save"></i>
-                                        Save analysis
-                                    </button>
+                                        <button
+                                            type="button"
+                                            id="remove_watchlist"
+                                            aria-label="Remove from watchlist"
+                                            title="Remove from watchlist"
+                                        >
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
 
-                                    <button
-                                        type="button"
-                                        id="remove_watchlist"
-                                        aria-label="Remove from watchlist"
-                                        title="Remove from watchlist"
-                                    >
-                                        <i data-lucide="trash-2"></i>
-                                    </button>
+                                    <div class="save-analysis-control">
+                                        <button type="button" id="update_analysis">
+                                            <i data-lucide="save"></i>
+                                            Save analysis
+                                        </button>
+                                        <span id="analysis-last-saved" aria-live="polite">
+                                            Last saved: Not saved yet
+                                        </span>
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
 
@@ -161,7 +170,7 @@
 
                             <div class="quantitative-actions">
                                 <span id="financials-last-refreshed" aria-live="polite">
-                                    Financials not yet refreshed
+                                    Last refreshed: Not refreshed yet
                                 </span>
 
                                 <button id="refresh-financials" type="button">

@@ -3,6 +3,7 @@
 // ==========================================
 
 let currentAnalysis = null;
+let savedAnalysis = null;
 
 
 // ==========================================
@@ -17,10 +18,12 @@ const qualitativeTab = document.getElementById("qualitative-tab");
 const searchForm = document.querySelector("#search-form");
 const tickerInput = document.querySelector("#ticker-input");
 const analyzeButton = document.querySelector("#analyze-button");
-const analysisContent = document.querySelector("#analysis-content");
 const welcomeMessage = document.querySelector("#welcome-message");
 const statusMessage = document.querySelector("#status-message");
 
+//Quantitative analysis
+const refreshfFinancials = document.querySelector("#refresh-financials");
+const analysisContent = document.querySelector("#analysis-content");
 const historicalCharts = {};
 
 // Watchlist
@@ -500,6 +503,24 @@ function displayValue(elementId, value) {
 }
 
 
+function formatTimestamp(timestamp) {
+    if (!timestamp) {
+        return null;
+    }
+
+    const date = new Date(timestamp);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+    });
+}
+
+
 // ==========================================
 // 4. API REQUESTS
 // ==========================================
@@ -518,7 +539,7 @@ async function fetchAnalysis(ticker) {
 }
 
 
-async function addCompany(ticker, analysis) {
+async function addCompany(ticker, analysis, lastFinancialsRefresh) {
     const response = await fetch(
         `http://127.0.0.1:8000/watchlist/${ticker}`,
         {
@@ -526,7 +547,10 @@ async function addCompany(ticker, analysis) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(analysis)
+            body: JSON.stringify({
+                analysis: analysis,
+                last_financials_refresh: lastFinancialsRefresh
+            })
         }
     );
 
@@ -668,6 +692,9 @@ async function loadWatchlist() {
 
 function displayAnalysis(data) {
     currentAnalysis = data.analysis;
+    lastFinancialsRefresh = data.last_financials_refresh;
+    
+    displayTimestamps(data);
 
     tickerInput.value = currentAnalysis.ticker;
 
@@ -850,6 +877,14 @@ function displayAnalysis(data) {
     displayHistoricalPFCFChart(currentAnalysis.history);
     displayHistoricalEVEBITDAChart(currentAnalysis.history);
     displayHistoricalPBChart(currentAnalysis.history);
+}
+
+function displayTimestamps(data) {
+    const savedAt = document.getElementById("analysis-last-saved");
+    const refreshedAt = document.getElementById("financials-last-refreshed");
+
+    savedAt.textContent = `Last saved: ${formatTimestamp(data.updated_at) ?? "Not saved yet"}`;
+refreshedAt.textContent = `Last refreshed: ${formatTimestamp(data.last_financials_refresh) ?? "Not refreshed yet"}`;
 }
 
 function displayHistoricalRevenueChart(history) {
@@ -1644,12 +1679,43 @@ searchForm.addEventListener("submit", async (event) => {
 // WATCHLIST BUTTON EVENT LISTENERS
 // ==========================================
 
+// update financials
+refreshfFinancials.addEventListener("click", async (event) => {
+    analysisContent.classList.add("is-hidden");
+    welcomeMessage.classList.add("is-hidden");
+    statusMessage.textContent = "Updating financials...";
+    statusMessage.classList.remove("is-hidden");
+    refreshfFinancials.disabled = true;
+
+    const ticker = currentAnalysis.ticker;
+
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/watchlist/${ticker}`,
+            { method: "PUT" }
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to refresh financials.");
+        }
+
+        const data = await response.json();
+        displayAnalysis(data);
+    } catch (error) {
+    statusMessage.textContent = "Unable to refresh financials.";
+    statusMessage.classList.remove("is-hidden");
+    console.error(error);
+    } finally {
+        refreshfFinancials.disabled = false;
+    }
+})
+
 // Save company to watchlist
 saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
-        await addCompany(currentAnalysis.ticker, currentAnalysis);
+        await addCompany(currentAnalysis.ticker, currentAnalysis, lastFinancialsRefresh);
 
         // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
@@ -1669,37 +1735,18 @@ saveCompany.addEventListener("click", async (event) => {
 updateCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
-    analysisContent.classList.add("is-hidden");
-    welcomeMessage.classList.add("is-hidden");
-    statusMessage.textContent = "Updating analysis...";
-    statusMessage.classList.remove("is-hidden");
-    updateCompany.disabled = true;
-
-    const ticker = currentAnalysis.ticker;
-
     try {
-        const response = await fetch(
-            `http://127.0.0.1:8000/watchlist/${ticker}`,
-            {
-                method: "PUT"
-            }
-        );
+        await addCompany(currentAnalysis.ticker, currentAnalysis, lastFinancialsRefresh);;
 
-        if (!response.ok) {
-            throw new Error("Unable to retrieve company data.");
-        }
+        const originalText = updateCompany.textContent;
+        updateCompany.textContent = "Analysis saved!";
 
-        const data = await response.json();
-        displayAnalysis(data);
+        setTimeout(() => {
+            updateCompany.textContent = originalText;
+        }, 3000);
 
     } catch (error) {
-        statusMessage.textContent =
-            "Unable to update the company data.";
-        statusMessage.classList.remove("is-hidden");
-        console.error(error);
-
-    } finally {
-        updateCompany.disabled = false;
+        console.error("Error saving analysis:", error);
     }
 });
 
@@ -1771,7 +1818,7 @@ watchlistAdd.addEventListener("click", () => {
 
         try {
             const data = await fetchAnalysis(ticker);
-            await addCompany(ticker, data.analysis);
+            await addCompany(ticker, data.analysis, data.last_financials_refresh);
 
             // Success: stop listening, then close the input
             stopDismiss();

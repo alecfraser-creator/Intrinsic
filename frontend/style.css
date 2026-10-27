@@ -16,7 +16,9 @@
      and .is-active for the currently displayed company.
    ========================================================================== */
 
+
 /* ---------- Tokens ---------- */
+
 :root {
     --bg: #111110;
     --surface: #181816;
@@ -55,7 +57,9 @@
     --font-mono: var(--font-sans);
 }
 
+
 /* ---------- Reset / base ---------- */
+
 *,
 *::before,
 *::after {
@@ -91,18 +95,14 @@ a {
     text-decoration: none;
 }
 
-/* Only the watchlist actions need this: #watchlist-actions sets display:flex,
-   which would otherwise override the hidden attribute */
-#watchlist-actions[hidden] {
-    display: none;
-}
-
 :focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 3px;
 }
 
+
 /* ---------- Layout ---------- */
+
 .dashboard {
     flex: 1;
     width: 100%;
@@ -142,7 +142,9 @@ a {
     scroll-margin-top: calc(var(--header-height) + var(--space-5));
 }
 
+
 /* ---------- Typography ---------- */
+
 h1,
 h2,
 h3 {
@@ -169,7 +171,9 @@ h3 {
     margin-bottom: var(--space-3);
 }
 
+
 /* ---------- Watchlist sidebar ---------- */
+
 .watchlist-sidebar {
     position: fixed;
     top: 0;
@@ -299,9 +303,6 @@ h3 {
     opacity: 1;
 }
 
-
-
-
 .watchlist-item.is-active {
     background: rgb(200 164 92 / 6%);
     box-shadow: inset 2px 0 0 var(--gold);
@@ -322,7 +323,9 @@ h3 {
     color: var(--text-muted);
 }
 
+
 /* ---------- Search ---------- */
+
 .search-section {
     max-width: 600px;
     width: 100%;
@@ -415,7 +418,9 @@ h3 {
     min-height: 1.5em;
 }
 
+
 /* ---------- Company overview ---------- */
+
 .company-header {
     display: flex;
     flex-direction: column;
@@ -429,7 +434,6 @@ h3 {
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
-
 }
 
 .company-identity {
@@ -471,8 +475,8 @@ h3 {
 }
 
 
-
 /* ---------- Watchlist controls ---------- */
+
 .watchlist-controls {
     display: flex;
     align-items: center;
@@ -530,14 +534,29 @@ h3 {
     cursor: not-allowed;
 }
 
-/* Saved-state actions */
+/* Saved-state actions: two stacked rows, same width */
 #watchlist-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    width: max-content;
+}
+
+/* Hide saved-state controls when the HTML hidden attribute is present */
+#watchlist-actions[hidden] {
+    display: none;
+}
+
+/* Row 1: "In watchlist" + bin */
+.watchlist-status-controls {
     display: flex;
     align-items: center;
     gap: var(--space-2);
 }
 
 #in_watchlist {
+    flex: 1;
     background: var(--surface);
     color: var(--text-muted);
     cursor: default;
@@ -548,21 +567,44 @@ h3 {
     opacity: 0.85;
 }
 
+/* Row 2: Save analysis + timestamp underneath */
+.save-analysis-control {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+}
+
+/* Primary action: filled gold */
 #update_analysis {
-    background: transparent;
-    color: var(--gold);
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--gold-ink);
+    font-weight: 600;
     cursor: pointer;
 }
 
-#update_analysis:hover {
-    background: var(--surface);
-    border-color: var(--gold);
-    color: var(--gold-hover);
+#update_analysis:hover:not(:disabled) {
+    background: var(--gold-hover);
+    border-color: var(--gold-hover);
+}
+
+#update_analysis:active:not(:disabled) {
+    background: var(--gold);
 }
 
 #update_analysis:disabled {
     opacity: 0.5;
     cursor: progress;
+}
+
+#analysis-last-saved {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-align: center;
+    white-space: nowrap;
 }
 
 /* Compact bin button */
@@ -592,7 +634,9 @@ h3 {
     flex-shrink: 0;
 }
 
+
 /* ---------- Section headings ---------- */
+
 .section-heading {
     margin-top: var(--space-6);
     margin-bottom: var(--space-5);
@@ -604,7 +648,9 @@ h3 {
     margin-top: var(--space-6);
 }
 
+
 /* ---------- Metrics: ruled rows ---------- */
+
 .metric-info {
     display: inline-flex;
     align-items: center;
@@ -624,7 +670,7 @@ h3 {
 }
 
 .metric-info:hover {
-    background-color: #fff
+    background-color: #fff;
 }
 
 .metric-info:focus-visible {
@@ -671,7 +717,9 @@ h3 {
     color: var(--negative);
 }
 
+
 /* ---------- Valuation: the big numbers ---------- */
+
 .valuation-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -706,7 +754,9 @@ h3 {
     max-width: 38ch;
 }
 
+
 /* ---------- Status message ---------- */
+
 .status-message {
     text-align: center;
     font-size: 0.9rem;
@@ -717,11 +767,14 @@ h3 {
     color: var(--negative);
 }
 
+
 /* ==========================================================================
    Qualitative Analysis
    ========================================================================== */
 
+
 /* ---------- Analysis tabs ---------- */
+
 .analysis-tabs {
     display: flex;
     gap: var(--space-6);
@@ -763,7 +816,9 @@ h3 {
     outline-offset: 2px;
 }
 
+
 /* ---------- Qualitative panel header ---------- */
+
 .qualitative-header {
     display: flex;
     align-items: flex-start;
@@ -785,7 +840,9 @@ h3 {
     line-height: 1.7;
 }
 
+
 /* ---------- Expandable sections ---------- */
+
 .qualitative-sections {
     border-top: 1px solid var(--border);
 }
@@ -839,7 +896,9 @@ h3 {
     color: var(--gold);
 }
 
+
 /* ---------- Text fields ---------- */
+
 .qualitative-fields {
     display: flex;
     flex-direction: column;
@@ -892,7 +951,9 @@ h3 {
     outline-offset: 1px;
 }
 
-/* ---------- Responsive ---------- */
+
+/* ---------- Qualitative responsive ---------- */
+
 @media (max-width: 720px) {
     .analysis-tabs {
         gap: var(--space-5);
@@ -929,6 +990,7 @@ h3 {
 
 
 /* ---------- Overlay ---------- */
+
 #loadingOverlay {
     position: fixed;
     inset: 0;
@@ -938,43 +1000,6 @@ h3 {
     justify-content: center;
     align-items: center;
 }
-
-#loadingOverlay.is-hidden {
-    display: none;
-}
-
-/* ---------- Footer ---------- */
-.site-footer {
-    padding: var(--space-5);
-    border-top: 1px solid var(--border);
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--text-faint);
-}
-
-.site-footer p + p {
-    margin-top: var(--space-1);
-}
-
-/* ==========================================================================
-   Page states
-   (selectors target .dashboard-main, which now holds the search and results;
-    the sidebar sits outside it so it stays visible in every state)
-   ========================================================================== */
-
-body[data-state="idle"] .dashboard-main > :not(.search-section):not(#welcome-message):not(#status-message) {
-    display: none;
-}
-
-body[data-state="idle"] .main-nav {
-    visibility: hidden;
-}
-
-/* Results fade in once revealed */
-body[data-state="results"] .dashboard-main > :not(.search-section) {
-    animation: reveal 0.35s ease both;
-}
-
 
 #loadingOverlay.is-hidden {
     display: none;
@@ -1056,11 +1081,15 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     display: none !important;
 }
 
+
+/* ---------- Animations ---------- */
+
 @keyframes reveal {
     from {
         opacity: 0;
         transform: translateY(6px);
     }
+
     to {
         opacity: 1;
         transform: none;
@@ -1068,6 +1097,24 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
 }
 
 
+/* ==========================================================================
+   Page states
+   (selectors target .dashboard-main, which now holds the search and results;
+    the sidebar sits outside it so it stays visible in every state)
+   ========================================================================== */
+
+body[data-state="idle"] .dashboard-main > :not(.search-section):not(#welcome-message):not(#status-message) {
+    display: none;
+}
+
+body[data-state="idle"] .main-nav {
+    visibility: hidden;
+}
+
+/* Results fade in once revealed */
+body[data-state="results"] .dashboard-main > :not(.search-section) {
+    animation: reveal 0.35s ease both;
+}
 
 
 /* ==========================================================================
@@ -1113,6 +1160,21 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     .company-summary {
         gap: var(--space-5);
     }
+
+    /* Allow the company name and its controls to wrap on smaller screens */
+    .company-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .watchlist-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #watchlist-actions {
+        width: 100%;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1133,12 +1195,13 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
 }
 
 
-
 /* ==========================================================================
    Quantitative Analysis
    ========================================================================== */
 
+
 /* ---------- Quantitative panel header ---------- */
+
 .quantitative-header {
     display: flex;
     align-items: flex-start;
@@ -1153,14 +1216,41 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     margin-bottom: var(--space-2);
 }
 
-/* ---------- Quantitative analysis actions ---------- */
-.quantitative-actions {
+
+/* ---------- Quantitative header and actions ---------- */
+
+.quantitative-top {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin: var(--space-6) 0 var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.quantitative-top .quantitative-header {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.quantitative-top .quantitative-header h2 {
+    margin-bottom: var(--space-2);
+}
+
+
+/* ---------- Quantitative analysis actions ---------- */
+
+.quantitative-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    margin: 0;
 }
 
 #financials-last-refreshed {
@@ -1170,7 +1260,9 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     line-height: 1.5;
 }
 
+
 /* ---------- Refresh financials button ---------- */
+
 #refresh-financials {
     min-height: 40px;
     display: inline-flex;
@@ -1218,58 +1310,8 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     flex-shrink: 0;
 }
 
-/* ---------- Responsive adjustments ---------- */
-@media (max-width: 720px) {
-    .quantitative-header {
-        margin-top: var(--space-5);
-        margin-bottom: var(--space-4);
-    }
 
-    .quantitative-actions {
-        justify-content: space-between;
-        margin-bottom: var(--space-4);
-    }
-}
-
-@media (max-width: 420px) {
-    .quantitative-actions {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-}
-
-
-/* ---------- Quantitative header and actions ---------- */
-.quantitative-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-5);
-    margin: var(--space-6) 0 var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-strong);
-}
-
-.quantitative-header {
-    flex: 1;
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
-.quantitative-header h2 {
-    margin-bottom: var(--space-2);
-}
-
-.quantitative-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-2);
-    flex-shrink: 0;
-    margin: 0;
-}
+/* ---------- Quantitative responsive ---------- */
 
 @media (max-width: 720px) {
     .quantitative-top {
@@ -1280,5 +1322,12 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
 
     .quantitative-actions {
         align-items: flex-start;
+    }
+}
+
+@media (max-width: 420px) {
+    .quantitative-actions {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }

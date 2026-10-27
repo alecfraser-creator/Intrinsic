@@ -2,16 +2,20 @@ import json
 from .connection import connect
 from datetime import datetime, timezone
 
-def insert_company(ticker, analysis):
+def insert_company(ticker, analysis, last_financials_refresh):
     connection = connect()
-
-    date = datetime.now(timezone.utc)
-    date = date.isoformat()
+    date = datetime.now(timezone.utc).isoformat()
 
     connection.execute(
-        "INSERT INTO Companies (Ticker, Analysis, Updated_at) VALUES (?, ?, ?) " \
-        "ON CONFLICT(Ticker) DO UPDATE SET Analysis = excluded.Analysis, Updated_at = excluded.Updated_at",
-        (ticker, json.dumps(analysis), date)
+        """
+        INSERT INTO Companies (Ticker, Analysis, Updated_at, Last_financials_refresh)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(Ticker) DO UPDATE SET
+            Analysis = excluded.Analysis,
+            Updated_at = excluded.Updated_at,
+            Last_financials_refresh = excluded.Last_financials_refresh
+        """,
+        (ticker, json.dumps(analysis), date, last_financials_refresh)
     )
 
     connection.commit()
@@ -19,11 +23,24 @@ def insert_company(ticker, analysis):
 
 
 
+def refresh_latest_financial(ticker, last_financials_refresh):
+    connection = connect()
+
+    connection.execute(
+        "UPDATE Companies SET Last_financials_refresh = ? WHERE Ticker = ?",
+        (last_financials_refresh, ticker)
+    )
+
+    connection.commit()
+    connection.close()
+
+
+    
 def get_saved_company(ticker):
     connection = connect()
 
     cursor = connection.execute(
-        "SELECT Ticker, Analysis, Updated_at FROM Companies WHERE Ticker = (?)",
+        "SELECT Ticker, Analysis, Updated_at, Last_financials_refresh FROM Companies WHERE Ticker = (?)",
         (ticker,),
     )
 
@@ -36,7 +53,8 @@ def get_saved_company(ticker):
     return {
         "ticker": company[0],
         "analysis": json.loads(company[1]),
-        "updated_at": company[2]
+        "updated_at": company[2],
+        "last_financials_refresh": company[3]
     }
 
 
