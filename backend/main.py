@@ -1,4 +1,6 @@
-#use the data passed in to the front end to create the chartss
+#next: fix the ev/ebitda fetching since it doesn't work for every company
+#fix the bug of when updating an anlysis, the buttons don't change to "add to watchlist"
+#next: build the qualitative analysis 
 
 import statistics
 from . import config
@@ -517,28 +519,26 @@ def calculate_valuation(
     # EV/EBITDA
     # -------------------------
 
-    if profile and balance_quarter and income_ttm and cashflow_ttm:
+    if profile and balance_quarter and income_ttm:
         market_cap = to_float(profile.get("market_cap"))
         total_debt = to_float(balance_quarter[0].get("total_debt"))
         cash = to_float(balance_quarter[0].get("cash"))
         ebit = to_float(income_ttm[0].get("ebit"))
-        depreciation = to_float(
-            cashflow_ttm[0].get("depreciation_amortization")
+
+        depreciation = (
+            to_float(cashflow_ttm[0].get("depreciation_amortization"))
+            if cashflow_ttm else None
         )
+        if depreciation is None and cashflow_annual:
+            depreciation = to_float(cashflow_annual[0].get("depreciation_amortization"))
 
-        if all(value is not None for value in [
-            market_cap,
-            total_debt,
-            cash,
-            ebit,
-            depreciation
-        ]):
-            ev = market_cap + total_debt - cash
+        if total_debt is None and cash is not None:
+            total_debt = 0.0           # no debt line found = no debt
+
+        if all(v is not None for v in [market_cap, total_debt, cash, ebit, depreciation]):
             ebitda = ebit + depreciation
-
             if ebitda > 0:
-                valuation["EV/EBITDA"] = ev / ebitda
-
+                valuation["EV/EBITDA"] = (market_cap + total_debt - cash) / ebitda
 
     # -------------------------
     # P/B
