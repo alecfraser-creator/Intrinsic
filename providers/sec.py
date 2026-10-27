@@ -1,7 +1,6 @@
 from backend import config
 import re
 import pandas as pd
-from datetime import timedelta
 from edgar import Company, set_identity
 from edgar.entity.entity_facts import EntityFacts
 from edgar.ttm import apply_split_adjustments, detect_splits
@@ -29,13 +28,7 @@ LONG_TERM_SECURITY_CONCEPTS = [
     "us-gaap:MarketableSecuritiesNoncurrent",
 ]
 
-# Tags a company may use for its D&A cash-flow line. First tag with a value wins per period.
-# GOOGL and TSLA both use us-gaap:Depreciation, which is why your label list misses them.
-DA_CONCEPTS = [
-    "us-gaap:DepreciationDepletionAndAmortization",
-    "us-gaap:DepreciationAmortizationAndAccretionNet",
-    "us-gaap:Depreciation",
-]
+
 
 def _da_row(df):
     if df is None or df.empty:
@@ -108,73 +101,6 @@ def da_from_filings(company, n_annual=4):
     return annual, ttm
 
 
-def da_by_period(facts):
-    """{(period_start, period_end): value}; latest filing wins, first concept wins per period."""
-    out = {}
-    if facts is None:
-        return out
-
-    for concept in DA_CONCEPTS:
-        try:
-            found = facts.query().by_concept(concept, exact=True).execute()
-        except Exception as error:
-            print(f"D&A query failed for {concept}: {error}")
-            continue
-
-        latest = {}
-        for fact in found:
-            if (
-                getattr(fact, "period_type", None) != "duration"
-                or fact.period_start is None
-                or fact.numeric_value is None
-                or getattr(fact, "unit", "USD") != "USD"
-            ):
-                continue
-
-            key = (fact.period_start, fact.period_end)
-            if key not in latest or fact.filing_date > latest[key].filing_date:
-                latest[key] = fact
-
-        for key, fact in latest.items():
-            out.setdefault(key, fact.numeric_value)
-
-    return out
-
-
-def da_annual(by_period):
-    """{"2025": value, ...} for ~12-month periods, keyed by the year of the period end."""
-    return {
-        str(k[1])[:4]: v
-        for k, v in by_period.items()
-        if 350 <= (k[1] - k[0]).days <= 380
-    }
-
-
-def da_ttm(by_period):
-    """TTM = latest fiscal year + current YTD - same YTD one year earlier."""
-    annual = {k: v for k, v in by_period.items() if 350 <= (k[1] - k[0]).days <= 380}
-    if not annual:
-        return None
-
-    fy = max(annual, key=lambda k: k[1])
-
-    newer = {
-        k: v for k, v in by_period.items()
-        if k[0] >= fy[1] and (k[1] - k[0]).days < 330
-    }
-    if not newer:
-        return annual[fy]          # latest filing is the 10-K itself
-
-    # Latest end date, longest period (the 9-month figure, not the lone Q3).
-    cur = max(newer, key=lambda k: (k[1], (k[1] - k[0]).days))
-    length = (cur[1] - cur[0]).days
-
-    for k, v in by_period.items():
-        if abs((cur[0] - k[0]).days - 365) <= 7 and abs((k[1] - k[0]).days - length) <= 7:
-            return annual[fy] + newer[cur] - v
-
-    return None
-
 def get_sec_data(ticker):
     ticker = ticker.strip().upper()
 
@@ -245,26 +171,17 @@ def get_sec_data(ticker):
             cashflow_quarter
         )
 
-        da = da_by_period(company.facts)
-        da_year = da_annual(da)
+        
 
         # 1) Filing's own cash-flow statement wins (catches company-specific tags like Tesla's).
         filing_annual, filing_ttm = da_from_filings(company)
         for row in cashflow_annual:
-            v = filing_annual.get(str(row["year"])[:4])
-            if v is not None:
-                row["depreciation_amortization"] = v
+            value = filing_annual.get(str(row["year"])[:4])
+            if value is not None:
+                row["depreciation_amortization"] = value
+        if cashflow_ttm and filing_ttm is not None:
+            cashflow_ttm[0]["depreciation_amortization"] = filing_ttm
 
-        # 2) Company Facts only fills what is still missing.
-        for row in cashflow_annual:
-            if row.get("depreciation_amortization") is None:
-                row["depreciation_amortization"] = da_year.get(str(row["year"])[:4])
-
-        if cashflow_ttm:
-            if filing_ttm is not None:
-                cashflow_ttm[0]["depreciation_amortization"] = filing_ttm
-            elif cashflow_ttm[0].get("depreciation_amortization") is None:
-                cashflow_ttm[0]["depreciation_amortization"] = da_ttm(da)
 
 
         return {
@@ -1214,11 +1131,8 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    for t in ("AAPL", "GOOGL", "TSLA"):
-        d = get_sec_data(t)
-        print(
-            t,
-            d["cashflow_ttm"][0]["depreciation_amortization"],
-            [r["depreciation_amortization"] for r in d["cashflow"][:6]],
-            d["balance_quarter"][0]["total_debt"],
-        )
+    from providers.sec import get_sec_data
+    d = get_sec_data("TSLA")   # use the ticker that's broken
+    print([(r["year"], r["depreciation_amortization"]) for r in d["cashflow"]])
+    print(sorted(d["shares_outstanding_annual"]))
+    print([b["year"] for b in d["balance_annual"]])

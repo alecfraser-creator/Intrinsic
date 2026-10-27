@@ -53,7 +53,8 @@ def fresh_analysis(ticker: str):
 
         insert_company(ticker, results)
             
-        return {"analysis": results}
+        return {"analysis": results,
+                "in_watchlist": True}
     
 
 

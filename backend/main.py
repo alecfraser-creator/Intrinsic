@@ -1,5 +1,4 @@
-#next: fix the ev/ebitda fetching since it doesn't work for every company
-#fix the bug of when updating an anlysis, the buttons don't change to "add to watchlist"
+
 #next: build the qualitative analysis 
 
 import statistics

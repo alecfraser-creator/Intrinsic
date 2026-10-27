@@ -9,6 +9,10 @@ let currentAnalysis = null;
 // DOM ELEMENTS
 // ==========================================
 
+// Tab switching buttons 
+const quantitativeTab = document.getElementById("quantitative-tab");
+const qualitativeTab = document.getElementById("qualitative-tab");
+
 // Search and analysis
 const searchForm = document.querySelector("#search-form");
 const tickerInput = document.querySelector("#ticker-input");
@@ -305,6 +309,9 @@ const metricInfoTitle = document.querySelector("#metric-info-title");
 const metricInfoContent = document.querySelector("#metric-info-content");
 const closeMetricInfoButton = document.querySelector("#close-metric-info");
  
+// Panels
+const quantitativePanel = document.getElementById("quantitative-panel");
+const qualitativePanel = document.getElementById("qualitative-panel");
  
 /* ---------- Popover ---------- */
  
@@ -507,7 +514,6 @@ async function fetchAnalysis(ticker) {
     }
 
     const data = await response.json();
-    console.log("API history:", data.analysis.history);
     return data;
 }
 
@@ -547,6 +553,32 @@ async function deleteCompany(ticker) {
     await loadWatchlist();
 }
 
+// ==========================================
+// TAB SWITCHING LOGIC
+// ==========================================
+
+function switchAnalysisTab(tab) {
+    if (tab === "qualitative") {
+        quantitativePanel.classList.add("is-hidden");
+        qualitativePanel.classList.remove("is-hidden");
+
+        quantitativeTab.classList.remove("is-active");
+        qualitativeTab.classList.add("is-active");
+
+        quantitativeTab.setAttribute("aria-selected", "false");
+        qualitativeTab.setAttribute("aria-selected", "true");
+    }
+    else {
+        quantitativePanel.classList.remove("is-hidden");
+        qualitativePanel.classList.add("is-hidden");
+
+        quantitativeTab.classList.add("is-active");
+        qualitativeTab.classList.remove("is-active");
+
+        quantitativeTab.setAttribute("aria-selected", "true");
+        qualitativeTab.setAttribute("aria-selected", "false");
+    }
+}
 
 // ==========================================
 // WATCHLIST DATA AND RENDERING
@@ -1535,6 +1567,17 @@ function displayHistoricalPBChart(history) {
         }
     });
 }
+// ==========================================
+//  TAB SWITCHING BUTTONS
+// ==========================================
+
+quantitativeTab.addEventListener("click", () => {
+    switchAnalysisTab("quantitative");
+});
+
+qualitativeTab.addEventListener("click", () => {
+    switchAnalysisTab("qualitative");
+});
 
 // ==========================================
 //  METRIC INFO BUTTONS

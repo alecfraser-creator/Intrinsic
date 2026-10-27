@@ -470,6 +470,8 @@ h3 {
     font-size: 1.15rem;
 }
 
+
+
 /* ---------- Watchlist controls ---------- */
 .watchlist-controls {
     display: flex;
@@ -715,6 +717,217 @@ h3 {
     color: var(--negative);
 }
 
+/* ==========================================================================
+   Qualitative Analysis
+   ========================================================================== */
+
+/* ---------- Analysis tabs ---------- */
+.analysis-tabs {
+    display: flex;
+    gap: var(--space-6);
+    margin-top: var(--space-4);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.analysis-tab {
+    position: relative;
+    padding: var(--space-3) 0;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.analysis-tab:hover {
+    color: var(--text);
+}
+
+.analysis-tab.is-active {
+    color: var(--gold);
+}
+
+.analysis-tab.is-active::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--gold);
+    content: "";
+}
+
+.analysis-tab:focus-visible {
+    outline-offset: 2px;
+}
+
+/* ---------- Qualitative panel header ---------- */
+.qualitative-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin: var(--space-6) 0 var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.qualitative-header h2 {
+    margin-bottom: var(--space-2);
+}
+
+.qualitative-description {
+    max-width: 600px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+/* ---------- Expandable sections ---------- */
+.qualitative-sections {
+    border-top: 1px solid var(--border);
+}
+
+.qualitative-section {
+    border-bottom: 1px solid var(--border);
+}
+
+.qualitative-section summary {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-2);
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.4;
+    cursor: pointer;
+    list-style: none;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
+}
+
+.qualitative-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.qualitative-section summary::after {
+    content: "+";
+    flex-shrink: 0;
+    color: var(--gold);
+    font-family: var(--font-sans);
+    font-size: 1.4rem;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.qualitative-section[open] summary::after {
+    content: "−";
+}
+
+.qualitative-section summary:hover {
+    color: var(--gold-hover);
+    background: rgb(255 255 255 / 2%);
+}
+
+.qualitative-section[open] summary {
+    color: var(--gold);
+}
+
+/* ---------- Text fields ---------- */
+.qualitative-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 0 var(--space-2) var(--space-5);
+}
+
+.qualitative-fields label {
+    margin-top: var(--space-3);
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.qualitative-fields label:first-child {
+    margin-top: 0;
+}
+
+.qualitative-fields textarea {
+    display: block;
+    width: 100%;
+    min-height: 110px;
+    padding: var(--space-3) var(--space-4);
+    resize: vertical;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    transition: border-color 0.15s ease;
+}
+
+.qualitative-fields textarea::placeholder {
+    color: var(--text-faint);
+}
+
+.qualitative-fields textarea:hover {
+    border-color: #555149;
+}
+
+.qualitative-fields textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.qualitative-fields textarea:focus-visible {
+    outline: 1px solid var(--gold);
+    outline-offset: 1px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 720px) {
+    .analysis-tabs {
+        gap: var(--space-5);
+    }
+
+    .analysis-tab {
+        font-size: 0.85rem;
+    }
+
+    .qualitative-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-4);
+    }
+
+    #save-qualitative-analysis {
+        align-self: flex-start;
+    }
+
+    .qualitative-section summary {
+        padding: var(--space-4) var(--space-2);
+        font-size: 1.1rem;
+    }
+
+    .qualitative-fields {
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .qualitative-fields textarea {
+        min-height: 120px;
+    }
+}
+
+
 /* ---------- Overlay ---------- */
 #loadingOverlay {
     position: fixed;
@@ -854,6 +1067,9 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     }
 }
 
+
+
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
@@ -913,5 +1129,156 @@ body[data-state="results"] .dashboard-main > :not(.search-section) {
     *::after {
         animation: none !important;
         transition: none !important;
+    }
+}
+
+
+
+/* ==========================================================================
+   Quantitative Analysis
+   ========================================================================== */
+
+/* ---------- Quantitative panel header ---------- */
+.quantitative-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin: var(--space-6) 0 var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.quantitative-header h2 {
+    margin-bottom: var(--space-2);
+}
+
+/* ---------- Quantitative analysis actions ---------- */
+.quantitative-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+
+#financials-last-refreshed {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+/* ---------- Refresh financials button ---------- */
+#refresh-financials {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+#refresh-financials:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--gold);
+    color: var(--gold-hover);
+}
+
+#refresh-financials:active:not(:disabled) {
+    background: var(--border);
+}
+
+#refresh-financials:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
+#refresh-financials svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ---------- Responsive adjustments ---------- */
+@media (max-width: 720px) {
+    .quantitative-header {
+        margin-top: var(--space-5);
+        margin-bottom: var(--space-4);
+    }
+
+    .quantitative-actions {
+        justify-content: space-between;
+        margin-bottom: var(--space-4);
+    }
+}
+
+@media (max-width: 420px) {
+    .quantitative-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+
+/* ---------- Quantitative header and actions ---------- */
+.quantitative-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin: var(--space-6) 0 var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.quantitative-header {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.quantitative-header h2 {
+    margin-bottom: var(--space-2);
+}
+
+.quantitative-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+    flex-shrink: 0;
+    margin: 0;
+}
+
+@media (max-width: 720px) {
+    .quantitative-top {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .quantitative-actions {
+        align-items: flex-start;
     }
 }
