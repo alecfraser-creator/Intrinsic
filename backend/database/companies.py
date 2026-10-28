@@ -63,7 +63,7 @@ def get_saved_company(ticker):
         "quant_analysis": json.loads(company[1]),
         "updated_at": company[2],
         "last_financials_refresh": company[3],
-        "qual_analysis": json.loads(company[4])
+        "qual_analysis": json.loads(company[4]) if company[4] else None
     }
 
 

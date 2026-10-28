@@ -4,7 +4,82 @@
 
 let currentQuantAnalysis = null;
 let savedQuantAnalysis = null;
-let currentQualAnalysis = null;
+let currentQualAnalysis = {
+    business_overview: {
+        "business-model": "",
+        "revenue-streams": "",
+        "geographic-exposure": ""
+    },
+    competitive_advantage: {
+        "competitive-advantages": "",
+        "moat-durability": "",
+        "competitors-threats": ""
+    },
+    management_capital_allocation: {
+        "management-track-record": "",
+        "insider-alignment": "",
+        "capital-allocation": ""
+    },
+    financial_quality: {
+        "earnings-quality": "",
+        "cyclicality-resilience": "",
+        "accounting-concerns": ""
+    },
+    growth_prospects: {
+        "growth-drivers": "",
+        "market-opportunity": "",
+        "reinvestment-opportunities": ""
+    },
+    risks_red_flags: {
+        "business-risks": "",
+        "external-threats": "",
+        "red-flags": ""
+    },
+    investment_thesis: {
+        "investment-case": "",
+        "market-misunderstanding": "",
+        "attractive-price": "",
+        "thesis-invalidation": ""
+    }
+};
+const qualitativeFieldMap = {
+    business_overview: [
+        "business-model",
+        "revenue-streams",
+        "geographic-exposure"
+    ],
+    competitive_advantage: [
+        "competitive-advantages",
+        "moat-durability",
+        "competitors-threats"
+    ],
+    management_capital_allocation: [
+        "management-track-record",
+        "insider-alignment",
+        "capital-allocation"
+    ],
+    financial_quality: [
+        "earnings-quality",
+        "cyclicality-resilience",
+        "accounting-concerns"
+    ],
+    growth_prospects: [
+        "growth-drivers",
+        "market-opportunity",
+        "reinvestment-opportunities"
+    ],
+    risks_red_flags: [
+        "business-risks",
+        "external-threats",
+        "red-flags"
+    ],
+    investment_thesis: [
+        "investment-case",
+        "market-misunderstanding",
+        "attractive-price",
+        "thesis-invalidation"
+    ]
+};
 let lastFinancialsRefresh = null;
 
 
@@ -646,6 +721,8 @@ async function loadWatchlist() {
                     statusMessage.classList.add("is-hidden");
 
                     const data = await fetchAnalysis(ticker);
+                    currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
+                    populateQualAnalysis();
                     displayAnalysis(data);
                 });
 
@@ -697,7 +774,7 @@ async function loadWatchlist() {
 
 function displayAnalysis(data) {
     currentQuantAnalysis = data.quant_analysis;
-    currentQualAnalysis = data.qual_analysis;
+    currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
     lastFinancialsRefresh = data.last_financials_refresh;
 
     displayTimestamps(data);
@@ -1608,6 +1685,48 @@ function displayHistoricalPBChart(history) {
         }
     });
 }
+
+// ==========================================
+// Qual analysis
+// ==========================================
+
+function collectQualAnalysis() {
+    for (const [section, fieldIds] of Object.entries(qualitativeFieldMap)) {
+        for (const fieldId of fieldIds) {
+            currentQualAnalysis[section][fieldId] =
+                document.getElementById(fieldId).value;
+        }
+    }
+
+    return currentQualAnalysis;
+}
+
+
+function populateQualAnalysis() {
+    for (const [section, fieldIds] of Object.entries(qualitativeFieldMap)) {
+        for (const fieldId of fieldIds) {
+            document.getElementById(fieldId).value =
+                currentQualAnalysis[section][fieldId];
+        }
+    }
+}
+
+
+function createEmptyQualAnalysis() {
+    const analysis = {};
+
+    for (const [section, fieldIds] of Object.entries(qualitativeFieldMap)) {
+        analysis[section] = {};
+
+        for (const fieldId of fieldIds) {
+            analysis[section][fieldId] = "";
+        }
+    }
+
+    return analysis;
+}
+
+
 // ==========================================
 //  TAB SWITCHING BUTTONS
 // ==========================================
@@ -1667,7 +1786,8 @@ searchForm.addEventListener("submit", async (event) => {
 
     try {
     const data = await fetchAnalysis(ticker);
-    currentQualAnalysis = data.qual_analysis;
+    currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
+    populateQualAnalysis();
     displayAnalysis(data);
 
 
@@ -1725,6 +1845,7 @@ saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
+        collectQualAnalysis();
         await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);
 
         // Ensure the content remains visible
@@ -1746,6 +1867,7 @@ updateCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
+        collectQualAnalysis()
         await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);;
 
         const originalText = updateCompany.textContent;
