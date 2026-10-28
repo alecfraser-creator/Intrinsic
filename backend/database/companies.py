@@ -1,26 +1,31 @@
+
 import json
 from .connection import connect
 from datetime import datetime, timezone
 
-def insert_company(ticker, analysis, last_financials_refresh):
+
+def insert_company(ticker, quant_analysis, last_financials_refresh, qual_analysis):
     connection = connect()
     date = datetime.now(timezone.utc).isoformat()
 
     connection.execute(
         """
-        INSERT INTO Companies (Ticker, Analysis, Updated_at, Last_financials_refresh)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO Companies (
+            Ticker, Quant_analysis, Updated_at, Last_financials_refresh, Qual_analysis
+        )
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(Ticker) DO UPDATE SET
-            Analysis = excluded.Analysis,
+            Quant_analysis = excluded.Quant_analysis,
             Updated_at = excluded.Updated_at,
-            Last_financials_refresh = excluded.Last_financials_refresh
+            Last_financials_refresh = excluded.Last_financials_refresh,
+            Qual_analysis = excluded.Qual_analysis
         """,
-        (ticker, json.dumps(analysis), date, last_financials_refresh)
+        (ticker, json.dumps(quant_analysis), date, last_financials_refresh, json.dumps(qual_analysis))
     )
 
     connection.commit()
     connection.close()
-
+    return date
 
 
 def refresh_latest_financial(ticker, last_financials_refresh):
@@ -35,12 +40,15 @@ def refresh_latest_financial(ticker, last_financials_refresh):
     connection.close()
 
 
-    
 def get_saved_company(ticker):
     connection = connect()
 
     cursor = connection.execute(
-        "SELECT Ticker, Analysis, Updated_at, Last_financials_refresh FROM Companies WHERE Ticker = (?)",
+        """
+        SELECT Ticker, Quant_analysis, Updated_at, Last_financials_refresh, Qual_analysis
+        FROM Companies
+        WHERE Ticker = ?
+        """,
         (ticker,),
     )
 
@@ -52,9 +60,10 @@ def get_saved_company(ticker):
 
     return {
         "ticker": company[0],
-        "analysis": json.loads(company[1]),
+        "quant_analysis": json.loads(company[1]),
         "updated_at": company[2],
-        "last_financials_refresh": company[3]
+        "last_financials_refresh": company[3],
+        "qual_analysis": json.loads(company[4])
     }
 
 
@@ -68,25 +77,23 @@ def delete_company(ticker):
     connection.close()
 
 
-def get_all_companies ():
+def get_all_companies():
     connection = connect()
-    
+
     cursor = connection.execute(
         "SELECT * FROM Companies"
     )
 
     companies = cursor.fetchall()
     connection.close()
-    
+
     results = []
 
-    for company in companies: 
-        analysis = json.loads(company[1])
+    for company in companies:
+        quant_analysis = json.loads(company[1])
         results.append({
             "ticker": company[0],
-            "name": analysis["profile"]["name"],
-            })
+            "name": quant_analysis["profile"]["name"],
+        })
 
     return results
-    
-    

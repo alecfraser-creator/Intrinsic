@@ -1096,6 +1096,19 @@ h3 {
     }
 }
 
+/* ---------- Footer ---------- */
+.site-footer {
+    padding: var(--space-5);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+}
+
+.site-footer p + p {
+    margin-top: var(--space-1);
+}
+
 
 /* ==========================================================================
    Page states

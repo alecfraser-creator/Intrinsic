@@ -2,8 +2,10 @@
 // GLOBAL STATE
 // ==========================================
 
-let currentAnalysis = null;
-let savedAnalysis = null;
+let currentQuantAnalysis = null;
+let savedQuantAnalysis = null;
+let currentQualAnalysis = null;
+let lastFinancialsRefresh = null;
 
 
 // ==========================================
@@ -539,7 +541,7 @@ async function fetchAnalysis(ticker) {
 }
 
 
-async function addCompany(ticker, analysis, lastFinancialsRefresh) {
+async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh) {
     const response = await fetch(
         `http://127.0.0.1:8000/watchlist/${ticker}`,
         {
@@ -548,8 +550,9 @@ async function addCompany(ticker, analysis, lastFinancialsRefresh) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                analysis: analysis,
-                last_financials_refresh: lastFinancialsRefresh
+                quant_analysis: quantAnalysis,
+                last_financials_refresh: lastFinancialsRefresh,
+                qual_analysis: qualAnalysis
             })
         }
     );
@@ -558,6 +561,8 @@ async function addCompany(ticker, analysis, lastFinancialsRefresh) {
         throw new Error("Unable to add company to watchlist.");
     }
 
+    const data = await response.json();
+    displayTimestamps(data);
     await loadWatchlist();
 }
 
@@ -691,12 +696,13 @@ async function loadWatchlist() {
 // ==========================================
 
 function displayAnalysis(data) {
-    currentAnalysis = data.analysis;
+    currentQuantAnalysis = data.quant_analysis;
+    currentQualAnalysis = data.qual_analysis;
     lastFinancialsRefresh = data.last_financials_refresh;
-    
+
     displayTimestamps(data);
 
-    tickerInput.value = currentAnalysis.ticker;
+    tickerInput.value = currentQuantAnalysis.ticker;
 
     if (data.in_watchlist) {
         saveCompany.classList.add("is-hidden");
@@ -714,18 +720,18 @@ function displayAnalysis(data) {
     // Company overview
     // --------------------------------------
 
-    displayValue("company-name", currentAnalysis.profile.name ?? "N/A");
-    displayValue("company-ticker", currentAnalysis.ticker ?? "N/A");
-    displayValue("share-price", `$${formatMetric(currentAnalysis.profile.price)}`);
+    displayValue("company-name", currentQuantAnalysis.profile.name ?? "N/A");
+    displayValue("company-ticker", currentQuantAnalysis.ticker ?? "N/A");
+    displayValue("share-price", `$${formatMetric(currentQuantAnalysis.profile.price)}`);
 
     displayValue(
         "market-cap",
-        currentAnalysis.profile.market_cap != null
-            ? `$${formatMetric(currentAnalysis.profile.market_cap / 1e12, "T")}`
+        currentQuantAnalysis.profile.market_cap != null
+            ? `$${formatMetric(currentQuantAnalysis.profile.market_cap / 1e12, "T")}`
             : "N/A"
     );
 
-    displayValue("company-ceo", currentAnalysis.profile.ceo ?? "N/A");
+    displayValue("company-ceo", currentQuantAnalysis.profile.ceo ?? "N/A");
 
 
     // --------------------------------------
@@ -734,38 +740,38 @@ function displayAnalysis(data) {
 
     displayValue(
         "cash",
-        currentAnalysis.financial_strength.cash != null
-            ? `$${formatMetric(currentAnalysis.financial_strength.cash / 1e9, "B")}`
+        currentQuantAnalysis.financial_strength.cash != null
+            ? `$${formatMetric(currentQuantAnalysis.financial_strength.cash / 1e9, "B")}`
             : "N/A"
     );
 
     displayValue(
         "total-debt",
-        currentAnalysis.financial_strength.total_debt != null
-            ? `$${formatMetric(currentAnalysis.financial_strength.total_debt / 1e9, "B")}`
+        currentQuantAnalysis.financial_strength.total_debt != null
+            ? `$${formatMetric(currentQuantAnalysis.financial_strength.total_debt / 1e9, "B")}`
             : "N/A"
     );
 
     displayValue(
         "net-debt",
-        currentAnalysis.financial_strength.net_debt != null
-            ? `$${formatMetric(currentAnalysis.financial_strength.net_debt / 1e9, "B")}`
+        currentQuantAnalysis.financial_strength.net_debt != null
+            ? `$${formatMetric(currentQuantAnalysis.financial_strength.net_debt / 1e9, "B")}`
             : "N/A"
     );
 
     displayValue(
         "debt-equity",
-        formatMetric(currentAnalysis.financial_strength.debt_to_equity, "x")
+        formatMetric(currentQuantAnalysis.financial_strength.debt_to_equity, "x")
     );
 
     displayValue(
         "current-ratio",
-        formatMetric(currentAnalysis.financial_strength.current_ratio, "x")
+        formatMetric(currentQuantAnalysis.financial_strength.current_ratio, "x")
     );
 
     displayValue(
         "interest-coverage",
-        formatMetric(currentAnalysis.financial_strength.interest_coverage, "x")
+        formatMetric(currentQuantAnalysis.financial_strength.interest_coverage, "x")
     );
 
 
@@ -775,78 +781,78 @@ function displayAnalysis(data) {
 
     displayValue(
         "revenue-cagr-5y",
-        formatMetric(currentAnalysis.profitability["Revenue 5Y CAGR"], "%")
+        formatMetric(currentQuantAnalysis.profitability["Revenue 5Y CAGR"], "%")
     );
 
     displayValue(
         "revenue-cagr-3y",
-        formatMetric(currentAnalysis.profitability["Revenue 3Y CAGR"], "%")
+        formatMetric(currentQuantAnalysis.profitability["Revenue 3Y CAGR"], "%")
     );
 
     displayValue(
         "revenue-yoy",
-        formatMetric(currentAnalysis.profitability["Revenue YoY Growth"], "%")
+        formatMetric(currentQuantAnalysis.profitability["Revenue YoY Growth"], "%")
     );
 
     displayValue(
         "eps-cagr-5y",
-        formatMetric(currentAnalysis.profitability["EPS 5Y CAGR"], "%")
+        formatMetric(currentQuantAnalysis.profitability["EPS 5Y CAGR"], "%")
     );
 
     displayValue(
         "eps-cagr-3y",
-        formatMetric(currentAnalysis.profitability["EPS 3Y CAGR"], "%")
+        formatMetric(currentQuantAnalysis.profitability["EPS 3Y CAGR"], "%")
     );
 
     displayValue(
         "eps-yoy",
-        formatMetric(currentAnalysis.profitability["EPS YoY Growth"], "%")
+        formatMetric(currentQuantAnalysis.profitability["EPS YoY Growth"], "%")
     );
 
     displayValue(
         "gross-margin",
-        formatMetric(currentAnalysis.profitability["Gross Margin"], "%")
+        formatMetric(currentQuantAnalysis.profitability["Gross Margin"], "%")
     );
 
     displayValue(
         "operating-margin",
-        formatMetric(currentAnalysis.profitability["Operating Margin"], "%")
+        formatMetric(currentQuantAnalysis.profitability["Operating Margin"], "%")
     );
 
     displayValue(
         "free-cash-flow",
-        currentAnalysis.profitability["Free Cashflow"] != null
-            ? `$${formatMetric(currentAnalysis.profitability["Free Cashflow"] / 1e9, "B")}`
+        currentQuantAnalysis.profitability["Free Cashflow"] != null
+            ? `$${formatMetric(currentQuantAnalysis.profitability["Free Cashflow"] / 1e9, "B")}`
             : "N/A"
     );
 
     displayValue(
         "fcf-margin",
-        formatMetric(currentAnalysis.profitability["FCF Margin"], "%")
+        formatMetric(currentQuantAnalysis.profitability["FCF Margin"], "%")
     );
 
     displayValue(
         "fcf-yoy",
-        formatMetric(currentAnalysis.profitability["FCF YoY Growth"], "%")
+        formatMetric(currentQuantAnalysis.profitability["FCF YoY Growth"], "%")
     );
 
-    displayValue("roe", formatMetric(currentAnalysis.profitability["ROE"], "%"));
-    displayValue("roic", formatMetric(currentAnalysis.profitability["ROIC"], "%"));
+    displayValue("roe", formatMetric(currentQuantAnalysis.profitability["ROE"], "%"));
+    displayValue("roic", formatMetric(currentQuantAnalysis.profitability["ROIC"], "%"));
 
 
     // --------------------------------------
     // Valuation multiples
     // --------------------------------------
 
-    displayValue("pe-ratio", formatMetric(currentAnalysis.valuation["P/E"], "x"));
-    displayValue("p-fcf", formatMetric(currentAnalysis.valuation["P/FCF"], "x"));
+    displayValue("pe-ratio", formatMetric(currentQuantAnalysis.valuation["P/E"], "x"));
+    displayValue("p-fcf", formatMetric(currentQuantAnalysis.valuation["P/FCF"], "x"));
 
     displayValue(
         "ev-ebitda",
-        formatMetric(currentAnalysis.valuation["EV/EBITDA"], "x")
+        formatMetric(currentQuantAnalysis.valuation["EV/EBITDA"], "x")
     );
 
-    displayValue("p-b", formatMetric(currentAnalysis.valuation["P/B"], "x"));
+    displayValue("p-b", formatMetric(currentQuantAnalysis.valuation["P/B"], "x"));
 
 
     // --------------------------------------
@@ -855,28 +861,28 @@ function displayAnalysis(data) {
 
     displayValue(
         "normalized-earnings-value",
-        currentAnalysis.valuation["Normalized Earnings Valuation"] != null
-            ? `$${formatMetric(currentAnalysis.valuation["Normalized Earnings Valuation"])}`
+        currentQuantAnalysis.valuation["Normalized Earnings Valuation"] != null
+            ? `$${formatMetric(currentQuantAnalysis.valuation["Normalized Earnings Valuation"])}`
             : "N/A"
     );
 
     displayValue(
         "dcf-value",
-        currentAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"] != null
-            ? `$${formatMetric(currentAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"])}`
+        currentQuantAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"] != null
+            ? `$${formatMetric(currentQuantAnalysis.valuation["Discounted Cash Flow (DCF) Valuation"])}`
             : "N/A"
     );
 
-    displayHistoricalRevenueChart(currentAnalysis.history)
-    displayHistoricalEPSChart(currentAnalysis.history)
-    displayHistoricalGrossMarginChart(currentAnalysis.history)
-    displayHistoricalOperatingMarginChart(currentAnalysis.history)
-    displayHistoricalFCFChart(currentAnalysis.history);
-    displayHistoricalFCFMarginChart(currentAnalysis.history);
-    displayHistoricalPEChart(currentAnalysis.history);
-    displayHistoricalPFCFChart(currentAnalysis.history);
-    displayHistoricalEVEBITDAChart(currentAnalysis.history);
-    displayHistoricalPBChart(currentAnalysis.history);
+    displayHistoricalRevenueChart(currentQuantAnalysis.history);
+    displayHistoricalEPSChart(currentQuantAnalysis.history);
+    displayHistoricalGrossMarginChart(currentQuantAnalysis.history);
+    displayHistoricalOperatingMarginChart(currentQuantAnalysis.history);
+    displayHistoricalFCFChart(currentQuantAnalysis.history);
+    displayHistoricalFCFMarginChart(currentQuantAnalysis.history);
+    displayHistoricalPEChart(currentQuantAnalysis.history);
+    displayHistoricalPFCFChart(currentQuantAnalysis.history);
+    displayHistoricalEVEBITDAChart(currentQuantAnalysis.history);
+    displayHistoricalPBChart(currentQuantAnalysis.history);
 }
 
 function displayTimestamps(data) {
@@ -1660,8 +1666,10 @@ searchForm.addEventListener("submit", async (event) => {
     const ticker = tickerInput.value.trim().toUpperCase();
 
     try {
-        const data = await fetchAnalysis(ticker);
-        displayAnalysis(data);
+    const data = await fetchAnalysis(ticker);
+    currentQualAnalysis = data.qual_analysis;
+    displayAnalysis(data);
+
 
     } catch (error) {
         statusMessage.textContent =
@@ -1687,7 +1695,7 @@ refreshfFinancials.addEventListener("click", async (event) => {
     statusMessage.classList.remove("is-hidden");
     refreshfFinancials.disabled = true;
 
-    const ticker = currentAnalysis.ticker;
+    const ticker = currentQuantAnalysis.ticker;
 
     try {
         const response = await fetch(
@@ -1700,6 +1708,8 @@ refreshfFinancials.addEventListener("click", async (event) => {
         }
 
         const data = await response.json();
+
+        displayTimestamps(data)
         displayAnalysis(data);
     } catch (error) {
     statusMessage.textContent = "Unable to refresh financials.";
@@ -1715,7 +1725,7 @@ saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
-        await addCompany(currentAnalysis.ticker, currentAnalysis, lastFinancialsRefresh);
+        await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);
 
         // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
@@ -1736,7 +1746,7 @@ updateCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
     try {
-        await addCompany(currentAnalysis.ticker, currentAnalysis, lastFinancialsRefresh);;
+        await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);;
 
         const originalText = updateCompany.textContent;
         updateCompany.textContent = "Analysis saved!";
@@ -1765,7 +1775,7 @@ removeCompany.addEventListener("click", async (event) => {
 
     removeCompany.disabled = true;
 
-    const ticker = currentAnalysis.ticker;
+    const ticker = currentQuantAnalysis.ticker;
 
     try {
         await deleteCompany(ticker);
@@ -1818,7 +1828,12 @@ watchlistAdd.addEventListener("click", () => {
 
         try {
             const data = await fetchAnalysis(ticker);
-            await addCompany(ticker, data.analysis, data.last_financials_refresh);
+            await addCompany(
+                ticker,
+                data.quant_analysis,
+                data.qual_analysis,
+                data.last_financials_refresh
+            );
 
             // Success: stop listening, then close the input
             stopDismiss();

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS companies (
     Ticker TEXT PRIMARY KEY,
-    Analysis TEXT NOT NULL,
+    Quant_analysis TEXT NOT NULL,
     Last_saved_at TEXT NOT NULL,
-    Last_financials_refresh TEXT
+    Last_financials_refresh TEXT,
+    Qual_analysis TEXT
 );
