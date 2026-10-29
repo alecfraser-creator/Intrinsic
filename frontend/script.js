@@ -87,9 +87,25 @@ let lastFinancialsRefresh = null;
 // DOM ELEMENTS
 // ==========================================
 
-// Tab switching buttons 
-const quantitativeTab = document.getElementById("quantitative-tab");
-const qualitativeTab = document.getElementById("qualitative-tab");
+// Tabs and pannels
+
+ 
+const tabs = {
+    quantitative: {
+        tab: document.getElementById("quantitative-tab"),
+        panel: document.getElementById("quantitative-panel")
+    },
+    qualitative: {
+        tab: document.getElementById("qualitative-tab"),
+        panel: document.getElementById("qualitative-panel")
+    }, 
+    valuation: {
+        tab: document.getElementById("valuation-tab"),
+        panel: document.getElementById("valuation-panel")
+    }
+    
+};
+
 
 // Search and analysis
 const searchForm = document.querySelector("#search-form");
@@ -389,10 +405,7 @@ const metricInfoTitle = document.querySelector("#metric-info-title");
 const metricInfoContent = document.querySelector("#metric-info-content");
 const closeMetricInfoButton = document.querySelector("#close-metric-info");
  
-// Panels
-const quantitativePanel = document.getElementById("quantitative-panel");
-const qualitativePanel = document.getElementById("qualitative-panel");
- 
+
 /* ---------- Popover ---------- */
  
 let activeInfo = null; // { button, popover, stopDismiss }
@@ -662,25 +675,14 @@ async function deleteCompany(ticker) {
 // ==========================================
 
 function switchAnalysisTab(tab) {
-    if (tab === "qualitative") {
-        quantitativePanel.classList.add("is-hidden");
-        qualitativePanel.classList.remove("is-hidden");
+    for (const key of Object.keys(tabs)) {
+        const isActive = key === tab;
 
-        quantitativeTab.classList.remove("is-active");
-        qualitativeTab.classList.add("is-active");
+        tabs[key].panel.classList.toggle("is-hidden", !isActive);
 
-        quantitativeTab.setAttribute("aria-selected", "false");
-        qualitativeTab.setAttribute("aria-selected", "true");
-    }
-    else {
-        quantitativePanel.classList.remove("is-hidden");
-        qualitativePanel.classList.add("is-hidden");
+        tabs[key].tab.classList.toggle("is-active", isActive);
 
-        quantitativeTab.classList.add("is-active");
-        qualitativeTab.classList.remove("is-active");
-
-        quantitativeTab.setAttribute("aria-selected", "true");
-        qualitativeTab.setAttribute("aria-selected", "false");
+        tabs[key].tab.setAttribute("aria-selected", String(isActive));
     }
 }
 
@@ -1731,13 +1733,11 @@ function createEmptyQualAnalysis() {
 //  TAB SWITCHING BUTTONS
 // ==========================================
 
-quantitativeTab.addEventListener("click", () => {
-    switchAnalysisTab("quantitative");
-});
-
-qualitativeTab.addEventListener("click", () => {
-    switchAnalysisTab("qualitative");
-});
+for (const key of Object.keys(tabs)) {
+    tabs[key].tab.addEventListener("click", () => {
+        switchAnalysisTab(key);
+    });
+}
 
 // ==========================================
 //  METRIC INFO BUTTONS

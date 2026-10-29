@@ -1,5 +1,4 @@
-#next: make the qualitative analysis saving logic
-#next: make the interface with the watchlist actions buttons nicer
+
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
 import statistics

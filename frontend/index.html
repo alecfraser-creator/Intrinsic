@@ -147,6 +147,17 @@
                         >
                             Qualitative Analysis
                         </button>
+
+                        <button
+                            type="button"
+                            id="valuation-tab"
+                            class="analysis-tab"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="valuation-panel"
+                        >
+                            Valuation
+                        </button>
                     </nav>
 
                     
@@ -443,26 +454,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="metrics-subsection">
-                                <h3>Intrinsic value</h3>
-                                <div class="valuation-grid">
-                                    <div class="valuation-card">
-                                        <span class="metric-label">
-                                            Normalized earnings valuation
-                                            <button type="button" class="metric-info" data-metric="normalized-earnings-value" aria-label="Explain normalized earnings valuation">i</button>
-                                        </span>
-                                        <p class="valuation-value" id="normalized-earnings-value"></p>
-                                    </div>
-                                    <div class="valuation-card">
-                                        <span class="metric-label">
-                                            Discounted cash flow (DCF) valuation
-                                            <button type="button" class="metric-info" data-metric="dcf-value" aria-label="Explain discounted cash flow valuation">i</button>
-                                        </span>
-                                        <p class="valuation-value" id="dcf-value"></p>
-                                    </div>
-                                </div>
-                            </div>
                         </section>
                     </div>
 
@@ -586,6 +577,34 @@
                             </details>
 
                         </div>
+                    </div>
+
+                    <!-- Custom Valuation -->
+                    <div
+                        id="valuation-panel"
+                        class="is-hidden"
+                        role="tabpanel"
+                        aria-labelledby="valuation-tab"
+                    >
+                        <section class="dashboard-section">
+                            <h2 class="section-heading">DCF Valuation</h2>
+                            <div class="valuation-grid">
+                            <div class="valuation-card">
+                                <span class="metric-label">
+                                    Normalized earnings valuation
+                                    <button type="button" class="metric-info" data-metric="normalized-earnings-value" aria-label="Explain normalized earnings valuation">i</button>
+                                </span>
+                                <p class="valuation-value" id="normalized-earnings-value"></p>
+                            </div>
+                            <div class="valuation-card">
+                                <span class="metric-label">
+                                    Discounted cash flow (DCF) valuation
+                                    <button type="button" class="metric-info" data-metric="dcf-value" aria-label="Explain discounted cash flow valuation">i</button>
+                                </span>
+                                <p class="valuation-value" id="dcf-value"></p>
+                            </div>
+                            
+                        </section>
                     </div>
 
                     <p class="status-message" role="status" aria-live="polite"></p>
