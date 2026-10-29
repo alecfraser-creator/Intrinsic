@@ -27,6 +27,11 @@ SHORT_TERM_INVESTMENT_CONCEPTS = [
 LONG_TERM_SECURITY_CONCEPTS = [
     "us-gaap:MarketableSecuritiesNoncurrent",
 ]
+# Fallback if "cash" is not in edgartools fillings
+CASH_CONCEPTS = [
+    "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+    "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+]
 
 
 
@@ -677,12 +682,15 @@ def extract_balance_extras(company):
     extras = {
         "commercial_paper": {},
         "short_term_investments": {},
-        "long_term_securities": {}
+        "long_term_securities": {},
+        "non_operating_current_assets": {},
+        "cash": {},
     }
 
     try:
         facts = company.facts
         period_end_map = build_period_end_map(facts)
+        
 
         extras["commercial_paper"] = get_balance_series(
             facts, "us-gaap:CommercialPaper", period_end_map
@@ -692,6 +700,48 @@ def extract_balance_extras(company):
         )
         extras["long_term_securities"] = get_first_balance_series(
             facts, LONG_TERM_SECURITY_CONCEPTS, period_end_map
+        )
+        extras["non_operating_current_assets"] = {
+            "held_for_sale": get_first_balance_series(
+                facts,
+                [
+                    "us-gaap:AssetsHeldForSaleCurrent",
+                    "us-gaap:DisposalGroupIncludingDiscontinuedOperationAssetsCurrent",
+                    "us-gaap:DisposalGroupHeldForSaleNotDiscontinuedOperationAssetsCurrent",
+                ],
+                period_end_map,
+            ),
+            "derivatives": get_balance_series(
+                facts, "us-gaap:DerivativeAssetsCurrent", period_end_map
+            ),
+            "restricted_cash": get_balance_series(
+                facts, "us-gaap:RestrictedCashCurrent", period_end_map
+            ),
+            "deferred_tax": get_balance_series(
+                facts, "us-gaap:DeferredTaxAssetsNetCurrent", period_end_map
+            ),
+        }
+    
+    
+        extras["non_operating_current_liabilities"] = {
+            "held_for_sale": get_first_balance_series(
+                facts,
+                [
+                    "us-gaap:DisposalGroupIncludingDiscontinuedOperationLiabilitiesCurrent",
+                    "us-gaap:DisposalGroupHeldForSaleNotDiscontinuedOperationLiabilitiesCurrent",
+                ],
+                period_end_map,
+            ),
+            "derivatives": get_balance_series(
+                facts, "us-gaap:DerivativeLiabilitiesCurrent", period_end_map
+            ),
+            "deferred_tax": get_balance_series(
+                facts, "us-gaap:DeferredTaxLiabilitiesNetCurrent", period_end_map
+            ),
+        }   
+
+        extras["cash"] = get_first_balance_series(
+            facts, CASH_CONCEPTS, period_end_map
         )
 
     except Exception as error:
@@ -841,6 +891,7 @@ def extract_income_data(data):
     return income
 
 
+
 def extract_balance_quarter(data, extras=None, period_prefix="Q"):
     if data is None:
         return []
@@ -849,10 +900,14 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
     commercial_paper_by_period = extras.get("commercial_paper") or {}
     short_term_investments_by_period = extras.get("short_term_investments") or {}
     long_term_securities_by_period = extras.get("long_term_securities") or {}
+    non_operating_assets_by_concept = extras.get("non_operating_current_assets") or {}
+    non_operating_liabilities_by_concept = extras.get("non_operating_current_liabilities") or {}
     balance = []
+    cash_by_period = extras.get("cash") or {}
 
     for period in get_periods(data, period_prefix):
-        cash = get_first_value(
+
+        cash_and_equivalents = get_first_value(
             data,
             [
                 "Cash and Cash Equivalents, at Carrying Value",
@@ -861,6 +916,8 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             ],
             period
         )
+        if cash_and_equivalents is None:
+            cash_and_equivalents = cash_by_period.get(period)
 
         current_maturities = get_first_value(
             data,
@@ -899,8 +956,6 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
         # "cash" = cash & équivalents + placements court terme + titres négociables
         # non courants. C'est cette valeur que main.py utilise pour net_debt,
         # EV/EBITDA, DCF et ROIC.
-        cash_and_equivalents = cash
-
         liquid_parts = [
             cash_and_equivalents,
             short_term_investments,
@@ -919,6 +974,27 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             commercial_paper,
             long_term_debt
         )
+        
+        current_assets = get_first_value(data, ["AssetsCurrent", "Assets, Current", "Current Assets"], period)
+    
+        current_liabilities = get_first_value(
+            data, ["Liabilities, Current", "Current Liabilities"], period
+        )
+
+        current_debt = combine_debt(
+            current_maturities, short_term_borrowings, commercial_paper, None
+        )
+
+        non_operating_liabilities = sum(
+            series.get(period) or 0
+            for series in non_operating_liabilities_by_concept.values()
+        )
+
+        operating_current_liabilities = (
+            current_liabilities - (current_debt or 0) - non_operating_liabilities
+            if current_liabilities is not None
+            else None
+        )
 
         equity = get_first_value(
             data,
@@ -929,6 +1005,29 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             ],
             period
         )
+
+        
+
+        # Actifs courants non opérationnels (détenus en vue de la vente, dérivés,
+        # restricted cash...). Lus dans les faits bruts, donc absents si la société
+        # ne les tague pas séparément.
+        non_operating = sum(
+            series.get(period) or 0
+            for series in non_operating_assets_by_concept.values()
+        )
+
+        # Top-down : actifs courants - cash & équivalents - placements court terme
+        # - actifs courants non opérationnels. On ne soustrait PAS long_term_securities
+        # (hors actifs courants) : d'où l'utilisation de cash_and_equivalents et pas de cash.
+        operating_current_assets = (
+            current_assets
+            - cash_and_equivalents
+            - (short_term_investments or 0)
+            - non_operating
+            if current_assets is not None and cash_and_equivalents is not None
+            else None
+        )
+        
 
         balance.append({
             "date": period,
@@ -949,15 +1048,17 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
                 else None
             ),
             "equity": equity,
-            "current_assets": get_first_value(
-                data, ["Assets, Current", "Current Assets"], period
-            ),
-            "current_liabilities": get_first_value(
-                data, ["Liabilities, Current", "Current Liabilities"], period
-            )
+            "current_assets": current_assets,
+            "current_liabilities": current_liabilities,
+            "non_operating_current_assets": non_operating,
+            "operating_current_assets": operating_current_assets,
+            "operating_current_liabilities": operating_current_liabilities,
+            "non_operating_current_liabilities": non_operating_liabilities
         })
 
     return balance
+
+    
 
 
 def extract_cashflow_period(data, period, period_key):
@@ -1131,8 +1232,41 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    from providers.sec import get_sec_data
-    d = get_sec_data("TSLA")   # use the ticker that's broken
-    print([(r["year"], r["depreciation_amortization"]) for r in d["cashflow"]])
-    print(sorted(d["shares_outstanding_annual"]))
-    print([b["year"] for b in d["balance_annual"]])
+    TICKERS = ["GE"]
+
+    def fmt(value):
+        return "None" if value is None else f"{value / 1e9:,.2f}B"
+
+    def print_balance(rows, label):
+        print(f"  {label}")
+        for b in rows:
+            oca = b["operating_current_assets"]
+            ocl = b["operating_current_liabilities"]
+            nwc = None if oca is None or ocl is None else oca - ocl
+            flag = "  <-- NEGATIVE" if (oca is not None and oca < 0) or (ocl is not None and ocl < 0) else ""
+            print(
+                f"    {b['year'] or b['date']:>8}"
+                f"  OCA {fmt(oca):>10}  OCL {fmt(ocl):>10}  NWC {fmt(nwc):>10}"
+                f"  nonop A {fmt(b['non_operating_current_assets']):>8}"
+                f"  nonop L {fmt(b['non_operating_current_liabilities']):>8}{flag}"
+            )
+
+    for ticker in TICKERS:
+        print(f"\n=== {ticker} ===")
+        d = get_sec_data(ticker)
+        if d is None:
+            print("  no data")
+            continue
+
+        print_balance(d["balance_annual"], "annual")
+        print_balance(d["balance_quarter"], "quarterly")
+
+        # Which non-operating items are actually non-zero, and in which periods
+        extras = extract_balance_extras(Company(ticker))
+        for side in ("non_operating_current_assets", "non_operating_current_liabilities"):
+            for key, series in extras[side].items():
+                if series:
+                    print(f"  {side}.{key}: { {p: fmt(v) for p, v in series.items()} }")
+
+
+ 
