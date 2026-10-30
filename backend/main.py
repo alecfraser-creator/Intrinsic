@@ -1,13 +1,17 @@
-#next: do the forecasting fcff
+# next: continue wacc 
+# after finishing the backend logic for dcf calculation: reorganise project so that main is a coordinater
+# and doesn't do the analysis himself
+
 #next: add a fallback bottom up approach to calculate oca ocl if top down approach fails
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
 import statistics
 from . import config
 
+from providers.market_data import calculate_beta
 from providers.fmp import get_fmp_data, get_data
 from providers.sec import get_sec_data
-from providers.finazon import get_latest_price, get_fiscal_year_end_prices
+from providers.finazon import get_latest_price, get_fiscal_year_end_prices, get_historical_price
 
 
 def main():
@@ -62,10 +66,15 @@ def analyze_company(ticker):
         if price_latest is None:
             return None
 
+        historical_data = get_historical_price(ticker)
+
         historical_prices = get_fiscal_year_end_prices(
-            ticker,
+            historical_data,
             sec_data["fiscal_year_ends"]
         )
+
+
+        print(historical_prices)
         
         shares_by_year = sec_data.get("shares_outstanding_annual", {})
 
@@ -134,7 +143,9 @@ def analyze_company(ticker):
         forecast_assumptions
     )
 
-    print(forecast)
+    beta = calculate_beta(historical_data)
+
+    print(beta)
 
     
     return {
@@ -926,6 +937,8 @@ def calculate_history(
 # DCF
 # =========================
 
+#fcff forecast
+
 def calculate_nwc_change(balance_annual):
     nwc_yearly = {}
 
@@ -1113,8 +1126,6 @@ def calculate_forecast_assumptions(profitability, history, income_annual, cashfl
         capex_rate_forecast,
         nwc_rate_forecast
     )
-    
-
 
 
 def forecast_fcff(
@@ -1226,6 +1237,20 @@ def forecast_fcff(
         previous_nwc = nwc
 
     return forecast
+
+
+#wacc calculation
+
+def calculate_cost_of_equity():
+    ...
+
+def calculate_cost_of_debt():
+    ...
+
+def calculate_wacc():
+    ... 
+
+
 
 
 # =========================

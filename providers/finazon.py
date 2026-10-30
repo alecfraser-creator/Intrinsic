@@ -1,16 +1,19 @@
+
 from datetime import datetime, timezone
 import sys
 from pathlib import Path
 
+import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backend import config
-import requests
 
-def get_fiscal_year_end_prices(ticker, fiscal_year_ends):
 
-    historical_data = get_historical_price(ticker, fiscal_year_ends)
+
+
+
+def get_fiscal_year_end_prices(historical_data, fiscal_year_ends):
 
     if not historical_data:
         return {}
@@ -43,28 +46,19 @@ def get_fiscal_year_end_prices(ticker, fiscal_year_ends):
     return prices
 
 
-def get_historical_price(ticker, fiscal_year_ends):
-    if not fiscal_year_ends:
-        return []
-
-    dates = list(fiscal_year_ends.values())
+def get_historical_price(ticker):
+    latest_date = datetime.now(timezone.utc)
 
     start_at = int(
-        datetime.strptime(min(dates), "%Y-%m-%d")
-        .replace(tzinfo=timezone.utc)
-        .timestamp()
+        latest_date.replace(year=latest_date.year - 10).timestamp()
     ) - 7 * 86400
 
-    end_at = int(
-        datetime.strptime(max(dates), "%Y-%m-%d")
-        .replace(tzinfo=timezone.utc)
-        .timestamp()
-    ) + 86400
+    end_at = int(latest_date.timestamp()) + 86400
 
     page_size = 1000
     all_rows = []
 
-    for page in range(10):  # safety cap
+    for page in range(10):
         url = (
             "https://api.finazon.io/latest/finazon/us_stocks_essential/time_series"
             f"?ticker={ticker}"
@@ -98,9 +92,11 @@ def get_historical_price(ticker, fiscal_year_ends):
     return all_rows
 
 
-
 def get_latest_price(ticker):
-    url = (f"https://api.finazon.io/latest/finazon/us_stocks_essential/price?ticker={ticker}&apikey={config.API_KEY_FINAZON}")
+    url = (
+        "https://api.finazon.io/latest/finazon/us_stocks_essential/price"
+        f"?ticker={ticker}&apikey={config.API_KEY_FINAZON}"
+    )
 
     try:
         response = requests.get(url, timeout=10)
@@ -117,20 +113,4 @@ def get_latest_price(ticker):
     return data["p"]
 
 
-if __name__ == "__main__":
-    from providers.sec import get_sec_data
-    
-    data = get_sec_data("AAPL")
-    
 
-    fiscal_year_ends = {
-        record["year"]: data["fiscal_year_ends"][record["year"]]
-        for record in data["income"]
-        if record["year"] in data["fiscal_year_ends"]
-    }
-
-    prices = get_fiscal_year_end_prices("AAPL", fiscal_year_ends)
-    print(prices)
-
-    
-    
