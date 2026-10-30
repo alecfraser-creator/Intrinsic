@@ -1,4 +1,5 @@
 
+#next: add a fallback bottom up approach to calculate oca ocl if top down approach fails
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
 import statistics
@@ -12,16 +13,13 @@ from providers.finazon import get_latest_price, get_fiscal_year_end_prices
 def main():
     ticker = input("Ticker: ").strip().upper()
     results = analyze_company(ticker)
-
-
+    
     if results is None:
         print("Unable to retrieve company data.")
         return
 
-    print_profile(results["profile"])
-    print_financial_strength(results["financial_strength"])
-    print_profitability(results["profitability"])
-    print_valuation(results["valuation"])
+    
+
 
 def analyze_company(ticker):
     ticker = ticker.strip().upper()
@@ -41,8 +39,13 @@ def analyze_company(ticker):
     cashflow_ttm = sec_data["cashflow_ttm"]
     historical_prices = {}
     shares_by_year = {}
-    print("Historical shares:", shares_by_year)
-    print("Historical prices:", historical_prices)
+
+    #dcf
+    nwc_change = calculate_nwc_change(balance_annual)
+    historical_fcff = calculate_historical_fcff(income_annual, cashflow_annual, nwc_change)
+    fcff_growth = calculate_fcff_growth(historical_fcff)
+    print(fcff_growth)
+    
    
 
     if config.DATA_PROVIDER == "free":
@@ -132,7 +135,8 @@ def analyze_company(ticker):
             shares_by_year
         )
     }
-    
+
+
 
 
 def get_company_data(urls):
@@ -417,7 +421,7 @@ def calculate_profitability(
             and ending_debt is not None
             and beginning_debt is not None
         ):
-            nopat = ebit * (1 - tax_rate / 100)
+            nopat = ebit * (1 - tax_rate)
 
             average_equity = (
                 beginning_equity + ending_equity
@@ -749,7 +753,6 @@ def calculate_historical_pe(income_annual, prices_historical):
     return ratios_annual
 
 
-
 # =========================
 # HISTORY (per-year series for the dashboard charts)
 # =========================
@@ -907,6 +910,119 @@ def calculate_history(
         series.reverse()
 
     return history
+
+
+# =========================
+# DCF
+# =========================
+
+def calculate_nwc_change(balance_annual):
+    nwc_yearly = {}
+
+    for year_data in balance_annual:
+        year = year_data["year"]
+        nwc = year_data["operating_current_assets"] - year_data["operating_current_liabilities"]
+
+        nwc_yearly[year] = nwc
+
+    years = sorted(nwc_yearly)
+
+    nwc_change = {}
+
+    for i in range(len(years) - 1):
+        current_year = years[i]
+        next_year = years[i + 1]
+        nwc_change[next_year] = nwc_yearly[next_year] - nwc_yearly[current_year]
+
+    return nwc_change
+
+
+def calculate_historical_fcff(income_annual, cashflow_annual, nwc_change):
+    historical_fcff = {}
+
+    for income_data in income_annual:
+        year = income_data["year"]  # Replace with your actual period_key
+
+        ebit = income_data["ebit"]
+        tax_rate = income_data["tax_rate"]
+
+        if ebit is None or tax_rate is None:
+            continue
+
+        nopat = ebit * (1 - tax_rate)
+
+        cashflow_data = next(
+            (item for item in cashflow_annual if item["year"] == year),
+            None
+        )
+
+        if cashflow_data is None or year not in nwc_change:
+            continue
+
+        da = cashflow_data["depreciation_amortization"]
+        capex = cashflow_data["capital_expenditure"]
+        delta_nwc = nwc_change[year]
+
+        if da is None or capex is None:
+            continue
+
+        print(
+            year,
+            "EBIT:", ebit,
+            "Tax rate:", tax_rate,
+            "NOPAT:", nopat,
+            "D&A:", da,
+            "CapEx:", capex,
+            "Change NWC:", delta_nwc
+        )
+
+        fcff = nopat + da - capex - delta_nwc
+
+        historical_fcff[year] = fcff
+
+    return historical_fcff
+
+
+def calculate_fcff_growth(historical_fcff):
+    years = sorted(historical_fcff)
+
+    yearly_growth = {}
+
+    for i in range(1, len(years)):
+        previous_year = years[i - 1]
+        current_year = years[i]
+
+        previous_fcff = historical_fcff[previous_year]
+        current_fcff = historical_fcff[current_year]
+
+        if previous_fcff > 0:
+            yearly_growth[current_year] = (
+                current_fcff / previous_fcff
+            ) - 1
+        else:
+            yearly_growth[current_year] = None
+
+    first_fcff = historical_fcff[years[0]]
+    last_fcff = historical_fcff[years[-1]]
+
+    if first_fcff > 0 and last_fcff > 0 and len(years) > 1:
+        intervals = len(years) - 1
+        cagr = (last_fcff / first_fcff) ** (1 / intervals) - 1
+    else:
+        cagr = None
+
+    return {
+        "yearly_growth": yearly_growth,
+        "cagr": cagr
+    }
+
+def forecast_fcff():
+    ...
+
+
+# =========================
+# =========================
+
 
 
 def format_value(value, decimals=2, prefix="", suffix=""):

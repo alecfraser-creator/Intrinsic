@@ -1,5 +1,6 @@
 from backend import config
 import re
+from datetime import date
 import pandas as pd
 from edgar import Company, set_identity
 from edgar.entity.entity_facts import EntityFacts
@@ -27,11 +28,20 @@ SHORT_TERM_INVESTMENT_CONCEPTS = [
 LONG_TERM_SECURITY_CONCEPTS = [
     "us-gaap:MarketableSecuritiesNoncurrent",
 ]
+# Investissements hors "cash" (volontairement) : exposés à part pour le pont EV -> equity.
+LONG_TERM_INVESTMENT_CONCEPTS = ["us-gaap:LongTermInvestments"]
+EQUITY_METHOD_INVESTMENT_CONCEPTS = ["us-gaap:EquityMethodInvestments"]
 # Fallback if "cash" is not in edgartools fillings
-CASH_CONCEPTS = [
+CASH_PLAIN_CONCEPTS = [
     "us-gaap:CashAndCashEquivalentsAtCarryingValue",
-    "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+    "us-gaap:CashAndDueFromBanks",
+    "us-gaap:Cash",
 ]
+# Inclut le restricted cash (courant ET non courant). Mappé par edgartools sur le
+# tableau de flux, JAMAIS sur le bilan : c'est pour ça qu'il manquait pour GEV.
+RESTRICTED_INCLUSIVE_CASH_CONCEPT = "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"
+RESTRICTED_INCLUSIVE_CASH_LABEL = "Cash Cash Equivalents Restricted Cash and Restricted Cash Equivalents"
+CASH_CONCEPTS = CASH_PLAIN_CONCEPTS + [RESTRICTED_INCLUSIVE_CASH_CONCEPT]
 
 
 
@@ -165,8 +175,9 @@ def get_sec_data(ticker):
         )
 
         
-        cashflow_annual = extract_cashflow_data(cashflow_annual_raw)
-        cashflow_quarter = extract_cashflow_data(cashflow_quarter_raw)
+        flow_ctx = make_flow_context(company)
+        cashflow_annual = extract_cashflow_data(cashflow_annual_raw, flow_ctx)
+        cashflow_quarter = extract_cashflow_data(cashflow_quarter_raw, flow_ctx)
 
         income_ttm = extract_income_ttm(income_quarter)
 
@@ -565,9 +576,78 @@ def get_value(data, label, period):
         return None
 
 
-def get_first_value(data, labels, period):
-    for label in labels:
-        value = get_value(data, label, period)
+def _bare(concept):
+    """'us-gaap:Assets' -> 'Assets' (l'index des DataFrames edgartools est sans préfixe)."""
+    return str(concept).split(":")[-1]
+
+
+def _clean_number(value):
+    if value is None:
+        return None
+
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+
+    if hasattr(value, "item"):
+        value = value.item()
+
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+
+    return value
+
+
+def get_by_concept(data, concepts, period):
+    """Valeur par NOM DE CONCEPT XBRL.
+
+    company.balance_sheet(as_dataframe=True) & co. sont indexés par concept (sans
+    préfixe "us-gaap:"). Contrairement au libellé (`label`), le concept ne change pas
+    d'une société à l'autre ni d'une version de la taxonomie à l'autre.
+    """
+    if data is None or not concepts or period not in data.columns or len(data.index) == 0:
+        return None
+
+    names = data.index.astype(str)
+
+    for concept in concepts:
+        mask = names == _bare(concept)
+
+        if not mask.any():
+            continue
+
+        for value in data.loc[mask, period]:
+            value = _clean_number(value)
+
+            if value is not None:
+                return value
+
+    return None
+
+
+def get_first_value(data, labels, period, concepts=None, concepts_first=False):
+    """Libellés exacts (comportement historique) puis, en repli, concepts XBRL.
+
+    concepts_first=True pour les champs dont le libellé n'a jamais été vérifié.
+    """
+    def by_labels():
+        for label in labels or []:
+            value = get_value(data, label, period)
+
+            if value is not None:
+                return value
+
+        return None
+
+    def by_concepts():
+        return get_by_concept(data, concepts, period)
+
+    lookups = (by_concepts, by_labels) if concepts_first else (by_labels, by_concepts)
+
+    for lookup in lookups:
+        value = lookup()
 
         if value is not None:
             return value
@@ -677,6 +757,159 @@ def get_first_balance_series(facts, concepts, period_end_map):
     return merged
 
 
+# ---------------------------------------------------------------------------
+# Flux (compte de résultat / tableau de flux) lus dans les faits bruts.
+#
+# Filet de sécurité quand le concept n'est pas dans le DataFrame edgartools (il n'y
+# apparaît que si edgartools le rattache à CE tableau). Les faits "duration" d'un
+# 10-Q sont CUMULÉS depuis le début de l'exercice (3M, 6M, 9M) et ceux d'un 10-K
+# couvrent l'année : on reconstruit donc le trimestre par différence :
+#   Q1 = 3M     Q2 = 6M - 3M     Q3 = 9M - 6M     Q4 = FY - 9M
+# Jamais de valeur inventée : s'il manque un maillon, on rend None.
+# ---------------------------------------------------------------------------
+
+ANNUAL_DAYS = (350, 380)
+QUARTER_DAYS = (70, 105)     # 13 semaines = 91 j ; 14 semaines = 98 j
+
+
+def _filing_date(fact):
+    return getattr(fact, "filing_date", None) or date.min
+
+
+def get_duration_facts(facts, concept, units=("USD",)):
+    if facts is None:
+        return []
+
+    try:
+        found = facts.query().by_concept(concept, exact=True).execute()
+    except Exception as error:
+        print(f"Facts query failed for {concept}: {error}")
+        return []
+
+    return [
+        fact for fact in found
+        if getattr(fact, "period_type", None) == "duration"
+        and getattr(fact, "unit", "USD") in units
+        and fact.numeric_value is not None
+        and getattr(fact, "period_start", None) is not None
+        and getattr(fact, "period_end", None) is not None
+        and not getattr(fact, "dimensions", None)
+    ]
+
+
+def latest_by_span(found):
+    """{(début, fin): fait} ; en cas de restatement le dépôt le plus récent gagne."""
+    spans = {}
+
+    for fact in found:
+        key = (fact.period_start, fact.period_end)
+
+        if key not in spans or _filing_date(fact) > _filing_date(spans[key]):
+            spans[key] = fact
+
+    return spans
+
+
+def flow_from_spans(spans, end, annual):
+    ending = [(start, stop) for (start, stop) in spans if stop == end]
+
+    if annual:
+        for start, stop in ending:
+            if ANNUAL_DAYS[0] <= (stop - start).days <= ANNUAL_DAYS[1]:
+                return spans[(start, stop)].numeric_value
+
+        return None
+
+    low, high = QUARTER_DAYS
+
+    # 1) un vrai fait trimestriel (3 mois) existe
+    for start, stop in ending:
+        if low <= (stop - start).days <= high:
+            return spans[(start, stop)].numeric_value
+
+    # 2) cumul depuis le début d'exercice moins le cumul précédent (même début)
+    for start, stop in ending:
+        if not high < (stop - start).days <= ANNUAL_DAYS[1]:
+            continue
+
+        for (other_start, other_stop), prior in spans.items():
+            if (
+                other_start == start
+                and other_stop < stop
+                and low <= (stop - other_stop).days <= high
+            ):
+                return spans[(start, stop)].numeric_value - prior.numeric_value
+
+    return None
+
+
+class FlowContext:
+    """Faits bruts + correspondance étiquette de colonne -> vraie date de clôture."""
+
+    def __init__(self, facts):
+        self.facts = facts
+        self.period_end_map = build_period_end_map(facts)
+        self._spans = {}
+
+    def spans(self, concept):
+        if concept not in self._spans:
+            self._spans[concept] = latest_by_span(get_duration_facts(self.facts, concept))
+
+        return self._spans[concept]
+
+    def value(self, concepts, period):
+        end = self.period_end_map.get(period)
+
+        if end is None:
+            return None
+
+        annual = period.startswith("FY ")
+
+        for concept in concepts:
+            if ":" not in concept:
+                concept = "us-gaap:" + concept
+
+            value = flow_from_spans(self.spans(concept), end, annual)
+
+            if value is not None:
+                return value
+
+        return None
+
+
+def make_flow_context(company):
+    try:
+        facts = company.facts
+        return FlowContext(facts) if facts is not None else None
+    except Exception as error:
+        print(f"Flow context unavailable: {error}")
+        return None
+
+
+def resolve_flow(data, period, labels, concepts, ctx=None, raw_concepts=None, concepts_first=False):
+    """DataFrame (libellé / concept) puis faits bruts. None si rien de fiable."""
+    value = get_first_value(
+        data, labels, period, concepts=concepts, concepts_first=concepts_first
+    )
+
+    if value is None and ctx is not None:
+        value = ctx.value(raw_concepts if raw_concepts is not None else concepts, period)
+
+    return value
+
+
+def report_missing(records, name, ignore=("year", "date", "period")):
+    """Affiche, par période, les champs restés à None : plus de panne silencieuse."""
+    if not records:
+        print(f"  [{name}] aucune donnée")
+        return
+
+    for record in records:
+        missing = [k for k, v in record.items() if v is None and k not in ignore]
+        label = record.get("date") or record.get("year") or record.get("period")
+        print(f"  [{name}] {label}: " + (", ".join(missing) if missing else "complet"))
+
+
 def extract_balance_extras(company):
     """Postes de bilan absents de company.balance_sheet() : lus dans les faits bruts."""
     extras = {
@@ -685,6 +918,17 @@ def extract_balance_extras(company):
         "long_term_securities": {},
         "non_operating_current_assets": {},
         "cash": {},
+        "cash_restricted_inclusive": set(),
+        "long_term_investments": {},
+        "equity_method_investments": {},
+        "current_assets": {},
+        "current_liabilities": {},
+        "equity_parent": {},
+        "equity_total": {},
+        "minority_interest": {},
+        "current_maturities": {},
+        "short_term_borrowings": {},
+        "long_term_debt": {},
     }
 
     try:
@@ -740,8 +984,63 @@ def extract_balance_extras(company):
             ),
         }   
 
-        extras["cash"] = get_first_balance_series(
-            facts, CASH_CONCEPTS, period_end_map
+        plain_cash = get_first_balance_series(facts, CASH_PLAIN_CONCEPTS, period_end_map)
+        inclusive_cash = get_balance_series(
+            facts, RESTRICTED_INCLUSIVE_CASH_CONCEPT, period_end_map
+        )
+        # Le cash "plain" gagne ; le cash incluant le restricted ne sert qu'en dernier
+        # recours, et on mémorise les périodes concernées pour ne pas soustraire le
+        # restricted cash courant une 2e fois dans l'OCA.
+        extras["cash"] = {**inclusive_cash, **plain_cash}
+        extras["cash_restricted_inclusive"] = {
+            label for label in inclusive_cash if label not in plain_cash
+        }
+        extras["long_term_investments"] = get_first_balance_series(
+            facts, LONG_TERM_INVESTMENT_CONCEPTS, period_end_map
+        )
+        extras["equity_method_investments"] = get_first_balance_series(
+            facts, EQUITY_METHOD_INVESTMENT_CONCEPTS, period_end_map
+        )
+
+        # Filets de sécurité : mêmes postes lus dans les faits bruts quand le DataFrame
+        # edgartools ne les contient pas (concept rattaché à un autre tableau, ou absent).
+        extras["current_assets"] = get_balance_series(
+            facts, "us-gaap:AssetsCurrent", period_end_map
+        )
+        extras["current_liabilities"] = get_balance_series(
+            facts, "us-gaap:LiabilitiesCurrent", period_end_map
+        )
+        extras["equity_parent"] = get_balance_series(
+            facts, "us-gaap:StockholdersEquity", period_end_map
+        )
+        extras["equity_total"] = get_balance_series(
+            facts,
+            "us-gaap:StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+            period_end_map,
+        )
+        extras["minority_interest"] = get_balance_series(
+            facts, "us-gaap:MinorityInterest", period_end_map
+        )
+        # DebtCurrent est volontairement absent ici : il inclut déjà les emprunts
+        # court terme, donc l'additionner à ShortTermBorrowings doublerait la dette.
+        extras["current_maturities"] = get_first_balance_series(
+            facts,
+            [
+                "us-gaap:LongTermDebtCurrent",
+                "us-gaap:LongTermDebtAndCapitalLeaseObligationsCurrent",
+            ],
+            period_end_map,
+        )
+        extras["short_term_borrowings"] = get_balance_series(
+            facts, "us-gaap:ShortTermBorrowings", period_end_map
+        )
+        extras["long_term_debt"] = get_first_balance_series(
+            facts,
+            [
+                "us-gaap:LongTermDebtNoncurrent",
+                "us-gaap:LongTermDebtAndCapitalLeaseObligations",
+            ],
+            period_end_map,
         )
 
     except Exception as error:
@@ -784,7 +1083,7 @@ def calculate_tax_rate(taxes, income_before_taxes):
     if taxes is None or income_before_taxes in (None, 0):
         return None
 
-    return taxes / income_before_taxes * 100
+    return taxes / income_before_taxes
 
 
 def calculate_free_cash_flow(operating_cash_flow, capital_expenditure):
@@ -804,17 +1103,25 @@ def extract_income_period(data, period, period_key):
         "revenue": get_first_value(
             data,
             ["Total Revenue", "Revenue", "Sales Revenue Net"],
-            period
+            period,
+            concepts=[
+                "Revenues",
+                "RevenueFromContractWithCustomerExcludingAssessedTax",
+                "SalesRevenueNet",
+                "RevenueFromContractWithCustomerIncludingAssessedTax",
+            ],
         ),
         "cost_of_revenue": get_first_value(
             data,
             ["Cost of Revenue", "Cost of Goods and Services Sold"],
-            period
+            period,
+            concepts=["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold"],
         ),
         "operating_income": get_first_value(
             data,
             ["Operating Income (Loss)", "Operating Income"],
-            period
+            period,
+            concepts=["OperatingIncomeLoss"],
         ),
         "interest_expense": get_first_value(
             data,
@@ -824,31 +1131,53 @@ def extract_income_period(data, period, period_key):
                 "Interest and Debt Expense",
                 "Interest Expense (non-operating)"
             ],
-            period
+            period,
+            concepts=[
+                "InterestExpense",
+                "InterestExpenseNonoperating",
+                "InterestExpenseDebt",
+                "InterestAndDebtExpense",
+            ],
         ),
         "net_income": get_first_value(
             data,
             ["Net Income (Loss) Attributable to Parent",
              "Net Income (Loss) Available to Common Stockholders Basic",
              "Net Income (Loss)"],
-            period
+            period,
+            concepts=["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic"],
         ),
         "eps": get_first_value(
             data,
             ["Earnings Per Share, Diluted", "Diluted Earnings Per Share"],
-            period
+            period,
+            concepts=["EarningsPerShareDiluted"],
+        ),
+        # Moyenne pondérée : ne JAMAIS la sommer en TTM (utiliser le dernier trimestre).
+        # Concept d'abord : libellé jamais vérifié sur de vrais DataFrames.
+        "shares_diluted": get_first_value(
+            data,
+            ["Weighted Average Number of Diluted Shares Outstanding"],
+            period,
+            concepts=["WeightedAverageNumberOfDilutedSharesOutstanding"],
+            concepts_first=True,
         ),
         "taxes": get_first_value(
             data,
             ["Income Tax Expense (Benefit)", "Income Tax Expense"],
-            period
+            period,
+            concepts=["IncomeTaxExpenseBenefit"],
         ),
         "income_before_taxes": get_first_value(
             data,
             ["Income (Loss) from Continuing Operations before Income Taxes, Noncontrolling Interest",
              "Income (Loss) from Continuing Operations before Income Taxes",
              "Income Before Tax"],
-            period
+            period,
+            concepts=[
+                "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+                "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
+            ],
         )
     }
 
@@ -902,51 +1231,77 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
     long_term_securities_by_period = extras.get("long_term_securities") or {}
     non_operating_assets_by_concept = extras.get("non_operating_current_assets") or {}
     non_operating_liabilities_by_concept = extras.get("non_operating_current_liabilities") or {}
+    long_term_investments_by_period = extras.get("long_term_investments") or {}
+    equity_method_investments_by_period = extras.get("equity_method_investments") or {}
+    restricted_inclusive_periods = extras.get("cash_restricted_inclusive") or set()
     balance = []
-    cash_by_period = extras.get("cash") or {}
+
+    def fallback(value, name, period):
+        """Valeur du DataFrame, sinon fait brut du même nom pour CETTE période."""
+        if value is not None:
+            return value
+
+        return (extras.get(name) or {}).get(period)
 
     for period in get_periods(data, period_prefix):
 
+        # --- cash & équivalents -------------------------------------------------
         cash_and_equivalents = get_first_value(
             data,
-            [
-                "Cash and Cash Equivalents, at Carrying Value",
-                "Cash and Cash Equivalents",
-                "Cash Cash Equivalents Restricted Cash and Restricted Cash Equivalents"
-            ],
-            period
+            ["Cash and Cash Equivalents, at Carrying Value", "Cash and Cash Equivalents"],
+            period,
+            concepts=["CashAndCashEquivalentsAtCarryingValue", "CashAndDueFromBanks", "Cash"],
         )
+        cash_includes_restricted = False
+
         if cash_and_equivalents is None:
-            cash_and_equivalents = cash_by_period.get(period)
+            cash_and_equivalents = get_value(data, RESTRICTED_INCLUSIVE_CASH_LABEL, period)
+            cash_includes_restricted = cash_and_equivalents is not None
 
-        current_maturities = get_first_value(
-            data,
-            [
-                "Long-term Debt, Current Maturities",
-                "Long-term Debt and Finance Lease Obligations, Current",
-                "Debt, Current"
-            ],
-            period
+        if cash_and_equivalents is None:
+            cash_and_equivalents = (extras.get("cash") or {}).get(period)
+            cash_includes_restricted = (
+                cash_and_equivalents is not None and period in restricted_inclusive_periods
+            )
+
+        # --- dette --------------------------------------------------------------
+        current_maturities = fallback(
+            get_first_value(
+                data,
+                [
+                    "Long-term Debt, Current Maturities",
+                    "Long-term Debt and Finance Lease Obligations, Current",
+                    "Debt, Current"
+                ],
+                period,
+                concepts=["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
+            ),
+            "current_maturities", period,
         )
 
-        short_term_borrowings = get_first_value(
-            data,
-            [
-                "Short-term Borrowings",
-                "Short-term Debt"
-            ],
-            period
+        short_term_borrowings = fallback(
+            get_first_value(
+                data,
+                ["Short-term Borrowings", "Short-term Debt"],
+                period,
+                concepts=["ShortTermBorrowings", "ShortTermDebt"],
+            ),
+            "short_term_borrowings", period,
         )
 
-        long_term_debt = get_first_value(
-            data,
-            [
-                "Long-term Debt, Excluding Current Maturities",
-                "Long-term Debt and Finance Lease Obligations, Noncurrent",
-                "Long-term Debt",
-                "Long Term Debt"
-            ],
-            period
+        long_term_debt = fallback(
+            get_first_value(
+                data,
+                [
+                    "Long-term Debt, Excluding Current Maturities",
+                    "Long-term Debt and Finance Lease Obligations, Noncurrent",
+                    "Long-term Debt",
+                    "Long Term Debt"
+                ],
+                period,
+                concepts=["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebt"],
+            ),
+            "long_term_debt", period,
         )
 
         commercial_paper = commercial_paper_by_period.get(period)
@@ -974,11 +1329,24 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             commercial_paper,
             long_term_debt
         )
-        
-        current_assets = get_first_value(data, ["AssetsCurrent", "Assets, Current", "Current Assets"], period)
-    
-        current_liabilities = get_first_value(
-            data, ["Liabilities, Current", "Current Liabilities"], period
+
+        # --- courant ------------------------------------------------------------
+        # None légitime pour un bilan non classé (banques, assureurs, certains
+        # industriels) : AssetsCurrent / LiabilitiesCurrent n'y existent pas.
+        current_assets = fallback(
+            get_first_value(
+                data, ["AssetsCurrent", "Assets, Current", "Current Assets"], period,
+                concepts=["AssetsCurrent"],
+            ),
+            "current_assets", period,
+        )
+
+        current_liabilities = fallback(
+            get_first_value(
+                data, ["Liabilities, Current", "Current Liabilities"], period,
+                concepts=["LiabilitiesCurrent"],
+            ),
+            "current_liabilities", period,
         )
 
         current_debt = combine_debt(
@@ -996,24 +1364,51 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             else None
         )
 
-        equity = get_first_value(
-            data,
-            [
-                "Stockholders' Equity Attributable to Parent",
-                "Stockholders' Equity",
-                "Stockholders' Equity Including Portion Attributable to Noncontrolling Interest"
-            ],
-            period
+        # --- capitaux propres / minoritaires -----------------------------------
+        equity_parent = fallback(
+            get_first_value(
+                data,
+                ["Stockholders' Equity Attributable to Parent", "Stockholders' Equity"],
+                period,
+                concepts=["StockholdersEquity"],
+            ),
+            "equity_parent", period,
         )
 
-        
+        # StockholdersEquityIncludingPortion... est rattaché au tableau des capitaux
+        # propres par edgartools : il n'est JAMAIS dans le DataFrame du bilan. Faits bruts.
+        equity_total = fallback(
+            get_by_concept(
+                data,
+                ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+                period,
+            ),
+            "equity_total", period,
+        )
 
-        # Actifs courants non opérationnels (détenus en vue de la vente, dérivés,
-        # restricted cash...). Lus dans les faits bruts, donc absents si la société
-        # ne les tague pas séparément.
+        equity = equity_parent if equity_parent is not None else equity_total
+
+        # Minoritaires : poste "MinorityInterest" du bilan en priorité ; sinon
+        # capitaux propres totaux - part du groupe. None si rien de fiable
+        # (on ne suppose pas 0 : main.py décidera).
+        noncontrolling_interest = fallback(
+            get_first_value(
+                data, ["Minority Interest"], period,
+                concepts=["MinorityInterest"], concepts_first=True,
+            ),
+            "minority_interest", period,
+        )
+
+        if noncontrolling_interest is None and equity_total is not None and equity_parent is not None:
+            noncontrolling_interest = equity_total - equity_parent
+
+        # --- actifs courants non opérationnels ---------------------------------
+        # Si le cash retenu inclut déjà le restricted cash, on ne le retire pas une
+        # 2e fois (sinon l'OCA est sous-estimé).
         non_operating = sum(
             series.get(period) or 0
-            for series in non_operating_assets_by_concept.values()
+            for key, series in non_operating_assets_by_concept.items()
+            if not (key == "restricted_cash" and cash_includes_restricted)
         )
 
         # Top-down : actifs courants - cash & équivalents - placements court terme
@@ -1027,7 +1422,6 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
             if current_assets is not None and cash_and_equivalents is not None
             else None
         )
-        
 
         balance.append({
             "date": period,
@@ -1048,6 +1442,9 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
                 else None
             ),
             "equity": equity,
+            "noncontrolling_interest": noncontrolling_interest,
+            "long_term_investments": long_term_investments_by_period.get(period),
+            "equity_method_investments": equity_method_investments_by_period.get(period),
             "current_assets": current_assets,
             "current_liabilities": current_liabilities,
             "non_operating_current_assets": non_operating,
@@ -1058,27 +1455,80 @@ def extract_balance_quarter(data, extras=None, period_prefix="Q"):
 
     return balance
 
-    
+
+# label = libellés historiques (vérifiés) ; concepts = noms XBRL ; raw = concepts lus dans
+# les faits bruts si le DataFrame n'a rien ; concepts_first pour les champs jamais vérifiés.
+CASHFLOW_SPECS = {
+    "operating_cash_flow": dict(
+        labels=["Net Cash Provided by (Used in) Operating Activities",
+                "Net Cash Provided by Operating Activities"],
+        concepts=["NetCashProvidedByUsedInOperatingActivities",
+                  "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+    ),
+    "capital_expenditure": dict(
+        labels=["Payments to Acquire Property, Plant, and Equipment",
+                "Payments to Acquire Property Plant and Equipment",
+                "Payments to Acquire Productive Assets"],
+        # "CapitalExpenditures" = alias d'edgartools (inclut aussi les capex impayés).
+        concepts=["PaymentsToAcquirePropertyPlantAndEquipment",
+                  "PaymentsToAcquireProductiveAssets", "CapitalExpenditures"],
+        raw=["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"],
+    ),
+    "depreciation_amortization": dict(
+        labels=["Depreciation, Depletion and Amortization",
+                "Depreciation, Depletion, and Amortization",
+                "Depreciation and Amortization"],
+        concepts=["DepreciationDepletionAndAmortization", "DepreciationAndAmortization",
+                  "DepreciationAmortizationAndAccretionNet"],
+        raw=["DepreciationDepletionAndAmortization", "DepreciationAndAmortization",
+             "DepreciationAmortizationAndAccretionNet"],
+    ),
+    "stock_based_compensation": dict(
+        # ShareBasedCompensation est rattaché au tableau de flux ; son libellé
+        # taxonomie actuel est "Share-based Payment Arrangement, Noncash Expense".
+        labels=["Share-based Payment Arrangement, Noncash Expense",
+                "Share-based Compensation", "Stock-based Compensation"],
+        concepts=["ShareBasedCompensation"],
+        raw=["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
+        concepts_first=True,
+    ),
+    "acquisitions": dict(
+        labels=["Payments to Acquire Businesses, Net of Cash Acquired",
+                "Payments to Acquire Businesses"],
+        concepts=["PaymentsToAcquireBusinessesNetOfCashAcquired", "PaymentsToAcquireBusinessesGross"],
+    ),
+    "buybacks": dict(
+        labels=["Payments for Repurchase of Common Stock",
+                "Payments for Repurchase of Equity"],
+        concepts=["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"],
+    ),
+    "dividends": dict(
+        labels=["Dividends paid", "Payments of Dividends",
+                "Payments of Dividends Common Stock"],
+        concepts=["PaymentsOfDividends", "PaymentsOfDividendsCommonStock", "DividendsPaid"],
+        raw=["PaymentsOfDividends", "PaymentsOfDividendsCommonStock"],
+    ),
+}
 
 
-def extract_cashflow_period(data, period, period_key):
-    capital_expenditure = get_first_value(
-        data,
-        ["Payments to Acquire Property, Plant, and Equipment",
-         "Payments to Acquire Property Plant and Equipment",
-         "Payments to Acquire Productive Assets"],
-        period
-    )
+def extract_cashflow_period(data, period, period_key, ctx=None):
+    values = {
+        field: resolve_flow(
+            data, period,
+            spec["labels"], spec["concepts"],
+            ctx=ctx,
+            raw_concepts=spec.get("raw"),
+            concepts_first=spec.get("concepts_first", False),
+        )
+        for field, spec in CASHFLOW_SPECS.items()
+    }
+
+    capital_expenditure = values["capital_expenditure"]
 
     if capital_expenditure is not None:
         capital_expenditure = abs(capital_expenditure)
 
-    operating_cash_flow = get_first_value(
-        data,
-        ["Net Cash Provided by (Used in) Operating Activities",
-         "Net Cash Provided by Operating Activities"],
-        period
-    )
+    operating_cash_flow = values["operating_cash_flow"]
 
     return {
         period_key: (
@@ -1092,35 +1542,15 @@ def extract_cashflow_period(data, period, period_key):
             operating_cash_flow,
             capital_expenditure
         ),
-        "depreciation_amortization": get_first_value(
-            data,
-            ["Depreciation, Depletion and Amortization",
-             "Depreciation, Depletion, and Amortization",
-             "Depreciation and Amortization"],
-            period
-        ),
-        "acquisitions": get_first_value(
-            data,
-            ["Payments to Acquire Businesses, Net of Cash Acquired",
-             "Payments to Acquire Businesses"],
-            period
-        ),
-        "buybacks": get_first_value(
-            data,
-            ["Payments for Repurchase of Common Stock",
-             "Payments for Repurchase of Equity"],
-            period
-        ),
-        "dividends": get_first_value(
-            data,
-            ["Dividends paid", "Payments of Dividends",
-             "Payments of Dividends Common Stock"],
-            period
-        )
+        "depreciation_amortization": values["depreciation_amortization"],
+        "stock_based_compensation": values["stock_based_compensation"],
+        "acquisitions": values["acquisitions"],
+        "buybacks": values["buybacks"],
+        "dividends": values["dividends"],
     }
 
 
-def extract_cashflow_data(data):
+def extract_cashflow_data(data, ctx=None):
     if data is None:
         return []
 
@@ -1129,12 +1559,12 @@ def extract_cashflow_data(data):
     for period in data.columns:
         if period.startswith("FY "):
             cashflow.append(
-                extract_cashflow_period(data, period, "year")
+                extract_cashflow_period(data, period, "year", ctx)
             )
 
         elif period.startswith("Q"):
             cashflow.append(
-                extract_cashflow_period(data, period, "period")
+                extract_cashflow_period(data, period, "period", ctx)
             )
 
     return cashflow
@@ -1197,6 +1627,7 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
             "operating_cash_flow",
             "capital_expenditure",
             "depreciation_amortization",
+            "stock_based_compensation",
             "acquisitions",
             "buybacks",
             "dividends"
@@ -1232,7 +1663,10 @@ def extract_cashflow_ttm(income_quarter, cashflow_quarter):
 
 
 if __name__ == "__main__":
-    TICKERS = ["GE"]
+    # Un échantillon qui couvre les cas pièges : bilan classé / non classé (banque),
+    # exercice non calendaire (WMT, AAPL), minoritaires (GEV, GE), classes d'actions
+    # multiples (GOOGL), restricted cash (GEV), SBC élevé (TSLA, META).
+    TICKERS = ["AAPL", "MSFT", "TSLA", "GEV", "GE", "IBM", "GOOGL", "WMT", "KO", "JPM"]
 
     def fmt(value):
         return "None" if value is None else f"{value / 1e9:,.2f}B"
@@ -1261,12 +1695,16 @@ if __name__ == "__main__":
         print_balance(d["balance_annual"], "annual")
         print_balance(d["balance_quarter"], "quarterly")
 
+        # Champs restés à None, par période : c'est LA vérification qui manquait.
+        report_missing(d["balance_annual"][:2], "balance FY")
+        report_missing(d["balance_quarter"][:2], "balance Q")
+        report_missing(d["cashflow"][:2], "cashflow FY")
+        report_missing(d["cashflow_ttm"][:1], "cashflow TTM", ignore=("year", "date", "period", "net_income", "change_in_cash"))
+        report_missing(d["income"][:2], "income FY")
+
         # Which non-operating items are actually non-zero, and in which periods
         extras = extract_balance_extras(Company(ticker))
         for side in ("non_operating_current_assets", "non_operating_current_liabilities"):
             for key, series in extras[side].items():
                 if series:
                     print(f"  {side}.{key}: { {p: fmt(v) for p, v in series.items()} }")
-
-
- 
