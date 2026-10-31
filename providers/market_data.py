@@ -4,13 +4,10 @@ import numpy as np
 import pandas as pd
 import requests
 
-
-from providers.finazon import get_historical_price
-from backend import config
+from .. import config
 
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 def calculate_beta(historical_data):
@@ -62,8 +59,8 @@ def calculate_beta(historical_data):
     return beta
 
 
-
 def get_risk_free_rate():
+
     url = "https://api.stlouisfed.org/fred/series/observations"
 
     params = {

@@ -10,44 +10,52 @@
 #next: add a fallback bottom up approach to calculate oca ocl if top down approach fails
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
+
 import json
-import statistics
-from . import config
 from pathlib import Path
 
-from providers.market_data import calculate_beta, get_risk_free_rate
-from providers.fmp import get_fmp_data, get_data
-from providers.sec import get_sec_data
-from providers.finazon import get_latest_price, get_fiscal_year_end_prices, get_historical_price
+from . import config
 
+from .providers.market_data import calculate_beta, get_risk_free_rate
+from .providers.fmp import get_fmp_data
+from .providers.sec import get_sec_data
+from .providers.finazon import (
+    get_latest_price,
+    get_fiscal_year_end_prices,
+    get_historical_price
+)
+
+from .utils import to_float
+
+from .quant_analysis.financial_strength import calculate_financial_strength
+from .quant_analysis.profitability import calculate_profitability
+from .quant_analysis.valuation import calculate_valuation
+from .quant_analysis.history import calculate_historical_pe, calculate_history
+
+from .dcf.analysis import run_dcf_analysis
+
+
+# =========================
+# CONFIGURATION
+# =========================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 with open(BASE_DIR / "data" / "market_assumptions.json", "r") as file:
     MARKET_ASSUMPTIONS = json.load(file)
 
-DCF_DEFAULTS = {
-    "wacc": 0.10,
-    "terminal_growth": 0.025,
-    "cash": 0,
-    "total_debt": 0
-}
 
-def main():
-    ticker = input("Ticker: ").strip().upper()
-    results = analyze_company(ticker)
-    
-    if results is None:
-        print("Unable to retrieve company data.")
-        return
-
-    
-
+# =========================
+# COMPANY ANALYSIS
+# =========================
 
 def analyze_company(ticker):
     ticker = ticker.strip().upper()
 
-   
+    # -------------------------
+    # Retrieve SEC data
+    # -------------------------
+
     sec_data = get_sec_data(ticker)
 
     if sec_data is None:
@@ -60,26 +68,29 @@ def analyze_company(ticker):
     balance_annual = sec_data["balance_annual"]
     cashflow_annual = sec_data["cashflow"]
     cashflow_ttm = sec_data["cashflow_ttm"]
+
+    historical_data = None
     historical_prices = {}
     shares_by_year = {}
 
+    # -------------------------
+    # Retrieve market data
+    # -------------------------
 
     if config.DATA_PROVIDER == "free":
 
-        # FMP provides the current price and historical ratios.
         fmp_data = get_fmp_data(ticker)
 
         if fmp_data is None:
             return None
 
         fmp_profile = fmp_data["profile"]
-        price_latest = to_float(fmp_profile.get("price"))
 
+        price_latest = to_float(fmp_profile.get("price"))
         ratios_annual = fmp_data["ratios_annual"]
 
     elif config.DATA_PROVIDER == "sec_finazon":
 
-        # Finazon provides the current price.
         price_latest = get_latest_price(ticker)
 
         if price_latest is None:
@@ -92,10 +103,9 @@ def analyze_company(ticker):
             sec_data["fiscal_year_ends"]
         )
 
-
-        print(historical_prices)
-        
-        shares_by_year = sec_data.get("shares_outstanding_annual", {})
+        shares_by_year = sec_data.get(
+            "shares_outstanding_annual", {}
+        )
 
         ratios_annual = calculate_historical_pe(
             income_annual,
@@ -107,6 +117,9 @@ def analyze_company(ticker):
             f"Unknown data provider: {config.DATA_PROVIDER}"
         )
 
+    # -------------------------
+    # Complete company profile
+    # -------------------------
 
     profile["ticker"] = ticker
     profile["price"] = price_latest
@@ -119,9 +132,13 @@ def analyze_company(ticker):
         else None
     )
 
+    # =========================
+    # FINANCIAL ANALYSIS
+    # =========================
 
     financial_strength = calculate_financial_strength(
-        balance_quarter, income_ttm
+        balance_quarter,
+        income_ttm
     )
 
     profitability = calculate_profitability(
@@ -142,30 +159,49 @@ def analyze_company(ticker):
     )
 
     history = calculate_history(
-            income_annual,
-            cashflow_annual,
-            ratios_annual,
-            balance_annual,
-            historical_prices,
-            shares_by_year
-        )
+        income_annual,
+        cashflow_annual,
+        ratios_annual,
+        balance_annual,
+        historical_prices,
+        shares_by_year
+    )
 
+    # =========================
+    # DCF ANALYSIS
+    # =========================
 
-    #dcf
-    beta = calculate_beta(historical_data)
+    beta = (
+        calculate_beta(historical_data)
+        if historical_data is not None
+        else None
+    )
 
     risk_free_rate = get_risk_free_rate()
 
-    equity_risk_premium = MARKET_ASSUMPTIONS["US"]["equity_risk_premium"]
+    equity_risk_premium = (
+        MARKET_ASSUMPTIONS["US"]["equity_risk_premium"]
+    )
 
-    total_debt = to_float(balance_quarter[0].get("total_debt"))
-    tax_rate = to_float(income_ttm[0].get("tax_rate"))
+    latest_balance = (
+        balance_quarter[0]
+        if balance_quarter
+        else {}
+    )
 
-    cash = to_float(balance_quarter[0].get("cash")) if balance_quarter else None
-    
-    shares_outstanding = to_float(profile.get("shares_outstanding"))
+    latest_income = (
+        income_ttm[0]
+        if income_ttm
+        else {}
+    )
 
-    market_cap=profile["market_cap"]
+    total_debt = to_float(latest_balance.get("total_debt"))
+    cash = to_float(latest_balance.get("cash"))
+    tax_rate = to_float(latest_income.get("tax_rate"))
+
+    shares_outstanding = to_float(
+        profile.get("shares_outstanding")
+    )
 
     dcf = run_dcf_analysis(
         profitability=profitability,
@@ -176,1582 +212,48 @@ def analyze_company(ticker):
         risk_free_rate=risk_free_rate,
         beta=beta,
         equity_risk_premium=equity_risk_premium,
-        market_cap=market_cap,
+        market_cap=profile["market_cap"],
         cash=cash,
         total_debt=total_debt,
         tax_rate=tax_rate,
         shares_outstanding=shares_outstanding
     )
 
+    # Keep the existing valuation structure used by the frontend.
+    if dcf is not None:
+        valuation["Discounted Cash Flow (DCF) Valuation"] = (
+            dcf["intrinsic_value_per_share"]
+        )
 
-    print(dcf)
+    # =========================
+    # FINAL RESULT
+    # =========================
 
-
-
-    
     return {
         "ticker": ticker,
         "profile": profile,
         "financial_strength": financial_strength,
         "profitability": profitability,
         "valuation": valuation,
-        "history": history
+        "history": history,
+        "dcf": dcf
     }
 
 
+# =========================
+# CLI ENTRY POINT
+# =========================
 
+def main():
+    ticker = input("Ticker: ").strip().upper()
 
-def get_company_data(urls):
-    profile_data, profile_error = get_data(urls["profile"])
+    results = analyze_company(ticker)
 
-    if profile_error == "api_error":
+    if results is None:
         print("Unable to retrieve company data.")
-        return None
+        return
 
-    if not profile_data:
-        return None
-
-    income_data, _ = get_data(urls["income_historical"])
-    cashflow_data, _ = get_data(urls["cashflow_historical"])
-    income_data_ttm, _ = get_data(urls["income_ttm"])
-    balance_quarter, _ = get_data(urls["balance_quarter"])
-    cashflow_data_ttm, _ = get_data(urls["cashflow_ttm"])
-    ratios_data, _ = get_data(urls["ratios_historical"])
-
-    return {
-        "profile": profile_data,
-        "balance_quarter": balance_quarter,
-        "income": income_data,
-        "cashflow": cashflow_data,
-        "income_ttm": income_data_ttm,
-        "cashflow_ttm": cashflow_data_ttm,
-        "ratios_historical": ratios_data
-    }
-
-
-
-def to_float(value):
-    if value is None:
-        return None
-
-    return float(value)
-
-
-def calculate_financial_strength(balance_quarter, income_ttm):
-
-    balance = balance_quarter[0] if balance_quarter else {}
-    income = income_ttm[0] if income_ttm else {}
-
-    cash = to_float(balance.get("cash"))
-    total_debt = to_float(balance.get("total_debt"))
-    equity = to_float(balance.get("equity"))
-    current_assets = to_float(balance.get("current_assets"))
-    current_liabilities = to_float(balance.get("current_liabilities"))
-
-    ebit = to_float(income.get("ebit"))
-    interest_expense = to_float(income.get("interest_expense"))
-
-    net_debt = (
-        total_debt - cash
-        if total_debt is not None and cash is not None
-        else None
-    )
-
-    debt_equity = (
-        total_debt / equity
-        if total_debt is not None
-        and equity is not None
-        and equity > 0
-        else None
-    )
-
-    current_ratio = (
-        current_assets / current_liabilities
-        if current_assets is not None
-        and current_liabilities not in (None, 0)
-        else None
-    )
-
-
-    interest_coverage = (
-        ebit / abs(interest_expense)
-        if ebit is not None
-        and interest_expense not in (None, 0)
-        else None
-    )
-
-    return {
-        "cash": cash,
-        "total_debt": total_debt,
-        "net_debt": net_debt,
-        "debt_to_equity": debt_equity,
-        "current_ratio": current_ratio,
-        "interest_coverage": interest_coverage
-    }
-
-
-def annual_cagr(income_annual, field, years):
-    """CAGR (en %) entre l'exercice le plus récent et celui d'il y a `years` ans.
-
-    income_annual est trié du plus récent au plus ancien. Il faut years + 1 exercices
-    (6 pour un CAGR sur 5 ans). Renvoie None si une valeur manque, n'est pas > 0,
-    ou si un exercice manque dans la liste (l'écart d'années ne vaut plus `years`).
-    """
-    if len(income_annual) <= years:
-        return None
-
-    latest_row = income_annual[0]
-    old_row = income_annual[years]
-
-    try:
-        if int(latest_row["year"]) - int(old_row["year"]) != years:
-            return None
-    except (KeyError, TypeError, ValueError):
-        pass
-
-    latest = to_float(latest_row.get(field))
-    old = to_float(old_row.get(field))
-
-    if latest is None or old is None or latest <= 0 or old <= 0:
-        return None
-
-    return ((latest / old) ** (1 / years) - 1) * 100
-
-
-def calculate_profitability(
-    income_annual,
-    income_ttm,
-    balance_quarter,
-    cashflow_ttm
-):
-
-    # =========================
-    # REVENUE GROWTH
-    # =========================
-
-    revenue_5y_cagr = annual_cagr(income_annual, "revenue", 5)
-    revenue_3y_cagr = annual_cagr(income_annual, "revenue", 3)
-    revenue_yoy_growth = None
-
-    if len(income_ttm) >= 5:
-        latest = to_float(income_ttm[0].get("revenue"))
-        old = to_float(income_ttm[4].get("revenue"))
-
-        if latest is not None and old not in (None, 0):
-            revenue_yoy_growth = ((latest / old) - 1) * 100
-
-
-    # =========================
-    # EPS GROWTH
-    # =========================
-
-    eps_5y_cagr = annual_cagr(income_annual, "eps", 5)
-    eps_3y_cagr = annual_cagr(income_annual, "eps", 3)
-    eps_yoy_growth = None
-
-    if len(income_ttm) >= 5:
-        latest = to_float(income_ttm[0].get("eps_diluted"))
-        old = to_float(income_ttm[4].get("eps_diluted"))
-
-        if (
-            latest is not None
-            and old is not None
-            and latest > 0
-            and old > 0
-        ):
-            eps_yoy_growth = ((latest / old) - 1) * 100
-
-
-    # =========================
-    # MARGINS
-    # =========================
-
-    gross_margin = None
-    operating_margin = None
-    fcf_margin = None
-    fcf_growth_yoy = None
-    fcf = None
-
-    if income_ttm:
-        revenue = to_float(income_ttm[0].get("revenue"))
-        gross_profit = to_float(income_ttm[0].get("gross_profit"))
-        ebit = to_float(income_ttm[0].get("ebit"))
-
-        if revenue not in (None, 0):
-
-            if gross_profit is not None:
-                gross_margin = (gross_profit / revenue) * 100
-
-            if ebit is not None:
-                operating_margin = (ebit / revenue) * 100
-
-    if cashflow_ttm:
-        fcf = to_float(cashflow_ttm[0].get("free_cash_flow"))
-
-        if fcf is not None and income_ttm:
-            revenue = to_float(income_ttm[0].get("revenue"))
-
-            if revenue not in (None, 0):
-                fcf_margin = (fcf / revenue) * 100
-
-    if len(cashflow_ttm) >= 5:
-        latest = to_float(cashflow_ttm[0].get("free_cash_flow"))
-        old = to_float(cashflow_ttm[4].get("free_cash_flow"))
-
-        if (
-            latest is not None
-            and old is not None
-            and latest > 0
-            and old > 0
-        ):
-            fcf_growth_yoy = ((latest / old) - 1) * 100
-
-
-    # =========================
-    # ROE
-    # =========================
-
-    roe = None
-
-    if income_ttm and len(balance_quarter) >= 5:
-
-        net_income = to_float(
-            income_ttm[0].get("net_income")
-        )
-
-        ending_equity = to_float(
-            balance_quarter[0].get("equity")
-        )
-
-        beginning_equity = to_float(
-            balance_quarter[4].get("equity")
-        )
-
-        if (
-            net_income is not None
-            and ending_equity is not None
-            and beginning_equity is not None
-        ):
-            average_equity = (
-                beginning_equity + ending_equity
-            ) / 2
-
-            if average_equity > 0:
-                roe = (
-                    net_income / average_equity
-                ) * 100
-
-
-    # =========================
-    # ROIC
-    # =========================
-
-    roic = None
-
-
-    if income_ttm and len(balance_quarter) >= 5:
-
-        ebit = to_float(
-            income_ttm[0].get("ebit")
-        )
-
-        tax_rate = to_float(
-            income_ttm[0].get("tax_rate")
-        )
-
-        ending_equity = to_float(
-            balance_quarter[0].get("equity")
-        )
-
-        beginning_equity = to_float(
-            balance_quarter[4].get("equity")
-        )
-
-        ending_debt = to_float(
-            balance_quarter[0].get("total_debt")
-        )
-
-        beginning_debt = to_float(
-            balance_quarter[4].get("total_debt")
-        )
-
-        if (
-            ebit is not None
-            and tax_rate is not None
-            and ending_equity is not None
-            and beginning_equity is not None
-            and ending_debt is not None
-            and beginning_debt is not None
-        ):
-            nopat = ebit * (1 - tax_rate)
-
-            average_equity = (
-                beginning_equity + ending_equity
-            ) / 2
-
-            average_debt = (
-                beginning_debt + ending_debt
-            ) / 2
-
-            # Capital investi = fonds propres + dette totale (la trésorerie n'est PAS
-            # déduite). Avec fonds propres + dette nette, le dénominateur devient une
-            # petite différence de grands nombres chez les sociétés très riches en
-            # trésorerie, et le ROIC explose ou devient instable.
-            average_invested_capital = (
-                average_equity + average_debt
-            )
-
-            if average_invested_capital > 0:
-                roic = (
-                    nopat / average_invested_capital
-                ) * 100
-
-
-
-    return {
-        "Revenue 5Y CAGR": revenue_5y_cagr,
-        "Revenue 3Y CAGR": revenue_3y_cagr,
-        "Revenue YoY Growth": revenue_yoy_growth,
-
-        "EPS 5Y CAGR": eps_5y_cagr,
-        "EPS 3Y CAGR": eps_3y_cagr,
-        "EPS YoY Growth": eps_yoy_growth,
-
-        "Gross Margin": gross_margin,
-        "Operating Margin": operating_margin,
-        "Free Cashflow": fcf,
-        "FCF Margin": fcf_margin,
-        "FCF YoY Growth": fcf_growth_yoy,
-
-        "ROE": roe,
-        "ROIC": roic
-    }
-
-
-def calculate_valuation(
-    profile,
-    income_ttm,
-    income_annual,
-    cashflow_ttm,
-    cashflow_annual,
-    balance_quarter,
-    ratios_annual
-):
-
-    valuation = {
-        "P/E": None,
-        "P/FCF": None,
-        "EV/EBITDA": None,
-        "P/B": None,
-        "Normalized Earnings Valuation": None,
-        "Discounted Cash Flow (DCF) Valuation": None
-    }
-
-
-    # =========================
-    # CURRENT VALUATION
-    # =========================
-
-    # -------------------------
-    # P/E
-    # -------------------------
-
-    if profile and income_ttm:
-        price = to_float(profile.get("price"))
-        eps = to_float(income_ttm[0].get("eps_diluted"))
-
-        if price is not None and eps is not None and eps > 0:
-            valuation["P/E"] = price / eps
-
-
-    # -------------------------
-    # P/FCF
-    # -------------------------
-
-    if profile and cashflow_ttm:
-        market_cap = to_float(profile.get("market_cap"))
-        fcf = to_float(cashflow_ttm[0].get("free_cash_flow"))
-
-        if (
-            market_cap is not None
-            and fcf is not None
-            and fcf > 0
-        ):
-            valuation["P/FCF"] = market_cap / fcf
-
-
-    # -------------------------
-    # EV/EBITDA
-    # -------------------------
-
-    if profile and balance_quarter and income_ttm:
-        market_cap = to_float(profile.get("market_cap"))
-        total_debt = to_float(balance_quarter[0].get("total_debt"))
-        cash = to_float(balance_quarter[0].get("cash"))
-        ebit = to_float(income_ttm[0].get("ebit"))
-
-        depreciation = (
-            to_float(cashflow_ttm[0].get("depreciation_amortization"))
-            if cashflow_ttm else None
-        )
-        if depreciation is None and cashflow_annual:
-            depreciation = to_float(cashflow_annual[0].get("depreciation_amortization"))
-
-        if total_debt is None and cash is not None:
-            total_debt = 0.0           # no debt line found = no debt
-
-        if all(v is not None for v in [market_cap, total_debt, cash, ebit, depreciation]):
-            ebitda = ebit + depreciation
-            if ebitda > 0:
-                valuation["EV/EBITDA"] = (market_cap + total_debt - cash) / ebitda
-
-    # -------------------------
-    # P/B
-    # -------------------------
-
-    if profile and balance_quarter:
-
-        market_cap = to_float(
-            profile.get("market_cap")
-        )
-
-        equity = to_float(
-            balance_quarter[0].get("equity")
-        )
-
-        if (
-            market_cap is not None
-            and equity is not None
-            and equity > 0
-        ):
-            valuation["P/B"] = (
-                market_cap / equity
-            )
-
-
-
-    # =========================
-    # NORMALIZED EARNINGS
-    # =========================
-
-    # Uses historical annual EPS and
-    # historical annual P/E ratios.
-
-    
-    if income_annual and ratios_annual:
-
-        eps = [
-            to_float(year.get("eps"))
-            for year in income_annual[:5]
-            if year.get("eps") is not None
-            and to_float(year.get("eps")) > 0
-        ]
-
-        pe_historical = [
-            to_float(year.get("pe"))
-            for year in ratios_annual[:5]
-            if year.get("pe") is not None
-            and to_float(year.get("pe")) > 0
-        ]
-
-        if eps and pe_historical:
-
-            normalized_eps = statistics.median(eps)
-
-            fair_pe = statistics.median(pe_historical)
-
-            valuation["Normalized Earnings Valuation"] = (
-                normalized_eps * fair_pe
-        )
-
-    # =========================
-    # DCF
-    # =========================
-
-    if (
-        profile
-        and cashflow_ttm
-        and cashflow_annual
-        and balance_quarter
-    ):
-
-        fcf = cashflow_ttm[0].get(
-            "free_cash_flow"
-        )
-
-        historical_fcf = [
-            year.get("free_cash_flow")
-            for year in cashflow_annual[:5]
-            if year.get("free_cash_flow") is not None
-        ]
-
-        if (
-            fcf is not None
-            and len(historical_fcf) >= 2
-            and all(
-                float(value) > 0
-                for value in historical_fcf
-            )
-        ):
-
-            fcf = float(fcf)
-
-            fcf_growth = (
-                float(historical_fcf[0])
-                / float(historical_fcf[-1])
-            ) ** (
-                1 / (len(historical_fcf) - 1)
-            ) - 1
-
-            fcf_forecast = []
-
-            for _ in range(5):
-
-                fcf *= 1 + fcf_growth
-
-                fcf_forecast.append(fcf)
-
-
-            discount_rate = 0.10
-            terminal_growth = 0.03
-
-            fcf_present_values = []
-
-            for year, forecast in enumerate(
-                fcf_forecast,
-                start=1
-            ):
-
-                present_value = (
-                    forecast
-                    / (1 + discount_rate) ** year
-                )
-
-                fcf_present_values.append(
-                    present_value
-                )
-
-
-            pv_of_fcf = sum(
-                fcf_present_values
-            )
-
-            terminal_value = (
-                fcf_forecast[-1]
-                * (1 + terminal_growth)
-                / (discount_rate - terminal_growth)
-            )
-
-            terminal_value_pv = (
-                terminal_value
-                / (1 + discount_rate) ** 5
-            )
-
-            enterprise_value = (
-                pv_of_fcf
-                + terminal_value_pv
-            )
-
-
-            total_debt = balance_quarter[0].get(
-                "total_debt"
-            )
-
-            cash = balance_quarter[0].get(
-                "cash"
-            )
-
-            market_cap = profile.get(
-                "market_cap"
-            )
-
-            price = profile.get(
-                "price"
-            )
-
-            if all(value is not None for value in [
-                total_debt,
-                cash,
-                market_cap,
-                price
-            ]) and price != 0:
-
-                shares_outstanding = (
-                    float(market_cap)
-                    / float(price)
-                )
-
-                equity_value = (
-                    enterprise_value
-                    - float(total_debt)
-                    + float(cash)
-                )
-
-                valuation[
-                    "Discounted Cash Flow (DCF) Valuation"
-                ] = (
-                    equity_value
-                    / shares_outstanding
-                )
-
-
-    return valuation
-
-
-#calculation of historical pe for the fair earnings valuation
-def calculate_historical_pe(income_annual, prices_historical):
-    ratios_annual = []
-
-    for row in income_annual:
-        price = prices_historical.get(row["year"])
-        eps = to_float(row.get("eps"))
-
-        if price is not None and eps is not None and eps > 0:
-            ratios_annual.append({
-                "year": row["year"],
-                "pe": price / eps
-            })
-
-    return ratios_annual
-
-
-# =========================
-# HISTORY (per-year series for the dashboard charts)
-# =========================
-
-HISTORY_YEARS = 6
-
-
-def percent(numerator, denominator):
-    if numerator is None or denominator in (None, 0):
-        return None
-
-    return numerator / denominator * 100
-
-
-def fiscal_year_key(value):
-    """'2025', 2025 or '2025-09-27' -> '2025'."""
-    return str(value)[:4]
-
-
-def calculate_history(
-    income_annual,
-    cashflow_annual,
-    ratios_annual,
-    balance_annual,
-    historical_prices,
-    shares_by_year
-):
-    """Build historical chart series, oldest year first."""
-    
-    shares_by_year = {
-            fiscal_year_key(year): to_float(shares)
-            for year, shares in shares_by_year.items()
-        }
-    
-    income_rows = income_annual[:HISTORY_YEARS]
-    
-    cashflow_by_year = {
-        fiscal_year_key(row.get("year")): row
-        for row in cashflow_annual
-    }
-
-    balance_by_year = {
-        fiscal_year_key(row.get("year")): row
-        for row in balance_annual
-        if row.get("year") is not None
-    }
-
-    ratios_have_years = bool(ratios_annual) and all(
-        row.get("year") is not None for row in ratios_annual
-    )
-
-    pe_by_year = (
-        {
-            fiscal_year_key(row["year"]): to_float(row.get("pe"))
-            for row in ratios_annual
-        }
-        if ratios_have_years
-        else {}
-    )
-
-    history = {
-        "years": [],
-        "revenue": [],
-        "fcf": [],
-        "eps": [],
-        "gross_margin": [],
-        "operating_margin": [],
-        "fcf_margin": [],
-        "pe": [],
-        "p_fcf": [],
-        "ev_ebitda": [],
-        "p_b": []
-    }
-
-    for index, row in enumerate(income_rows):
-        year = fiscal_year_key(row.get("year"))
-
-        revenue = to_float(row.get("revenue"))
-        gross_profit = to_float(row.get("gross_profit"))
-        ebit = to_float(row.get("ebit"))
-        eps = to_float(row.get("eps"))
-
-        cashflow_row = cashflow_by_year.get(year, {})
-        balance_row = balance_by_year.get(year, {})
-
-        fcf = to_float(cashflow_row.get("free_cash_flow"))
-        depreciation = to_float(
-            cashflow_row.get("depreciation_amortization")
-        )
-
-        price = to_float(historical_prices.get(year))
-
-        shares = shares_by_year.get(year)
-
-        market_cap = (
-            price * shares
-            if price is not None and shares is not None
-            else None
-        )
-
-        cash = to_float(balance_row.get("cash"))
-        debt = to_float(balance_row.get("total_debt"))
-        equity = to_float(balance_row.get("equity"))
-
-        if ratios_have_years:
-            pe = pe_by_year.get(year)
-        elif index < len(ratios_annual):
-            pe = to_float(ratios_annual[index].get("pe"))
-        else:
-            pe = None
-
-        p_fcf = (
-            market_cap / fcf
-            if market_cap is not None and fcf is not None and fcf > 0
-            else None
-        )
-
-        ebitda = (
-            ebit + depreciation
-            if ebit is not None and depreciation is not None
-            else None
-        )
-
-        ev_ebitda = (
-            (market_cap + debt - cash) / ebitda
-            if (
-                market_cap is not None
-                and debt is not None
-                and cash is not None
-                and ebitda is not None
-                and ebitda > 0
-            )
-            else None
-        )
-
-        p_b = (
-            market_cap / equity
-            if market_cap is not None and equity is not None and equity > 0
-            else None
-        )
-
-        history["years"].append(year)
-        history["revenue"].append(revenue)
-        history["fcf"].append(fcf)
-        history["eps"].append(eps)
-        history["gross_margin"].append(percent(gross_profit, revenue))
-        history["operating_margin"].append(percent(ebit, revenue))
-        history["fcf_margin"].append(percent(fcf, revenue))
-        history["pe"].append(pe)
-        history["p_fcf"].append(p_fcf)
-        history["ev_ebitda"].append(ev_ebitda)
-        history["p_b"].append(p_b)
-
-    for series in history.values():
-        series.reverse()
-
-    return history
-
-
-# =========================
-# DCF
-# =========================
-
-#fcff forecast
-
-
-def run_dcf_analysis(
-    profitability,
-    history,
-    income_annual,
-    cashflow_annual,
-    balance_annual,
-    risk_free_rate,
-    beta,
-    equity_risk_premium,
-    market_cap,
-    cash,
-    total_debt,
-    tax_rate,
-    shares_outstanding,
-    terminal_growth=0.025
-):
-    # Historical FCFF
-    nwc_change = calculate_nwc_change(balance_annual)
-
-    historical_fcff = calculate_historical_fcff(
-        income_annual,
-        cashflow_annual,
-        nwc_change
-    )
-
-    historical_growth = calculate_fcff_growth(historical_fcff)
-
-    # Forecast assumptions
-    forecast_assumptions = calculate_forecast_assumptions(
-        profitability,
-        history,
-        income_annual,
-        cashflow_annual,
-        balance_annual
-    )
-
-    # Forecast FCFF
-    forecast = forecast_fcff(
-        income_annual,
-        balance_annual,
-        forecast_assumptions
-    )
-
-    if forecast is None:
-        return None
-
-    # WACC
-    cost_of_equity = calculate_cost_of_equity(
-        risk_free_rate,
-        beta,
-        equity_risk_premium
-    )
-
-    cost_of_debt = calculate_cost_of_debt(
-        balance_annual,
-        income_annual
-    )
-
-    latest_tax_rate = tax_rate
-
-    wacc = calculate_wacc(
-        market_cap,
-        total_debt,
-        cost_of_equity,
-        cost_of_debt,
-        latest_tax_rate
-    )
-
-    # WACC breakdown
-    market_cap = to_float(market_cap)
-    total_debt = to_float(total_debt)
-
-    total_capital = market_cap + total_debt
-
-    wacc_details = {
-        "risk_free_rate": risk_free_rate,
-        "beta": beta,
-        "equity_risk_premium": equity_risk_premium,
-        "cost_of_equity": cost_of_equity,
-        "cost_of_debt": cost_of_debt,
-        "equity_weight": market_cap / total_capital,
-        "debt_weight": total_debt / total_capital,
-        "tax_rate": latest_tax_rate
-    } if total_capital > 0 else None
-
-    # DCF valuation
-    dcf_result = calculate_dcf(
-        forecast,
-        wacc,
-        cash,
-        total_debt,
-        shares_outstanding,
-        terminal_growth,
-        forecast_assumptions,
-        wacc_details
-    )
-
-    if dcf_result is None:
-        return None
-
-    # Add historical information
-    dcf_result["historical_fcff"] = historical_fcff
-    dcf_result["historical_fcff_growth"] = historical_growth
-
-    return dcf_result
-
-
-
-def calculate_nwc_change(balance_annual):
-    nwc_yearly = {}
-
-    for year_data in balance_annual:
-        year = year_data["year"]
-        nwc = year_data["operating_current_assets"] - year_data["operating_current_liabilities"]
-
-        nwc_yearly[year] = nwc
-
-    years = sorted(nwc_yearly)
-
-    nwc_change = {}
-
-    for i in range(len(years) - 1):
-        current_year = years[i]
-        next_year = years[i + 1]
-        nwc_change[next_year] = nwc_yearly[next_year] - nwc_yearly[current_year]
-
-    return nwc_change
-
-
-def calculate_historical_fcff(income_annual, cashflow_annual, nwc_change):
-    historical_fcff = {}
-
-    for income_data in income_annual:
-        year = income_data["year"]  # Replace with your actual period_key
-
-        ebit = income_data["ebit"]
-        tax_rate = income_data["tax_rate"]
-
-        if ebit is None or tax_rate is None:
-            continue
-
-        nopat = ebit * (1 - tax_rate)
-
-        cashflow_data = next(
-            (item for item in cashflow_annual if item["year"] == year),
-            None
-        )
-
-        if cashflow_data is None or year not in nwc_change:
-            continue
-
-        da = cashflow_data["depreciation_amortization"]
-        capex = cashflow_data["capital_expenditure"]
-        delta_nwc = nwc_change[year]
-
-        if da is None or capex is None:
-            continue
-
-        print(
-            year,
-            "EBIT:", ebit,
-            "Tax rate:", tax_rate,
-            "NOPAT:", nopat,
-            "D&A:", da,
-            "CapEx:", capex,
-            "Change NWC:", delta_nwc
-        )
-
-        fcff = nopat + da - capex - delta_nwc
-
-        historical_fcff[year] = fcff
-
-    return historical_fcff
-
-
-def calculate_fcff_growth(historical_fcff):
-    years = sorted(historical_fcff)
-
-    yearly_growth = {}
-
-    for i in range(1, len(years)):
-        previous_year = years[i - 1]
-        current_year = years[i]
-
-        previous_fcff = historical_fcff[previous_year]
-        current_fcff = historical_fcff[current_year]
-
-        if previous_fcff > 0:
-            yearly_growth[current_year] = (
-                current_fcff / previous_fcff
-            ) - 1
-        else:
-            yearly_growth[current_year] = None
-
-    first_fcff = historical_fcff[years[0]]
-    last_fcff = historical_fcff[years[-1]]
-
-    if first_fcff > 0 and last_fcff > 0 and len(years) > 1:
-        intervals = len(years) - 1
-        cagr = (last_fcff / first_fcff) ** (1 / intervals) - 1
-    else:
-        cagr = None
-
-    return {
-        "yearly_growth": yearly_growth,
-        "cagr": cagr
-    }
-
-
-
-def calculate_forecast_assumptions(
-    profitability,
-    history,
-    income_annual,
-    cashflow_annual,
-    balance_annual
-):
-    weights = {
-        "6y_average": 0.3,
-        "3y_average": 0.3,
-        "latest": 0.4
-    }
-
-    def calculate_weighted_forecast(values):
-        values = [v for v in values if v is not None]
-
-        if not values:
-            return None
-
-        latest = values[0]
-        three_year = values[:3]
-        six_year = values[:6]
-
-        avg_3y = sum(three_year) / len(three_year)
-        avg_6y = sum(six_year) / len(six_year)
-
-        forecast = (
-            avg_6y * weights["6y_average"]
-            + avg_3y * weights["3y_average"]
-            + latest * weights["latest"]
-        )
-
-        return {
-            "forecast": forecast,
-            "6y_average": avg_6y,
-            "3y_average": avg_3y,
-            "latest": latest,
-            "weights": weights
-        }
-
-    # Revenue growth
-    revenue_5y = profitability["Revenue 5Y CAGR"] / 100
-    revenue_3y = profitability["Revenue 3Y CAGR"] / 100
-
-    revenue_growth = {
-        "forecast": (revenue_5y + revenue_3y) / 2,
-        "5y_cagr": revenue_5y,
-        "3y_cagr": revenue_3y
-    }
-
-    # Operating margin
-    operating_margin = calculate_weighted_forecast(
-        history["operating_margin"]
-    )
-
-    if operating_margin is not None:
-        for key in ["forecast", "6y_average", "3y_average", "latest"]:
-            operating_margin[key] /= 100
-
-    # Match financial statements by year rather than list index
-    cashflow_by_year = {
-        str(item["year"]): item
-        for item in cashflow_annual
-    }
-
-    balance_by_year = {
-        str(item["year"]): item
-        for item in balance_annual
-    }
-
-    # Sort income statements newest first
-    income_sorted = sorted(
-        income_annual,
-        key=lambda x: int(x["year"]),
-        reverse=True
-    )[:6]
-
-    # Tax rate
-    tax_rate = calculate_weighted_forecast([
-        to_float(item.get("tax_rate"))
-        for item in income_sorted
-    ])
-
-    # D&A / Revenue
-    da_rates = []
-
-    # CapEx / Revenue
-    capex_rates = []
-
-    # NWC / Revenue
-    nwc_rates = []
-
-    for income in income_sorted:
-        year = str(income["year"])
-        revenue = to_float(income.get("revenue"))
-
-        if revenue is None or revenue == 0:
-            continue
-
-        cashflow = cashflow_by_year.get(year)
-        balance = balance_by_year.get(year)
-
-        if cashflow:
-            da = to_float(cashflow.get("depreciation_amortization"))
-            capex = to_float(cashflow.get("capital_expenditure"))
-
-            if da is not None:
-                da_rates.append(da / revenue)
-
-            if capex is not None:
-                capex_rates.append(capex / revenue)
-
-        if balance:
-            assets = to_float(balance.get("operating_current_assets"))
-            liabilities = to_float(balance.get("operating_current_liabilities"))
-
-            if assets is not None and liabilities is not None:
-                nwc_rates.append((assets - liabilities) / revenue)
-
-    da_rate = calculate_weighted_forecast(da_rates)
-    capex_rate = calculate_weighted_forecast(capex_rates)
-    nwc_rate = calculate_weighted_forecast(nwc_rates)
-
-    return {
-        "revenue_growth": revenue_growth,
-        "operating_margin": operating_margin,
-        "tax_rate": tax_rate,
-        "da_rate": da_rate,
-        "capex_rate": capex_rate,
-        "nwc_rate": nwc_rate
-    }
-
-
-
-def forecast_fcff(
-    income_annual,
-    balance_annual,
-    forecast_assumptions,
-    forecast_years=5
-):
-    # Extract forecast assumptions
-    revenue_growth = forecast_assumptions["revenue_growth"]["forecast"]
-    operating_margin = forecast_assumptions["operating_margin"]["forecast"]
-    tax_rate = forecast_assumptions["tax_rate"]["forecast"]
-    da_rate = forecast_assumptions["da_rate"]["forecast"]
-    capex_rate = forecast_assumptions["capex_rate"]["forecast"]
-    nwc_rate = forecast_assumptions["nwc_rate"]["forecast"]
-
-    latest_income = income_annual[0]
-
-    latest_revenue = to_float(latest_income.get("revenue"))
-    latest_year = int(fiscal_year_key(latest_income.get("year")))
-
-    latest_balance = next(
-        (
-            row for row in balance_annual
-            if fiscal_year_key(row.get("year")) == str(latest_year)
-        ),
-        None
-    )
-
-    if latest_balance is None or latest_revenue is None:
-        return None
-
-    operating_assets = to_float(
-        latest_balance.get("operating_current_assets")
-    )
-    operating_liabilities = to_float(
-        latest_balance.get("operating_current_liabilities")
-    )
-
-    if operating_assets is None or operating_liabilities is None:
-        return None
-
-    latest_nwc = operating_assets - operating_liabilities
-
-    assumptions = [
-        revenue_growth,
-        operating_margin,
-        tax_rate,
-        da_rate,
-        capex_rate,
-        nwc_rate
-    ]
-
-    if any(value is None for value in assumptions):
-        return None
-
-    forecast = []
-
-    revenue = latest_revenue
-    previous_nwc = latest_nwc
-    previous_revenue = latest_revenue
-
-    for year in range(1, forecast_years + 1):
-
-        forecast_year = latest_year + year
-
-        # Revenue
-        revenue *= (1 + revenue_growth)
-        revenue_growth_actual = revenue / previous_revenue - 1
-
-        # EBIT and NOPAT
-        ebit = revenue * operating_margin
-        nopat = ebit * (1 - tax_rate)
-
-        # D&A and CapEx
-        da = revenue * da_rate
-        capex = revenue * capex_rate
-
-        # Net Working Capital
-        nwc = revenue * nwc_rate
-        delta_nwc = nwc - previous_nwc
-
-        # FCFF
-        fcff = nopat + da - capex - delta_nwc
-
-        forecast.append({
-            "year": forecast_year,
-            "revenue": revenue,
-            "revenue_growth": revenue_growth_actual,
-            "ebit": ebit,
-            "operating_margin": operating_margin,
-            "tax_rate": tax_rate,
-            "nopat": nopat,
-            "da": da,
-            "da_rate": da_rate,
-            "capex": capex,
-            "capex_rate": capex_rate,
-            "nwc": nwc,
-            "nwc_rate": nwc_rate,
-            "change_nwc": delta_nwc,
-            "fcff": fcff,
-            "fcff_margin": fcff / revenue if revenue else None
-        })
-
-        previous_nwc = nwc
-        previous_revenue = revenue
-
-    return forecast
-
-def calculate_cost_of_equity(risk_free_rate, beta, equity_risk_premium):
-    if any(value is None for value in [risk_free_rate, beta, equity_risk_premium]):
-        return None
-
-    return risk_free_rate + beta * equity_risk_premium
-
-
-def calculate_cost_of_debt(balance_annual, income_annual):
-    if not balance_annual or not income_annual:
-        return None
-
-    latest_income = max(income_annual, key=lambda x: int(x["year"]))
-    year = int(latest_income["year"])
-
-    current_balance = next(
-        (item for item in balance_annual if int(item["year"]) == year),
-        None
-    )
-    previous_balance = next(
-        (item for item in balance_annual if int(item["year"]) == year - 1),
-        None
-    )
-
-    if current_balance is None or previous_balance is None:
-        return None
-
-    interest_expense = to_float(latest_income.get("interest_expense"))
-    beginning_debt = to_float(previous_balance.get("total_debt"))
-    ending_debt = to_float(current_balance.get("total_debt"))
-
-    if any(value is None for value in [interest_expense, beginning_debt, ending_debt]):
-        return None
-
-    average_debt = (beginning_debt + ending_debt) / 2
-
-    if average_debt <= 0:
-        return None
-
-    return abs(interest_expense) / average_debt
-
-
-def calculate_wacc(market_cap, total_debt, cost_of_equity, cost_of_debt, tax_rate):
-
-    market_cap = to_float(market_cap)
-    total_debt = to_float(total_debt)
-    cost_of_equity = to_float(cost_of_equity)
-    cost_of_debt = to_float(cost_of_debt)
-    tax_rate = to_float(tax_rate)
-
-    if any(value is None for value in [
-        market_cap,
-        total_debt,
-        cost_of_equity
-    ]):
-        return None
-
-    if market_cap < 0 or total_debt < 0:
-        return None
-
-    total_capital = market_cap + total_debt
-
-    if total_capital <= 0:
-        return None
-
-    equity_weight = market_cap / total_capital
-    debt_weight = total_debt / total_capital
-
-    if total_debt == 0:
-        return cost_of_equity
-
-    if cost_of_debt is None or tax_rate is None:
-        return None
-
-    wacc = (
-        equity_weight * cost_of_equity
-        + debt_weight * cost_of_debt * (1 - tax_rate)
-    )
-
-    return wacc
-
-
-
-def calculate_dcf(
-    forecast,
-    wacc,
-    cash,
-    total_debt,
-    shares_outstanding,
-    terminal_growth=0.025,
-    forecast_assumptions=None,
-    wacc_details=None
-):
-    assumptions = {
-        "wacc": wacc,
-        "terminal_growth": terminal_growth,
-        "cash": cash,
-        "total_debt": total_debt,
-        "shares_outstanding": shares_outstanding
-    }
-
-    defaults_used = {}
-
-    for key, default in DCF_DEFAULTS.items():
-        if assumptions.get(key) is None:
-            assumptions[key] = default
-            defaults_used[key] = default
-
-    wacc = to_float(assumptions["wacc"])
-    terminal_growth = to_float(assumptions["terminal_growth"])
-    cash = to_float(assumptions["cash"])
-    total_debt = to_float(assumptions["total_debt"])
-    shares_outstanding = to_float(shares_outstanding)
-
-    if (
-        not forecast
-        or shares_outstanding is None
-        or shares_outstanding <= 0
-    ):
-        return None
-
-    if any(value is None for value in [
-        wacc, terminal_growth, cash, total_debt
-    ]):
-        return None
-
-    if wacc <= terminal_growth or wacc <= -1:
-        return None
-
-    # =========================
-    # PRESENT VALUE OF FORECAST
-    # =========================
-
-    present_values = []
-
-    for year, item in enumerate(forecast, start=1):
-
-        fcff = to_float(item.get("fcff"))
-
-        if fcff is None:
-            return None
-
-        discount_factor = 1 / (1 + wacc) ** year
-        present_value = fcff * discount_factor
-
-        present_values.append({
-            **item,
-            "discount_period": year,
-            "discount_factor": discount_factor,
-            "present_value": present_value
-        })
-
-    pv_forecast = sum(
-        item["present_value"]
-        for item in present_values
-    )
-
-    # =========================
-    # TERMINAL VALUE
-    # =========================
-
-    terminal_fcff = (
-        to_float(forecast[-1]["fcff"])
-        * (1 + terminal_growth)
-    )
-
-    terminal_value = terminal_fcff / (wacc - terminal_growth)
-
-    pv_terminal_value = (
-        terminal_value / (1 + wacc) ** len(forecast)
-    )
-
-    # =========================
-    # ENTERPRISE AND EQUITY VALUE
-    # =========================
-
-    enterprise_value = pv_forecast + pv_terminal_value
-
-    net_cash = cash - total_debt
-
-    equity_value = enterprise_value + net_cash
-
-    intrinsic_value_per_share = equity_value / shares_outstanding
-
-    terminal_value_percentage = (
-        pv_terminal_value / enterprise_value
-        if enterprise_value != 0 else None
-    )
-
-    # =========================
-    # SENSITIVITY ANALYSIS
-    # =========================
-
-    wacc_values = [
-        wacc - 0.02,
-        wacc - 0.01,
-        wacc,
-        wacc + 0.01,
-        wacc + 0.02
-    ]
-
-    growth_values = [
-        terminal_growth - 0.01,
-        terminal_growth - 0.005,
-        terminal_growth,
-        terminal_growth + 0.005,
-        terminal_growth + 0.01
-    ]
-
-
-    # =========================
-    # RETURN
-    # =========================
-
-    return {
-        "forecast": forecast,
-        "present_values": present_values,
-
-        "pv_forecast": pv_forecast,
-        "terminal_fcff": terminal_fcff,
-        "terminal_value": terminal_value,
-        "pv_terminal_value": pv_terminal_value,
-        "terminal_value_percentage": terminal_value_percentage,
-
-        "enterprise_value": enterprise_value,
-        "equity_value": equity_value,
-        "net_cash": net_cash,
-
-        "intrinsic_value_per_share": intrinsic_value_per_share,
-
-        "assumptions": {
-            **assumptions,
-            "forecast_assumptions": forecast_assumptions,
-            "wacc_details": wacc_details
-        },
-
-        "defaults_used": defaults_used
-    }
-
-
-
-# =========================
-# =========================
-
-
-
-def format_value(value, decimals=2, prefix="", suffix=""):
-    if value is None:
-        return "N/A"
-
-    return f"{prefix}{value:,.{decimals}f}{suffix}"
-
-
-def print_profile(profile):
-    print("\n" + "=" * 60)
-    print("COMPANY PROFILE")
-    print("=" * 60)
-
-    print(f"Company:      {profile.get('name', 'N/A')}")
-    print(f"Price:        {format_value(profile.get('price'), prefix='$')}")
-    print(f"Market Cap:   {format_value(profile.get('market_cap'), decimals=0, prefix='$')}")
-    print(f"CEO:          {profile.get('ceo', 'N/A')}")
-
-    print("=" * 60)
-
-
-def print_financial_strength(financial_strength):
-    print("\n" + "=" * 60)
-    print("FINANCIAL STRENGTH")
-    print("=" * 60)
-
-    print(f"Cash:              {format_value(financial_strength.get('cash'), decimals=0, prefix='$')}")
-    print(f"Total Debt:        {format_value(financial_strength.get('total_debt'), decimals=0, prefix='$')}")
-    print(f"Net Debt:          {format_value(financial_strength.get('net_debt'), decimals=0, prefix='$')}")
-    print(f"Debt / Equity:     {format_value(financial_strength.get('debt_to_equity'))}")
-    print(f"Current Ratio:     {format_value(financial_strength.get('current_ratio'))}")
-    print(f"Interest Coverage: {format_value(financial_strength.get('interest_coverage'), suffix='x')}")
-
-
-def print_profitability(profitability):
-    print("\n" + "=" * 60)
-    print("PROFITABILITY & GROWTH")
-    print("=" * 60)
-
-    print(f"Revenue 5Y CAGR:    {format_value(profitability.get('Revenue 5Y CAGR'), suffix='%')}")
-    print(f"Revenue 3Y CAGR:    {format_value(profitability.get('Revenue 3Y CAGR'), suffix='%')}")
-    print(f"Revenue YoY Growth: {format_value(profitability.get('Revenue YoY Growth'), suffix='%')}")
-
-    print(f"\nEPS 5Y CAGR:        {format_value(profitability.get('EPS 5Y CAGR'), suffix='%')}")
-    print(f"EPS 3Y CAGR:        {format_value(profitability.get('EPS 3Y CAGR'), suffix='%')}")
-    print(f"EPS YoY Growth:     {format_value(profitability.get('EPS YoY Growth'), suffix='%')}")
-
-    print(f"\nGross Margin:       {format_value(profitability.get('Gross Margin'), suffix='%')}")
-    print(f"Operating Margin:   {format_value(profitability.get('Operating Margin'), suffix='%')}")
-    print(f"Free Cash Flow:     {format_value(profitability.get('Free Cashflow'), decimals=0, prefix='$')}")
-    print(f"FCF Margin:         {format_value(profitability.get('FCF Margin'), suffix='%')}")
-    print(f"FCF YoY Growth:     {format_value(profitability.get('FCF YoY Growth'), suffix='%')}")
-
-    print(f"\nROE:                {format_value(profitability.get('ROE'), suffix='%')}")
-    print(f"ROIC:               {format_value(profitability.get('ROIC'), suffix='%')}")
-
-
-def print_valuation(valuation):
-    print("\n" + "=" * 60)
-    print("VALUATION")
-    print("=" * 60)
-
-    print(f"P/E:                         {format_value(valuation.get('P/E'), suffix='x')}")
-    print(f"P/FCF:                       {format_value(valuation.get('P/FCF'), suffix='x')}")
-    print(f"EV/EBITDA:                   {format_value(valuation.get('EV/EBITDA'), suffix='x')}")
-    print(f"P/B:                         {format_value(valuation.get('P/B'), suffix='x')}")
-
-    print(
-        f"Normalized Earnings Value:  "
-        f"{format_value(valuation.get('Normalized Earnings Valuation'), prefix='$')}"
-    )
-
-    print(
-        f"DCF Value:                  "
-        f"{format_value(valuation.get('Discounted Cash Flow (DCF) Valuation'), prefix='$')}"
-    )
+    print(json.dumps(results, indent=2, default=str))
 
 
 if __name__ == "__main__":
