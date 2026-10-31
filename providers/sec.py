@@ -30,6 +30,7 @@ LONG_TERM_SECURITY_CONCEPTS = [
 ]
 # Investissements hors "cash" (volontairement) : exposés à part pour le pont EV -> equity.
 LONG_TERM_INVESTMENT_CONCEPTS = ["us-gaap:LongTermInvestments"]
+
 EQUITY_METHOD_INVESTMENT_CONCEPTS = ["us-gaap:EquityMethodInvestments"]
 # Fallback if "cash" is not in edgartools fillings
 CASH_PLAIN_CONCEPTS = [
@@ -42,6 +43,15 @@ CASH_PLAIN_CONCEPTS = [
 RESTRICTED_INCLUSIVE_CASH_CONCEPT = "us-gaap:CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"
 RESTRICTED_INCLUSIVE_CASH_LABEL = "Cash Cash Equivalents Restricted Cash and Restricted Cash Equivalents"
 CASH_CONCEPTS = CASH_PLAIN_CONCEPTS + [RESTRICTED_INCLUSIVE_CASH_CONCEPT]
+
+INTEREST_EXPENSE_LABELS = ["Interest Expense", "Interest Expense, Nonoperating", "Interest Expense, Non-Operating"]
+INTEREST_EXPENSE_CONCEPTS = [
+    "InterestExpense",
+    "InterestExpenseNonoperating",
+    "InterestExpenseDebt",
+    "InterestAndDebtExpense",
+    "InterestExpenseLongTermDebt",
+]
 
 
 
@@ -121,6 +131,7 @@ def get_sec_data(ticker):
 
     try:
         company = Company(ticker)
+        
 
         filings = company.get_filings(form="10-K")
         fiscal_year_ends = {}
@@ -138,6 +149,7 @@ def get_sec_data(ticker):
             fiscal_year_ends,
             splits
         )
+
 
         income_annual_raw = get_income_statement(
             company, split_adjusted_facts, periods=ANNUAL_PERIODS, annual=True
@@ -162,8 +174,11 @@ def get_sec_data(ticker):
 
         balance_extras = extract_balance_extras(company)
 
-        income_annual = extract_income_data(income_annual_raw)
-        income_quarter = extract_income_data(income_quarter_raw)
+        flow_ctx = make_flow_context(company)  
+        income_annual = extract_income_data(income_annual_raw, flow_ctx)
+
+        income_quarter = extract_income_data(income_quarter_raw, flow_ctx)
+
         balance_quarter = extract_balance_quarter(
             balance_quarter_raw,
             balance_extras
@@ -174,8 +189,6 @@ def get_sec_data(ticker):
             period_prefix="FY "
         )
 
-        
-        flow_ctx = make_flow_context(company)
         cashflow_annual = extract_cashflow_data(cashflow_annual_raw, flow_ctx)
         cashflow_quarter = extract_cashflow_data(cashflow_quarter_raw, flow_ctx)
 
@@ -1093,7 +1106,7 @@ def calculate_free_cash_flow(operating_cash_flow, capital_expenditure):
     return operating_cash_flow - capital_expenditure
 
 
-def extract_income_period(data, period, period_key):
+def extract_income_period(data, period, period_key, ctx=None):
     income = {
         period_key: (
             period.replace("FY ", "")
@@ -1123,22 +1136,7 @@ def extract_income_period(data, period, period_key):
             period,
             concepts=["OperatingIncomeLoss"],
         ),
-        "interest_expense": get_first_value(
-            data,
-            [
-                "Interest Expense",
-                "Interest Expense, Debt",
-                "Interest and Debt Expense",
-                "Interest Expense (non-operating)"
-            ],
-            period,
-            concepts=[
-                "InterestExpense",
-                "InterestExpenseNonoperating",
-                "InterestExpenseDebt",
-                "InterestAndDebtExpense",
-            ],
-        ),
+        
         "net_income": get_first_value(
             data,
             ["Net Income (Loss) Attributable to Parent",
@@ -1178,7 +1176,12 @@ def extract_income_period(data, period, period_key):
                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",
             ],
-        )
+        ),
+        "interest_expense": resolve_flow(
+            data, period,
+            INTEREST_EXPENSE_LABELS, INTEREST_EXPENSE_CONCEPTS,
+            ctx=ctx,
+        ),
     }
 
     revenue = income["revenue"]
@@ -1200,7 +1203,7 @@ def extract_income_period(data, period, period_key):
     return income
 
 
-def extract_income_data(data):
+def extract_income_data(data, ctx=None):
     if data is None:
         return []
 
@@ -1208,14 +1211,10 @@ def extract_income_data(data):
 
     for period in data.columns:
         if period.startswith("FY "):
-            income.append(
-                extract_income_period(data, period, "year")
-            )
+            income.append(extract_income_period(data, period, "year", ctx))
 
         elif period.startswith("Q"):
-            income.append(
-                extract_income_period(data, period, "period")
-            )
+            income.append(extract_income_period(data, period, "period", ctx))
 
     return income
 

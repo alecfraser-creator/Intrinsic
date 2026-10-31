@@ -13,3 +13,6 @@ API_KEY_FMP = os.getenv("API_KEY_FMP")
 
 
 API_KEY_FINAZON = os.getenv("API_KEY_FINAZON")
+
+
+FRED_API_KEY = os.getenv("API_KEY_FRED")

@@ -1,18 +1,25 @@
-# next: continue wacc 
+# next: calcu
 # after finishing the backend logic for dcf calculation: reorganise project so that main is a coordinater
 # and doesn't do the analysis himself
 
 #next: add a fallback bottom up approach to calculate oca ocl if top down approach fails
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
+import json
 import statistics
 from . import config
+from pathlib import Path
 
-from providers.market_data import calculate_beta
+from providers.market_data import calculate_beta, get_risk_free_rate
 from providers.fmp import get_fmp_data, get_data
 from providers.sec import get_sec_data
 from providers.finazon import get_latest_price, get_fiscal_year_end_prices, get_historical_price
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+with open(BASE_DIR / "data" / "market_assumptions.json", "r") as file:
+    MARKET_ASSUMPTIONS = json.load(file)
 
 def main():
     ticker = input("Ticker: ").strip().upper()
@@ -144,8 +151,37 @@ def analyze_company(ticker):
     )
 
     beta = calculate_beta(historical_data)
+    risk_free_rate = get_risk_free_rate()
+    equity_risk_premium = MARKET_ASSUMPTIONS["US"]["equity_risk_premium"]
+    cost_of_equity = calculate_cost_of_equity(risk_free_rate, beta, equity_risk_premium)
+    cost_of_debt = calculate_cost_of_debt(balance_annual, income_annual)
+    total_debt = to_float(balance_quarter[0].get("total_debt"))
+    tax_rate = to_float(income_ttm[0].get("tax_rate"))
 
-    print(beta)
+    wacc = calculate_wacc(
+        profile["market_cap"],
+        total_debt,
+        cost_of_equity,
+        cost_of_debt,
+        tax_rate
+    )
+
+    market_cap = profile.get("market_cap")
+    print(f"\n=== WACC: {ticker} ===")
+    print(f"Market cap: {market_cap}")
+    print(f"Total debt: {total_debt}")
+    print(f"Risk-free rate: {risk_free_rate:.2%}" if risk_free_rate is not None else "Risk-free rate: N/A")
+    print(f"Beta: {beta}")
+    print(f"Equity risk premium: {equity_risk_premium:.2%}")
+    print(f"Cost of equity: {cost_of_equity:.2%}" if cost_of_equity is not None else "Cost of equity: N/A")
+    print(f"Cost of debt: {cost_of_debt:.2%}" if cost_of_debt is not None else "Cost of debt: N/A")
+    print(f"Tax rate: {tax_rate:.2%}" if tax_rate is not None else "Tax rate: N/A")
+    print(f"WACC: {wacc:.2%}" if wacc is not None else "WACC: N/A")
+    print(f"Equity weight: {market_cap / (market_cap + total_debt):.2%}")
+    print(f"Debt weight: {total_debt / (market_cap + total_debt):.2%}")
+
+
+
 
     
     return {
@@ -1241,14 +1277,83 @@ def forecast_fcff(
 
 #wacc calculation
 
-def calculate_cost_of_equity():
-    ...
+def calculate_cost_of_equity(risk_free_rate, beta, equity_risk_premium):
+    return risk_free_rate + beta * equity_risk_premium
 
-def calculate_cost_of_debt():
-    ...
+def calculate_cost_of_debt(balance_annual, income_annual):
+    latest_income = max(income_annual, key=lambda x: int(x["year"]))
+    year = int(latest_income["year"])
 
-def calculate_wacc():
-    ... 
+    current_balance = next(
+        (item for item in balance_annual if int(item["year"]) == year),
+        None
+    )
+
+    previous_balance = next(
+        (item for item in balance_annual if int(item["year"]) == year - 1),
+        None
+    )
+
+    if current_balance is None or previous_balance is None:
+        return None
+
+    interest_expense = latest_income.get("interest_expense")
+    beginning_debt = previous_balance.get("total_debt")
+    ending_debt = current_balance.get("total_debt")
+    
+    if any(value is None for value in [
+        interest_expense,
+        beginning_debt,
+        ending_debt
+    ]):
+        return None
+
+    average_debt = (beginning_debt + ending_debt) / 2
+
+    if average_debt <= 0:
+        return None
+
+    return abs(interest_expense) / average_debt
+
+
+def calculate_wacc(market_cap, total_debt, cost_of_equity, cost_of_debt, tax_rate):
+
+    market_cap = to_float(market_cap)
+    total_debt = to_float(total_debt)
+    cost_of_equity = to_float(cost_of_equity)
+    cost_of_debt = to_float(cost_of_debt)
+    tax_rate = to_float(tax_rate)
+
+    if any(value is None for value in [
+        market_cap,
+        total_debt,
+        cost_of_equity
+    ]):
+        return None
+
+    if market_cap < 0 or total_debt < 0:
+        return None
+
+    total_capital = market_cap + total_debt
+
+    if total_capital <= 0:
+        return None
+
+    equity_weight = market_cap / total_capital
+    debt_weight = total_debt / total_capital
+
+    if total_debt == 0:
+        return cost_of_equity
+
+    if cost_of_debt is None or tax_rate is None:
+        return None
+
+    wacc = (
+        equity_weight * cost_of_equity
+        + debt_weight * cost_of_debt * (1 - tax_rate)
+    )
+
+    return wacc
 
 
 

@@ -2,8 +2,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import requests
+
 
 from providers.finazon import get_historical_price
+from backend import config
+
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,3 +60,29 @@ def calculate_beta(historical_data):
     beta = returns.iloc[:, 0].cov(returns["SP500"]) / market_variance
 
     return beta
+
+
+
+def get_risk_free_rate():
+    url = "https://api.stlouisfed.org/fred/series/observations"
+
+    params = {
+        "series_id": "DGS10",
+        "api_key": config.FRED_API_KEY,
+        "file_type": "json",
+        "sort_order": "desc",
+        "limit": 10
+    }
+
+    response = requests.get(url, params=params, timeout=10)
+    response.raise_for_status()
+
+    observations = response.json()["observations"]
+
+    for observation in observations:
+        value = observation["value"]
+
+        if value != ".":
+            return float(value) / 100
+
+    raise ValueError("No valid Treasury yield observation found.")
