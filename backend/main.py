@@ -1,13 +1,8 @@
-# next: combine everything to calculate dcf (base, bear and bull case)
-# next: build a fallback assumption system, and pass to the frontend if assumptions were used : {
- #   "value": 0.0777,
-  #  "status": "calculated"
+# next: populate scenarios.py to calculate a bear, base and bull case
+# next: build the front end for the dcf 
+# next: make the 
 
-#
-# after finishing the backend logic for dcf calculation: reorganise project so that main is a coordinater
-# and doesn't do the analysis himself
 
-#next: add a fallback bottom up approach to calculate oca ocl if top down approach fails
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
 

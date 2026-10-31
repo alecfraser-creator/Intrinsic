@@ -1,3 +1,4 @@
+
 from ..utils import to_float
 
 from .historical import (
@@ -8,6 +9,7 @@ from .historical import (
 
 from .assumptions import calculate_forecast_assumptions
 from .forecast import forecast_fcff
+from .scenarios import generate_scenarios
 
 from .wacc import (
     calculate_cost_of_equity,
@@ -57,18 +59,7 @@ def run_dcf_analysis(
     )
 
 
-    # 3. Forecast future FCFF
-    forecast = forecast_fcff(
-        income_annual,
-        balance_annual,
-        forecast_assumptions
-    )
-
-    if forecast is None:
-        return None
-
-
-    # 4. Calculate WACC components
+    # 3. Calculate WACC components
     cost_of_equity = calculate_cost_of_equity(
         risk_free_rate,
         beta,
@@ -88,8 +79,11 @@ def run_dcf_analysis(
         tax_rate
     )
 
+    # Use the default WACC if the calculation is unavailable
+    base_wacc = wacc if wacc is not None else 0.10
 
-    # 5. Prepare WACC details for the result
+
+    # 4. Prepare WACC details
     market_cap_value = to_float(market_cap)
     debt_value = to_float(total_debt)
 
@@ -110,31 +104,76 @@ def run_dcf_analysis(
             "equity_weight": equity_weight,
             "debt_weight": debt_weight,
             "tax_rate": tax_rate,
-            "wacc": wacc
+            "wacc": base_wacc
         }
 
     else:
         wacc_details = None
 
 
-    # 6. Calculate intrinsic value
-    dcf_result = calculate_dcf(
-        forecast,
-        wacc,
-        cash,
-        total_debt,
-        shares_outstanding,
-        terminal_growth,
+    # 5. Generate bear, base and bull scenarios
+    scenarios = generate_scenarios(
         forecast_assumptions,
-        wacc_details
+        base_wacc,
+        terminal_growth
     )
 
-    if dcf_result is None:
+    scenario_results = {}
+
+    for name, scenario in scenarios.items():
+
+        # Forecast FCFF using scenario-specific assumptions
+        forecast = forecast_fcff(
+            income_annual,
+            balance_annual,
+            scenario["assumptions"]
+        )
+
+        if forecast is None:
+            scenario_results[name] = None
+            continue
+
+        scenario_wacc_details = (
+            dict(wacc_details) if wacc_details else None
+        )
+
+        if scenario_wacc_details is not None:
+            scenario_wacc_details["wacc"] = scenario["wacc"]
+
+        # Calculate DCF valuation
+        dcf_result = calculate_dcf(
+            forecast,
+            scenario["wacc"],
+            cash,
+            total_debt,
+            shares_outstanding,
+            scenario["terminal_growth"],
+            scenario["assumptions"],
+            scenario_wacc_details
+        )
+
+        if dcf_result is None:
+            scenario_results[name] = None
+            continue
+
+        # Record the default WACC if the original calculation failed
+        if wacc is None:
+            dcf_result.setdefault("defaults_used", {})["wacc"] = 0.10
+
+        # Add historical FCFF information
+        dcf_result["historical_fcff"] = historical_fcff
+        dcf_result["historical_fcff_growth"] = historical_growth
+
+        scenario_results[name] = dcf_result
+
+
+    # 6. Keep base case as the main DCF result
+    base_result = scenario_results.get("base")
+
+    if base_result is None:
         return None
 
+    result = dict(base_result)
+    result["scenarios"] = scenario_results
 
-    # 7. Add historical FCFF information
-    dcf_result["historical_fcff"] = historical_fcff
-    dcf_result["historical_fcff_growth"] = historical_growth
-
-    return dcf_result
+    return result

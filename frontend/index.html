@@ -580,32 +580,57 @@
                     </div>
 
                     <!-- Custom Valuation -->
+                    
                     <div
                         id="valuation-panel"
                         class="is-hidden"
                         role="tabpanel"
                         aria-labelledby="valuation-tab"
                     >
-                        <section class="dashboard-section">
+                        <section id="dcf-valuation" class="dashboard-section">
+
                             <h2 class="section-heading">DCF Valuation</h2>
-                            <div class="valuation-grid">
-                            <div class="valuation-card">
-                                <span class="metric-label">
-                                    Normalized earnings valuation
-                                    <button type="button" class="metric-info" data-metric="normalized-earnings-value" aria-label="Explain normalized earnings valuation">i</button>
-                                </span>
-                                <p class="valuation-value" id="normalized-earnings-value"></p>
+
+                            <!-- DCF Scenarios -->
+                            <div class="dcf-scenarios">
+
+                                <button type="button" class="dcf-scenario" data-scenario="bear">
+                                    <span class="dcf-scenario-name">Bear case</span>
+                                    <span class="dcf-scenario-value" id="dcf-bear-value"></span>
+                                    <span class="dcf-scenario-comparison" id="dcf-bear-comparison"></span>
+                                </button>
+
+                                <button type="button" class="dcf-scenario is-active" data-scenario="base">
+                                    <span class="dcf-scenario-name">Base case</span>
+                                    <span class="dcf-scenario-value" id="dcf-base-value"></span>
+                                    <span class="dcf-scenario-comparison" id="dcf-base-comparison"></span>
+                                </button>
+
+                                <button type="button" class="dcf-scenario" data-scenario="bull">
+                                    <span class="dcf-scenario-name">Bull case</span>
+                                    <span class="dcf-scenario-value" id="dcf-bull-value"></span>
+                                    <span class="dcf-scenario-comparison" id="dcf-bull-comparison"></span>
+                                </button>
+
                             </div>
-                            <div class="valuation-card">
-                                <span class="metric-label">
-                                    Discounted cash flow (DCF) valuation
-                                    <button type="button" class="metric-info" data-metric="dcf-value" aria-label="Explain discounted cash flow valuation">i</button>
-                                </span>
-                                <p class="valuation-value" id="dcf-value"></p>
+
+                            <!-- Selected Scenario Forecast -->
+                            <div id="dcf-forecast-section">
+
+                                <div id="dcf-forecast-chart-container">
+                                    <canvas id="dcf-forecast-chart"></canvas>
+                                </div>
+
                             </div>
-                            
+
+                            <!-- DCF Assumptions -->
+                            <div id="dcf-assumptions-section">
+                                <!-- Forecast assumption controls will go here -->
+                            </div>
+
                         </section>
                     </div>
+
 
                     <p class="status-message" role="status" aria-live="polite"></p>
                 </div>
