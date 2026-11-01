@@ -19,6 +19,22 @@ from .wacc import (
 
 from .model import calculate_dcf
 
+def resolve_tax_rate(tax_rate, forecast_assumptions):
+    # Caller passed the whole assumptions dict: take its forecast value
+    if isinstance(tax_rate, dict):
+        tax_rate = tax_rate.get("forecast")
+
+    tax_rate = to_float(tax_rate)
+    if tax_rate is not None and tax_rate > 1:
+        tax_rate /= 100
+
+    # Nothing usable passed: fall back to the historical weighted rate
+    if tax_rate is None:
+        fallback = (forecast_assumptions.get("tax_rate") or {}).get("forecast")
+        tax_rate = to_float(fallback)
+
+    return tax_rate
+
 
 def run_dcf_analysis(
     profitability,
@@ -57,7 +73,8 @@ def run_dcf_analysis(
         cashflow_annual,
         balance_annual
     )
-
+    
+    tax_rate = resolve_tax_rate(tax_rate, forecast_assumptions)
 
     # 3. Calculate WACC components
     cost_of_equity = calculate_cost_of_equity(
@@ -66,9 +83,15 @@ def run_dcf_analysis(
         equity_risk_premium
     )
 
-    cost_of_debt = calculate_cost_of_debt(
-        balance_annual,
-        income_annual
+    cost_of_debt_details = calculate_cost_of_debt(
+    balance_annual,
+    income_annual
+)
+
+    cost_of_debt = (
+        cost_of_debt_details["cost_of_debt"]
+        if cost_of_debt_details is not None
+        else None
     )
 
     wacc = calculate_wacc(
@@ -99,18 +122,38 @@ def run_dcf_analysis(
         debt_weight = debt_value / total_capital
 
         wacc_details = {
+            "risk_free_rate": risk_free_rate,
+            "beta": beta,
+            "equity_risk_premium": equity_risk_premium,
+            "market_cap": market_cap,
+            "total_debt": total_debt,
+
             "cost_of_equity": cost_of_equity,
             "cost_of_debt": cost_of_debt,
+            "cost_of_debt_details": cost_of_debt_details,
             "equity_weight": equity_weight,
             "debt_weight": debt_weight,
             "tax_rate": tax_rate,
+            "calculated_wacc": wacc,
             "wacc": base_wacc
         }
 
     else:
         wacc_details = None
 
-
+    print({
+        "wacc_raw": wacc,
+        "cost_of_equity": cost_of_equity,
+        "cost_of_debt": cost_of_debt,
+        "market_cap": market_cap,
+        "total_debt": total_debt,
+        "tax_rate": tax_rate,
+        "rf": risk_free_rate,
+        "beta": beta,
+        "erp": equity_risk_premium,
+        "base_wacc": base_wacc,
+    })
+    
     # 5. Generate bear, base and bull scenarios
     scenarios = generate_scenarios(
         forecast_assumptions,

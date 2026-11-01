@@ -21,53 +21,39 @@ def calculate_cost_of_debt(balance_annual, income_annual):
     if not balance_annual or not income_annual:
         return None
 
-    latest_income = income_annual[0]
+    income_sorted = sorted(income_annual, key=lambda x: int(x["year"]), reverse=True)
+    latest_income = income_sorted[0]
 
-    interest_expense = to_float(
-        latest_income.get("interest_expense")
-    )
-
+    interest_expense = to_float(latest_income.get("interest_expense"))
     if interest_expense is None:
         return None
 
-    latest_year = fiscal_year_key(latest_income.get("date"))
-
-    balance_by_year = {
-        fiscal_year_key(item.get("date")): item
-        for item in balance_annual
-    }
+    balance_by_year = {str(b["year"]): b for b in balance_annual}
+    latest_year = str(latest_income["year"])
 
     current_balance = balance_by_year.get(latest_year)
-
-    previous_balance = balance_by_year.get(
-        str(int(latest_year) - 1)
-    ) if latest_year and latest_year.isdigit() else None
-
     if not current_balance:
         return None
 
-    current_debt = to_float(current_balance.get("total_debt"))
+    previous_balance = balance_by_year.get(str(int(latest_year) - 1))
 
+    current_debt = to_float(current_balance.get("total_debt"))
     if current_debt is None:
         return None
 
-    if previous_balance:
-        previous_debt = to_float(
-            previous_balance.get("total_debt")
-        )
-    else:
-        previous_debt = None
-
-    if previous_debt is not None:
-        average_debt = (current_debt + previous_debt) / 2
-    else:
-        average_debt = current_debt
+    previous_debt = to_float(previous_balance.get("total_debt")) if previous_balance else None
+    average_debt = (current_debt + previous_debt) / 2 if previous_debt is not None else current_debt
 
     if average_debt <= 0:
         return None
 
-    return abs(interest_expense) / average_debt
-
+    return {
+        "cost_of_debt": abs(interest_expense) / average_debt,
+        "interest_expense": abs(interest_expense),
+        "average_debt": average_debt,
+        "current_debt": current_debt,
+        "previous_debt": previous_debt,
+    }
 
 def calculate_wacc(
     cost_of_equity,

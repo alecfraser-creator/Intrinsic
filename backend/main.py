@@ -1,6 +1,5 @@
-# next: populate scenarios.py to calculate a bear, base and bull case
-# next: build the front end for the dcf 
-# next: make the 
+# next: add an explanation of assmptions, and what data composes them
+# make assumptions customisable (final assumptions but also their components)
 
 
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
