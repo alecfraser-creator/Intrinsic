@@ -47,22 +47,24 @@ def calculate_forecast_assumptions(
 
     revenue_5y = profitability["Revenue 5Y CAGR"]
     revenue_3y = profitability["Revenue 3Y CAGR"]
+    revenue_yoy = profitability["Revenue YoY Growth"]
 
-    if revenue_5y is not None and revenue_3y is not None:
-        revenue_5y /= 100
-        revenue_3y /= 100
+    revenue_growth_values = [
+        value / 100
+        for value in (revenue_5y, revenue_3y, revenue_yoy)
+        if value is not None
+    ]
 
-        revenue_growth = {
-            "forecast": (revenue_5y + revenue_3y) / 2,
-            "5y_cagr": revenue_5y,
-            "3y_cagr": revenue_3y
-        }
-    else:
-        revenue_growth = {
-            "forecast": None,
-            "5y_cagr": revenue_5y / 100 if revenue_5y is not None else None,
-            "3y_cagr": revenue_3y / 100 if revenue_3y is not None else None
-        }
+    revenue_growth = {
+        "forecast": (
+            sum(revenue_growth_values) / len(revenue_growth_values)
+            if revenue_growth_values
+            else None
+        ),
+        "5y_cagr": revenue_5y / 100 if revenue_5y is not None else None,
+        "3y_cagr": revenue_3y / 100 if revenue_3y is not None else None,
+        "yoy_growth": revenue_yoy / 100 if revenue_yoy is not None else None
+    }
 
     # =========================
     # OPERATING MARGIN

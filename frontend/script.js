@@ -958,10 +958,19 @@ function displayAnalysis(data) {
     // DCF
     // --------------------------------------
     displayDcfScenarios();
-    displayDcfForecastChart("base");
-    const selectedScenario = document.querySelector(".dcf-scenario.is-active")?.dataset.scenario || "base";
 
+    const selectedScenario =
+        document.querySelector(".dcf-scenario.is-active")?.dataset.scenario || "base";
+
+    displayDcfForecastChart(selectedScenario);
     displayDcfAssumptions(selectedScenario);
+    setupFcffCalculationAccordion()
+    displayFcffForecast(
+        currentQuantAnalysis.dcf.scenarios[selectedScenario]
+    );
+    displayDcfValuation(
+        currentQuantAnalysis.dcf.scenarios[selectedScenario]
+    );
 }
 
 function displayTimestamps(data) {
@@ -2001,7 +2010,6 @@ function displayDcfForecastChart(scenario) {
         }
     });
 }
-
 function displayDcfAssumptions(selectedScenario) {
     const scenarios = currentQuantAnalysis.dcf.scenarios;
     const scenarioKeys = ["bear", "base", "bull"];
@@ -2092,6 +2100,55 @@ function displayDcfAssumptions(selectedScenario) {
 
     setupDcfAssumptionAccordion();
 }
+function setupFcffCalculationAccordion() {
+    const sections = [
+        {
+            toggle: "#dcf-fcff-calculation-section .fcff-section-toggle",
+            content: "#dcf-fcff-calculation-content"
+        },
+        {
+            toggle: "#dcf-valuation-calculation-section .fcff-section-toggle",
+            content: "#dcf-valuation-calculation-content"
+        }
+    ];
+
+    for (const section of sections) {
+        const toggle = document.querySelector(section.toggle);
+        const content = document.querySelector(section.content);
+
+        if (!toggle || !content || toggle.dataset.initialized) continue;
+
+        toggle.addEventListener("click", () => {
+            toggle.classList.toggle("is-active");
+            content.classList.toggle("is-hidden");
+        });
+
+        toggle.dataset.initialized = "true";
+    }
+}
+function displayFcffForecast(scenarioData) {
+    const container = document.querySelector("#dcf-fcff-calculation-content");
+
+    if (!container) {
+        console.error("FCFF calculation container not found.");
+        return;
+    }
+
+    container.innerHTML = explainFcffForecast(scenarioData);
+}
+function displayDcfValuation(scenarioData) {
+    const container = document.querySelector(
+        "#dcf-valuation-calculation-content"
+    );
+
+    if (!container) {
+        console.error("DCF valuation calculation container not found.");
+        return;
+    }
+
+    container.innerHTML = explainDcfValuation(scenarioData);
+}
+
 
 // Assumptions explanations 
 
@@ -2152,35 +2209,44 @@ function setupDcfAssumptionAccordion() {
         const isOpening = explanation.classList.contains("is-hidden");
 
         if (isOpening) {
-            const selectedScenario = container.dataset.selectedScenario;
-            const scenarioData = currentQuantAnalysis.dcf.scenarios[selectedScenario];
+            const baseScenarioData = currentQuantAnalysis.dcf.scenarios.base;
+
+            if (!baseScenarioData) {
+                console.error("Base scenario data is unavailable.");
+                return;
+            }
 
             if (assumptionKey === "revenue_growth") {
-                explanation.innerHTML = explainRevenueGrowth(scenarioData);
+                explanation.innerHTML = explainRevenueGrowth(baseScenarioData);
 
             } else if (assumptionKey === "operating_margin") {
-                explanation.innerHTML = explainOperatingMargin(scenarioData);
+                explanation.innerHTML = explainOperatingMargin(baseScenarioData);
 
             } else if (assumptionKey === "tax_rate") {
-                explanation.innerHTML = explainTaxRate(scenarioData);
+                explanation.innerHTML = explainTaxRate(baseScenarioData);
+
             } else if (assumptionKey === "da_rate") {
-                explanation.innerHTML = explainDaRate(scenarioData);
-            }  else if (assumptionKey === "capex_rate") {
-                explanation.innerHTML = explainCapexRate(scenarioData);
+                explanation.innerHTML = explainDaRate(baseScenarioData);
+
+            } else if (assumptionKey === "capex_rate") {
+                explanation.innerHTML = explainCapexRate(baseScenarioData);
+
             } else if (assumptionKey === "nwc_rate") {
-                explanation.innerHTML = explainNwcRate(scenarioData);
+                explanation.innerHTML = explainNwcRate(baseScenarioData);
+
             } else if (assumptionKey === "wacc") {
-                console.log(scenarioData.assumptions.wacc_details);
-                explanation.innerHTML = explainWacc(scenarioData);
+                explanation.innerHTML = explainWacc(baseScenarioData);
+
             } else if (assumptionKey === "terminal_growth") {
-                explanation.innerHTML = explainTerminalGrowth(scenarioData);
+                explanation.innerHTML = explainTerminalGrowth(baseScenarioData);
             }
-        } // Closes isOpening
+        }
 
         explanation.classList.toggle("is-hidden");
         assumptionContainer.classList.toggle("is-expanded");
     });
 }
+
 
 function explainRevenueGrowth(scenarioData) {
     const assumptions = scenarioData.assumptions;
@@ -2194,11 +2260,19 @@ function explainRevenueGrowth(scenarioData) {
 
     const isDefault = Object.hasOwn(defaultsUsed, "revenue_growth");
 
-    const has5y = revenueGrowth["5y_cagr"] !== null &&
-                  revenueGrowth["5y_cagr"] !== undefined;
+    const inputs = [
+        { label: "5-year CAGR", value: revenueGrowth["5y_cagr"] },
+        { label: "3-year CAGR", value: revenueGrowth["3y_cagr"] },
+        { label: "TTM YoY Growth", value: revenueGrowth["yoy_growth"] }
+    ];
 
-    const has3y = revenueGrowth["3y_cagr"] !== null &&
-                  revenueGrowth["3y_cagr"] !== undefined;
+    const availableInputs = inputs.filter(
+        input => input.value !== null && input.value !== undefined
+    );
+
+    const weight = availableInputs.length > 0
+        ? 100 / availableInputs.length
+        : 0;
 
     const hasForecast = revenueGrowth.forecast !== null &&
                         revenueGrowth.forecast !== undefined;
@@ -2210,10 +2284,11 @@ function explainRevenueGrowth(scenarioData) {
                 <h4>How is Revenue Growth calculated?</h4>
 
                 <p>
-                    Intrinsic establishes its revenue growth assumption by
-                    averaging the company's 5-year and 3-year historical
-                    revenue CAGRs. Both periods receive equal weight,
-                    balancing long-term performance with more recent trends.
+                    Intrinsic estimates future revenue growth by averaging
+                    three historical growth measures: the 5-year CAGR,
+                    3-year CAGR and latest TTM year-over-year growth.
+                    Each available measure receives equal weight.
+                    Missing values are excluded from the calculation.
                 </p>
             </div>
 
@@ -2227,35 +2302,37 @@ function explainRevenueGrowth(scenarioData) {
                 <h5>Historical inputs</h5>
 
                 <div class="assumption-explanation-table">
+                    ${inputs.map(input => {
+                        const isAvailable = input.value !== null &&
+                                            input.value !== undefined;
 
-                    <div class="assumption-explanation-row">
-                        <span>5-year CAGR</span>
-                        <span>${formatPercent(revenueGrowth["5y_cagr"])}</span>
-                        <span>50%</span>
-                    </div>
-
-                    <div class="assumption-explanation-row">
-                        <span>3-year CAGR</span>
-                        <span>${formatPercent(revenueGrowth["3y_cagr"])}</span>
-                        <span>50%</span>
-                    </div>
-
+                        return `
+                            <div class="assumption-explanation-row">
+                                <span>${input.label}</span>
+                                <span>${formatPercent(input.value)}</span>
+                                <span>${isAvailable
+                                    ? `${weight.toFixed(1)}%`
+                                    : "Excluded"}
+                                </span>
+                            </div>
+                        `;
+                    }).join("")}
                 </div>
             </div>
 
             <div class="assumption-explanation-formula">
                 <h5>Average growth calculation</h5>
 
-                ${has5y && has3y ? `
+                ${availableInputs.length > 0 ? `
                     <p>
-                        (${formatPercent(revenueGrowth["5y_cagr"])} × 50%)
-                        +
-                        (${formatPercent(revenueGrowth["3y_cagr"])} × 50%)
+                        ${availableInputs.map(input =>
+                            `(${formatPercent(input.value)} × ${weight.toFixed(1)}%)`
+                        ).join(" + ")}
                     </p>
                 ` : `
                     <p>
-                        The calculation requires both the 5-year and
-                        3-year revenue CAGR.
+                        No historical revenue growth data is available
+                        to calculate an assumption.
                     </p>
                 `}
 
@@ -2271,6 +2348,7 @@ function explainRevenueGrowth(scenarioData) {
         </div>
     `;
 }
+
 
 function explainOperatingMargin(scenarioData) {
     const assumptions = scenarioData.assumptions;
@@ -2296,16 +2374,21 @@ function explainOperatingMargin(scenarioData) {
                 <h4>How is Operating Margin calculated?</h4>
 
                 <p>
-                    Intrinsic establishes its operating margin assumption using a
-                    weighted average of historical operating margin performance.
-                    This assumption is then applied to projected revenue throughout
-                    the forecast period.
+                    Intrinsic establishes its Base operating margin assumption
+                    using a weighted average of historical operating margin
+                    performance. This assumption is then applied to projected
+                    revenue throughout the forecast period.
+                </p>
+
+                <p>
+                    This is the calculated Base assumption, independent of
+                    the Bear and Bull scenario adjustments.
                 </p>
             </div>
 
             ${isDefault ? `
                 <div class="assumption-explanation-warning">
-                    A default value was used instead of a calculated forecast.
+                    A default value was used instead of a calculated Base assumption.
                 </div>
             ` : ""}
 
@@ -2345,19 +2428,9 @@ function explainOperatingMargin(scenarioData) {
                 </p>
 
                 <div class="assumption-explanation-result">
-                    <span>Operating margin assumption</span>
+                    <span>Calculated Base operating margin</span>
                     <strong>${formatPercent(operatingMargin.forecast)}</strong>
                 </div>
-            </div>
-            
-
-            <div class="assumption-explanation-result">
-                <div>
-                    <span>Forecast operating margin</span>
-                    <p>Weighted historical average</p>
-                </div>
-
-                <strong>${formatPercent(operatingMargin.forecast)}</strong>
             </div>
 
         </div>
@@ -2404,16 +2477,21 @@ function explainTaxRate(scenarioData) {
                 <h4>How is Tax Rate calculated?</h4>
 
                 <p>
-                    Intrinsic establishes its tax rate assumption using a
+                    Intrinsic establishes its Base tax rate assumption using a
                     weighted average of historical annual tax rates.
                     Longer-term averages provide historical context, while
                     the latest available year receives additional weight.
+                </p>
+
+                <p>
+                    This is the calculated Base assumption, independent of
+                    the Bear and Bull scenario adjustments.
                 </p>
             </div>
 
             ${isDefault ? `
                 <div class="assumption-explanation-warning">
-                    A default value was used instead of a calculated assumption.
+                    A default value was used instead of a calculated Base assumption.
                 </div>
             ` : ""}
 
@@ -2461,7 +2539,7 @@ function explainTaxRate(scenarioData) {
                 `}
 
                 <div class="assumption-explanation-result">
-                    <span>Tax rate assumption</span>
+                    <span>Calculated Base tax rate</span>
                     <strong>${hasForecast ? formatPercent(taxRate.forecast) : "Not available"}</strong>
                 </div>
             </div>
@@ -2509,15 +2587,20 @@ function explainDaRate(scenarioData) {
 
                 <p>
                     Intrinsic calculates the company's annual depreciation
-                    and amortization as a percentage of revenue. The forecast
+                    and amortization as a percentage of revenue. The Base
                     assumption is based on a weighted average of historical
                     D&A rates.
+                </p>
+
+                <p>
+                    This is the calculated Base assumption, independent of
+                    the Bear and Bull scenario adjustments.
                 </p>
             </div>
 
             ${isDefault ? `
                 <div class="assumption-explanation-warning">
-                    A default value was used instead of a calculated assumption.
+                    A default value was used instead of a calculated Base assumption.
                 </div>
             ` : ""}
 
@@ -2565,7 +2648,7 @@ function explainDaRate(scenarioData) {
                 `}
 
                 <div class="assumption-explanation-result">
-                    <span>D&A / Revenue assumption</span>
+                    <span>Calculated Base D&A / Revenue</span>
                     <strong>${hasForecast ? formatPercent(daRate.forecast) : "Not available"}</strong>
                 </div>
             </div>
@@ -2612,15 +2695,20 @@ function explainCapexRate(scenarioData) {
 
                 <p>
                     Intrinsic calculates the company's annual capital
-                    expenditures as a percentage of revenue. The forecast
+                    expenditures as a percentage of revenue. The Base
                     assumption is based on a weighted average of historical
                     CapEx rates.
+                </p>
+
+                <p>
+                    This is the calculated Base assumption, independent of
+                    the Bear and Bull scenario adjustments.
                 </p>
             </div>
 
             ${isDefault ? `
                 <div class="assumption-explanation-warning">
-                    A default value was used instead of a calculated assumption.
+                    A default value was used instead of a calculated Base assumption.
                 </div>
             ` : ""}
 
@@ -2668,7 +2756,7 @@ function explainCapexRate(scenarioData) {
                 `}
 
                 <div class="assumption-explanation-result">
-                    <span>CapEx / Revenue assumption</span>
+                    <span>Calculated Base CapEx / Revenue</span>
                     <strong>${hasForecast ? formatPercent(capexRate.forecast) : "Not available"}</strong>
                 </div>
             </div>
@@ -2718,14 +2806,19 @@ function explainNwcRate(scenarioData) {
                     current assets minus operating current liabilities.
                     This amount is divided by revenue to determine the
                     company's historical working capital requirements.
-                    The forecast assumption is based on a weighted average
+                    The Base assumption is based on a weighted average
                     of historical NWC ratios.
+                </p>
+
+                <p>
+                    This is the calculated Base assumption, independent of
+                    the Bear and Bull scenario adjustments.
                 </p>
             </div>
 
             ${isDefault ? `
                 <div class="assumption-explanation-warning">
-                    A default value was used instead of a calculated assumption.
+                    A default value was used instead of a calculated Base assumption.
                 </div>
             ` : ""}
 
@@ -2773,7 +2866,7 @@ function explainNwcRate(scenarioData) {
                 `}
 
                 <div class="assumption-explanation-result">
-                    <span>NWC / Revenue assumption</span>
+                    <span>Calculated Base NWC / Revenue</span>
                     <strong>${hasForecast ? formatPercent(nwcRate.forecast) : "Not available"}</strong>
                 </div>
             </div>
@@ -2843,6 +2936,11 @@ function explainWacc(scenarioData) {
                     of capital. It combines the cost of equity and the
                     after-tax cost of debt, weighted by their respective
                     proportions of total capital.
+                </p>
+
+                <p>
+                    The calculation below explains the Base WACC,
+                    before any Bear or Bull scenario adjustments.
                 </p>
             </div>
 
@@ -3001,7 +3099,7 @@ function explainWacc(scenarioData) {
                     </div>
 
                     <div class="assumption-explanation-row">
-                        <span>Calculated WACC</span>
+                        <span>Calculated Base WACC</span>
                         <span>${hasCalculatedWacc
                             ? formatPercent(details.calculated_wacc)
                             : "Not available"}</span>
@@ -3010,14 +3108,15 @@ function explainWacc(scenarioData) {
                 </div>
 
                 <div class="assumption-explanation-result">
-                    <span>WACC used in this scenario</span>
+                    <span>Base WACC used in the DCF</span>
                     <strong>${formatPercent(details.wacc)}</strong>
                 </div>
 
                 ${isDefault ? `
                     <p>
-                        The scenario WACC is based on the default value,
-                        adjusted according to the selected scenario.
+                        Since the WACC could not be calculated, the Base
+                        scenario uses the default value. Bear and Bull
+                        scenarios may apply their own adjustments to it.
                     </p>
                 ` : ""}
             </div>
@@ -3054,12 +3153,14 @@ function explainTerminalGrowth(scenarioData) {
                 <p>
                     Unlike the other DCF assumptions, terminal growth
                     is manually specified rather than calculated from
-                    historical financial averages.
+                    historical financial averages. The value shown here
+                    is the Base terminal growth assumption, independent
+                    of any Bear or Bull scenario adjustments.
                 </p>
             </div>
 
             <div class="assumption-explanation-inputs">
-                <h5>Scenario assumptions</h5>
+                <h5>Base assumption</h5>
 
                 <div class="assumption-explanation-table">
 
@@ -3087,7 +3188,7 @@ function explainTerminalGrowth(scenarioData) {
                 </p>
 
                 <div class="assumption-explanation-result">
-                    <span>Terminal growth assumption</span>
+                    <span>Base terminal growth assumption</span>
                     <strong>${hasTerminalGrowth
                         ? formatPercent(terminalGrowth)
                         : "Not available"}</strong>
@@ -3097,6 +3198,625 @@ function explainTerminalGrowth(scenarioData) {
         </div>
     `;
 }
+
+// fcff  and valuation calculation explanantion
+
+function explainFcffForecast(scenarioData) {
+    const forecast = scenarioData?.forecast;
+
+    if (!Array.isArray(forecast) || forecast.length === 0) {
+        return `
+            <div class="fcff-explanation-content">
+                <p>FCFF forecast data is not available.</p>
+            </div>
+        `;
+    }
+
+    const formatAmount = value => {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return "—";
+        }
+
+        const absValue = Math.abs(value);
+
+        if (absValue >= 1e12) {
+            return `${(value / 1e12).toFixed(2)}T`;
+        }
+
+        if (absValue >= 1e9) {
+            return `${(value / 1e9).toFixed(2)}B`;
+        }
+
+        if (absValue >= 1e6) {
+            return `${(value / 1e6).toFixed(2)}M`;
+        }
+
+        return value.toLocaleString("en-US", {
+            maximumFractionDigits: 2
+        });
+    };
+
+    const formatPercent = value => {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return "—";
+        }
+
+        return `${(value * 100).toFixed(2)}%`;
+    };
+
+    const formatSignedAmount = value => {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return "—";
+        }
+
+        if (value > 0) {
+            return `+${formatAmount(value)}`;
+        }
+
+        return formatAmount(value);
+    };
+
+    const rows = [
+        {
+            label: "Revenue",
+            getValue: year => formatAmount(year.revenue)
+        },
+        {
+            label: "Revenue growth",
+            getValue: year => formatPercent(year.revenue_growth)
+        },
+        {
+            label: "Operating margin",
+            getValue: year => formatPercent(year.operating_margin)
+        },
+        {
+            label: "EBIT",
+            getValue: year => formatAmount(year.ebit)
+        },
+        {
+            label: "Tax rate",
+            getValue: year => formatPercent(year.tax_rate)
+        },
+        {
+            label: "NOPAT",
+            getValue: year => formatAmount(year.nopat)
+        },
+        {
+            label: "D&A",
+            getValue: year => formatSignedAmount(year.da)
+        },
+        {
+            label: "CapEx",
+            getValue: year => formatSignedAmount(-year.capex)
+        },
+        {
+            label: "Change in NWC",
+            getValue: year => formatSignedAmount(-year.change_nwc)
+        },
+        {
+            label: "Projected FCFF",
+            className: "fcff-total-row",
+            getValue: year => formatAmount(year.fcff)
+        }
+    ];
+
+    const tableRows = rows.map(row => `
+        <div class="fcff-calculation-row ${row.className || ""}">
+            <span class="fcff-calculation-label">${row.label}</span>
+
+            ${forecast.map(year => `
+                <span class="fcff-calculation-value">
+                    ${row.getValue(year)}
+                </span>
+            `).join("")}
+        </div>
+    `).join("");
+
+    return `
+        <div class="fcff-explanation-content">
+
+            <div class="fcff-explanation-intro">
+                <h4>How is free cash flow to the firm calculated?</h4>
+
+                <p>
+                    Intrinsic projects the company's free cash flow to the firm
+                    (FCFF) by starting with operating profit after taxes,
+                    then adjusting for non-cash expenses, capital investments
+                    and changes in operating working capital.
+                </p>
+
+                <p>
+                    The calculation uses the selected scenario's forecast
+                    assumptions. Each year's FCFF is calculated independently
+                    using the projected financial figures shown below.
+                </p>
+            </div>
+
+            <div class="fcff-calculation-formula">
+                <h5>FCFF formula</h5>
+
+                <p>
+                    FCFF = NOPAT + D&A − CapEx − Change in NWC
+                </p>
+
+                <p>
+                    NOPAT represents operating profit after taxes.
+                    D&A is added back because it is a non-cash expense,
+                    while CapEx and increases in working capital represent
+                    cash outflows.
+                </p>
+            </div>
+
+            <div class="fcff-calculation-breakdown">
+                <h5>Forecast calculation</h5>
+
+                <p>
+                    All figures are expressed in the same currency as
+                    the company's financial statements.
+                </p>
+
+                <div class="fcff-calculation-table">
+
+                    <div class="fcff-calculation-row fcff-calculation-header">
+                        <span>Component</span>
+
+                        ${forecast.map(year => `
+                            <span>${year.year}</span>
+                        `).join("")}
+                    </div>
+
+                    ${tableRows}
+
+                </div>
+            </div>
+
+            <div class="fcff-explanation-details">
+
+                <h5>Understanding the components</h5>
+
+                <div class="fcff-explanation-item">
+                    <strong>NOPAT</strong>
+                    <p>
+                        Net Operating Profit After Taxes is calculated by
+                        applying the forecast tax rate to EBIT.
+                    </p>
+                    <p>
+                        NOPAT = EBIT × (1 − Tax Rate)
+                    </p>
+                </div>
+
+                <div class="fcff-explanation-item">
+                    <strong>Depreciation and amortization</strong>
+                    <p>
+                        D&A is added back to NOPAT because it reduces
+                        accounting profit without representing a cash
+                        outflow in the current period. It is forecast
+                        as a percentage of revenue.
+                    </p>
+                </div>
+
+                <div class="fcff-explanation-item">
+                    <strong>Capital expenditures</strong>
+                    <p>
+                        CapEx represents investments in long-term assets
+                        and is deducted from cash flow. It is forecast
+                        as a percentage of revenue.
+                    </p>
+                </div>
+
+                <div class="fcff-explanation-item">
+                    <strong>Change in net working capital</strong>
+                    <p>
+                        Net working capital is calculated as operating
+                        current assets minus operating current liabilities.
+                        Its forecast is based on the historical weighted
+                        average NWC-to-revenue ratio.
+                    </p>
+                    <p>
+                        An increase in NWC consumes cash and reduces FCFF.
+                        A decrease releases cash and increases FCFF.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+function explainDcfValuation(scenarioData) {
+
+    if (!scenarioData) {
+        return `<p>DCF valuation data is unavailable.</p>`;
+    }
+
+    const {
+        present_values,
+        pv_forecast,
+        terminal_fcff,
+        terminal_value,
+        pv_terminal_value,
+        terminal_value_percentage,
+        enterprise_value,
+        equity_value,
+        net_cash,
+        intrinsic_value_per_share,
+        assumptions
+    } = scenarioData;
+
+    const {
+        wacc,
+        terminal_growth,
+        cash,
+        total_debt,
+        shares_outstanding
+    } = assumptions;
+
+    // FORMATTERS
+
+    function formatAmount(value) {
+        if (value == null || !Number.isFinite(Number(value))) return "N/A";
+
+        const number = Number(value);
+        const absolute = Math.abs(number);
+
+        if (absolute >= 1e12) {
+            return `${(number / 1e12).toFixed(2)}T`;
+        }
+
+        if (absolute >= 1e9) {
+            return `${(number / 1e9).toFixed(2)}B`;
+        }
+
+        if (absolute >= 1e6) {
+            return `${(number / 1e6).toFixed(2)}M`;
+        }
+
+        if (absolute >= 1e3) {
+            return `${(number / 1e3).toFixed(2)}K`;
+        }
+
+        return number.toFixed(2);
+    }
+
+    function formatPercent(value) {
+        if (value == null || !Number.isFinite(Number(value))) return "N/A";
+        return `${(Number(value) * 100).toFixed(2)}%`;
+    }
+
+    function formatShares(value) {
+        if (value == null || !Number.isFinite(Number(value))) return "N/A";
+
+        const number = Number(value);
+        const absolute = Math.abs(number);
+
+        if (absolute >= 1e9) return `${(number / 1e9).toFixed(2)}B`;
+        if (absolute >= 1e6) return `${(number / 1e6).toFixed(2)}M`;
+        if (absolute >= 1e3) return `${(number / 1e3).toFixed(2)}K`;
+
+        return number.toLocaleString("en-US", {
+            maximumFractionDigits: 2
+        });
+    }
+
+    function formatFactor(value) {
+        if (value == null || !Number.isFinite(Number(value))) return "N/A";
+        return `${Number(value).toFixed(4)}x`;
+    }
+
+    function calculationRow(label, values, extraClass = "") {
+        return `
+            <div class="fcff-calculation-row ${extraClass}">
+                <span class="fcff-calculation-label">${label}</span>
+                ${values.map(value => `
+                    <span class="fcff-calculation-value">${value}</span>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    // PRESENT VALUE OF FORECAST FCFF
+
+    const forecastRows = (present_values || []).map(item => {
+        return `
+            <div class="fcff-calculation-row">
+                <span class="fcff-calculation-label">
+                    Year ${item.discount_period}
+                </span>
+                <span class="fcff-calculation-value">
+                    ${formatAmount(item.fcff)}
+                </span>
+                <span class="fcff-calculation-value">
+                    ${formatFactor(item.discount_factor)}
+                </span>
+                <span class="fcff-calculation-value">
+                    ${formatAmount(item.present_value)}
+                </span>
+            </div>
+        `;
+    }).join("");
+
+    // TERMINAL VALUE
+
+    const terminalFcffLastYear =
+        present_values?.[present_values.length - 1]?.fcff;
+
+    return `
+        <div class="fcff-explanation-content">
+
+            <!-- INTRODUCTION -->
+
+            <div class="fcff-explanation-intro">
+                <h3>How the DCF valuation is calculated</h3>
+                <p>
+                    The DCF model estimates the company's intrinsic value
+                    by calculating the present value of its projected free
+                    cash flows and its terminal value. It then adjusts
+                    enterprise value for net cash or debt and divides the
+                    result by shares outstanding.
+                </p>
+            </div>
+
+            <!-- PRESENT VALUE OF FORECAST -->
+
+            <div class="fcff-calculation-breakdown">
+
+                <h3>1. Present value of forecast cash flows</h3>
+
+                <p>
+                    Each year's projected free cash flow is discounted
+                    back to today's value using the weighted average
+                    cost of capital (WACC).
+                </p>
+
+                <div class="fcff-calculation-formula">
+                    <strong>Present Value = FCFF ÷ (1 + WACC)<sup>t</sup></strong>
+                    <small>
+                        t represents the number of years into the future.
+                    </small>
+                </div>
+
+                <div class="fcff-calculation-table">
+
+                    <div class="fcff-calculation-row fcff-calculation-header">
+                        <span>Year</span>
+                        <span>Forecast FCFF</span>
+                        <span>Discount factor</span>
+                        <span>Present value</span>
+                    </div>
+
+                    ${forecastRows}
+
+                    ${calculationRow(
+                        "Total present value",
+                        [
+                            "",
+                            "",
+                            formatAmount(pv_forecast)
+                        ],
+                        "fcff-total-row"
+                    )}
+
+                </div>
+
+                <div class="fcff-explanation-details">
+                    <p>
+                        <strong>WACC:</strong> ${formatPercent(wacc)}
+                    </p>
+                    <p>
+                        A higher WACC reduces the present value of future
+                        cash flows, while a lower WACC increases it.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- TERMINAL VALUE -->
+
+            <div class="fcff-calculation-breakdown">
+
+                <h3>2. Terminal value</h3>
+
+                <p>
+                    The terminal value estimates the value of all cash flows
+                    generated after the explicit forecast period. It assumes
+                    that FCFF grows at a constant rate indefinitely.
+                </p>
+
+                <div class="fcff-calculation-formula">
+                    <strong>
+                        Terminal Value = FCFF₅ × (1 + g) ÷ (WACC − g)
+                    </strong>
+                    <small>
+                        g represents the perpetual growth rate.
+                    </small>
+                </div>
+
+                <div class="fcff-explanation-details">
+
+                    <p>
+                        <strong>Final forecast FCFF:</strong>
+                        ${formatAmount(terminalFcffLastYear)}
+                    </p>
+
+                    <p>
+                        <strong>Terminal growth rate:</strong>
+                        ${formatPercent(terminal_growth)}
+                    </p>
+
+                    <p>
+                        <strong>Terminal year FCFF:</strong>
+                        ${formatAmount(terminal_fcff)}
+                    </p>
+
+                    <p>
+                        <strong>Terminal value:</strong>
+                        ${formatAmount(terminal_value)}
+                    </p>
+
+                </div>
+
+                <h4>Discounting the terminal value</h4>
+
+                <p>
+                    Since the terminal value is calculated at the end of
+                    the forecast period, it must also be discounted back
+                    to today's value.
+                </p>
+
+                <div class="fcff-calculation-formula">
+                    <strong>
+                        PV of Terminal Value =
+                        Terminal Value ÷ (1 + WACC)⁵
+                    </strong>
+                </div>
+
+                <div class="fcff-explanation-details">
+                    <p>
+                        <strong>Present value of terminal value:</strong>
+                        ${formatAmount(pv_terminal_value)}
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- ENTERPRISE AND EQUITY VALUE -->
+
+            <div class="fcff-calculation-breakdown">
+
+                <h3>3. Enterprise value and equity value</h3>
+
+                <p>
+                    Enterprise value is the sum of the present value of
+                    forecast cash flows and the present value of terminal
+                    value. To obtain equity value, net cash or debt is
+                    added to enterprise value.
+                </p>
+
+                <div class="fcff-calculation-formula">
+                    <strong>
+                        Enterprise Value = PV of Forecast FCFF + PV of Terminal Value
+                    </strong>
+                </div>
+
+                <div class="fcff-explanation-details">
+
+                    <p>
+                        <strong>PV of forecast FCFF:</strong>
+                        ${formatAmount(pv_forecast)}
+                    </p>
+
+                    <p>
+                        <strong>PV of terminal value:</strong>
+                        ${formatAmount(pv_terminal_value)}
+                    </p>
+
+                    <p>
+                        <strong>Enterprise value:</strong>
+                        ${formatAmount(enterprise_value)}
+                    </p>
+
+                </div>
+
+                <div class="fcff-calculation-formula">
+                    <strong>
+                        Equity Value = Enterprise Value + Cash − Total Debt
+                    </strong>
+                </div>
+
+                <div class="fcff-explanation-details">
+
+                    <p>
+                        <strong>Cash:</strong>
+                        ${formatAmount(cash)}
+                    </p>
+
+                    <p>
+                        <strong>Total debt:</strong>
+                        ${formatAmount(total_debt)}
+                    </p>
+
+                    <p>
+                        <strong>Net cash / (debt):</strong>
+                        ${formatAmount(net_cash)}
+                    </p>
+
+                    <p>
+                        <strong>Equity value:</strong>
+                        ${formatAmount(equity_value)}
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- INTRINSIC VALUE PER SHARE -->
+
+            <div class="fcff-calculation-breakdown">
+
+                <h3>4. Intrinsic value per share</h3>
+
+                <p>
+                    Finally, equity value is divided by the number of
+                    outstanding shares to estimate the intrinsic value
+                    of one share.
+                </p>
+
+                <div class="fcff-calculation-formula">
+                    <strong>
+                        Intrinsic Value Per Share =
+                        Equity Value ÷ Shares Outstanding
+                    </strong>
+                </div>
+
+                <div class="fcff-explanation-details">
+
+                    <p>
+                        <strong>Equity value:</strong>
+                        ${formatAmount(equity_value)}
+                    </p>
+
+                    <p>
+                        <strong>Shares outstanding:</strong>
+                        ${formatShares(shares_outstanding)}
+                    </p>
+
+                    <p>
+                        <strong>Intrinsic value per share:</strong>
+                        ${formatAmount(intrinsic_value_per_share)}
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- TERMINAL VALUE DEPENDENCY -->
+
+            <div class="fcff-explanation-details">
+
+                <h3>Terminal value contribution</h3>
+
+                <p>
+                    The terminal value represents
+                    <strong>${formatPercent(terminal_value_percentage)}</strong>
+                    of total enterprise value.
+                </p>
+
+                <p>
+                    This indicates how much the valuation depends on cash
+                    flows beyond the explicit forecast period. A high
+                    percentage means the valuation is particularly
+                    sensitive to assumptions such as WACC and perpetual
+                    growth.
+                </p>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
 
 // ==========================================
 //  TAB SWITCHING BUTTONS
