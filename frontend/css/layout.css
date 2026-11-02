@@ -1,0 +1,40 @@
+/* ---------- Layout ---------- */
+
+.dashboard {
+    flex: 1;
+    width: 100%;
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5) var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+}
+
+.dashboard-title {
+    font-family: var(--font-sans);
+    font-size: 4rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    text-align: center;
+    margin-bottom: -1.5rem;
+}
+
+/* The sidebar is fixed, so the layout wrapper only holds the main column */
+.dashboard-layout {
+    display: block;
+}
+
+/* Everything that used to sit directly in .dashboard now lives here,
+   so it carries the vertical rhythm */
+.dashboard-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-7);
+    min-width: 0;
+}
+
+.dashboard-section,
+.company-header {
+    scroll-margin-top: calc(var(--header-height) + var(--space-5));
+}

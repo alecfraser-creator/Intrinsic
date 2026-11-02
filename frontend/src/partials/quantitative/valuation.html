@@ -1,0 +1,57 @@
+                        <!-- Valuation -->
+                        <section id="valuation" class="dashboard-section">
+                            <h2 class="section-heading">Valuation</h2>
+
+                            <div class="metrics-subsection">
+                                <h3>Multiples</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            P/E
+                                            <button type="button" class="metric-info" data-metric="pe-ratio" aria-label="Explain price-to-earnings ratio">i</button>
+                                        </span>
+                                        <span class="metric-value" id="pe-ratio"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            P/FCF
+                                            <button type="button" class="metric-info" data-metric="p-fcf" aria-label="Explain price-to-free-cash-flow ratio">i</button>
+                                        </span>
+                                        <span class="metric-value" id="p-fcf"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            EV/EBITDA
+                                            <button type="button" class="metric-info" data-metric="ev-ebitda" aria-label="Explain enterprise value to EBITDA">i</button>
+                                        </span>
+                                        <span class="metric-value" id="ev-ebitda"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            P/B
+                                            <button type="button" class="metric-info" data-metric="p-b" aria-label="Explain price-to-book ratio">i</button>
+                                        </span>
+                                        <span class="metric-value" id="p-b"></span>
+                                    </div>
+                                </div>
+
+                                <div class="historical-chart-grid">
+                                    <div class="historical-chart">
+                                        <h4>Historical P/E</h4>
+                                        <canvas id="historical-pe-chart" role="img" aria-label="Historical price-to-earnings ratio"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Historical P/FCF</h4>
+                                        <canvas id="historical-p-fcf-chart" role="img" aria-label="Historical price-to-free-cash-flow ratio"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Historical EV/EBITDA</h4>
+                                        <canvas id="historical-ev-ebitda-chart" role="img" aria-label="Historical enterprise value to EBITDA ratio"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Historical P/B</h4>
+                                        <canvas id="historical-p-b-chart" role="img" aria-label="Historical price-to-book ratio"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>

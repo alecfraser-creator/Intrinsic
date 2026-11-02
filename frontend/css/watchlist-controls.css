@@ -1,0 +1,143 @@
+/* ---------- Watchlist controls ---------- */
+
+.watchlist-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+/* Shared button styling */
+#save_watchlist,
+#in_watchlist,
+#update_analysis,
+#remove_watchlist {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+#save_watchlist,
+#in_watchlist,
+#update_analysis {
+    padding: var(--space-2) var(--space-3);
+}
+
+/* Add to watchlist */
+#save_watchlist {
+    background: transparent;
+    color: var(--gold);
+    cursor: pointer;
+}
+
+#save_watchlist:hover {
+    background: var(--surface);
+    border-color: var(--gold);
+    color: var(--gold-hover);
+}
+
+#save_watchlist:active {
+    background: var(--border);
+}
+
+/* Saved-state actions: two stacked rows, same width */
+#watchlist-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    width: max-content;
+}
+
+/* Row 1: "In watchlist" + bin */
+.watchlist-status-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+#in_watchlist {
+    flex: 1;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: default;
+    opacity: 0.85;
+}
+
+#in_watchlist:disabled {
+    opacity: 0.85;
+}
+
+/* Row 2: Save analysis + timestamp underneath */
+.save-analysis-control {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+}
+
+/* Primary action: filled gold */
+#update_analysis {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--gold-ink);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#update_analysis:hover:not(:disabled) {
+    background: var(--gold-hover);
+    border-color: var(--gold-hover);
+}
+
+#update_analysis:active:not(:disabled) {
+    background: var(--gold);
+}
+
+#analysis-last-saved {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Compact bin button */
+#remove_watchlist {
+    width: 40px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+#remove_watchlist:hover {
+    background: rgb(210 123 114 / 8%);
+    border-color: var(--negative);
+    color: var(--negative);
+}
+
+#remove_watchlist:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Keep Lucide icons consistent */
+.watchlist-controls svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}

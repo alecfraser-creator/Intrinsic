@@ -1,4 +1,4 @@
-# next: make growth predictions take into account ttm
+# next: separate html, js and css into multiple files 
 # next: make the front end flag what inputs are missing
 # next: separate the dcf calculation from the quant analysis to be able to refresh financials without overwriting dcf
 # make assumptions customisable (final assumptions but also their components)

@@ -1,0 +1,11 @@
+/* ---------- DCF forecast ---------- */
+
+#dcf-forecast-section {
+    margin-top: var(--space-6);
+}
+
+#dcf-forecast-chart-container {
+    position: relative;
+    height: 350px;
+    margin-top: var(--space-5);
+}

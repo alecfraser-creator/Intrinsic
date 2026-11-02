@@ -1,0 +1,54 @@
+/* ---------- Company overview ---------- */
+
+.company-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.company-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.company-identity {
+    min-width: 0;
+}
+
+.company-header h2 {
+    font-size: clamp(2.2rem, 4.5vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+}
+
+.company-ticker {
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.company-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+}
+
+.company-summary .metric-value {
+    text-align: left;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.summary-item .metric-value {
+    font-size: 1.15rem;
+}

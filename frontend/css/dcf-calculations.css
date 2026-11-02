@@ -1,0 +1,202 @@
+/* FCFF Calculation Section */
+
+.fcff-explanation-intro p,
+.fcff-calculation-formula p,
+.fcff-calculation-breakdown p,
+.fcff-explanation-item p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+.fcff-explanation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.fcff-explanation-intro,
+.fcff-calculation-formula,
+.fcff-calculation-breakdown,
+.fcff-explanation-details {
+    padding: 20px;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.fcff-explanation-content h4,
+.fcff-explanation-content h5 {
+    color: var(--text-primary);
+    margin: 0 0 12px;
+}
+
+.fcff-explanation-content h4 {
+    font-size: 1.05rem;
+}
+
+.fcff-explanation-content h5 {
+    font-size: 0.95rem;
+}
+
+.fcff-explanation-content p {
+    margin: 8px 0 0;
+}
+
+/* Formula */
+
+.fcff-calculation-formula > p:first-of-type {
+    font-family: monospace;
+    font-size: 1rem;
+    color: var(--text-primary);
+    padding: 14px;
+    background: var(--surface-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+/* Calculation Table */
+
+.fcff-calculation-table {
+    overflow-x: auto;
+    margin-top: 16px;
+}
+.fcff-calculation-header span:first-child {
+    text-align: left;
+}
+
+.fcff-calculation-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 1.6fr) repeat(5, minmax(90px, 1fr));
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border);
+}
+
+
+.fcff-calculation-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: right;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.fcff-calculation-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.fcff-calculation-value {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.fcff-total-row {
+    border-top: 1px solid var(--border-strong);
+    border-bottom: none;
+    margin-top: 4px;
+    padding-top: 16px;
+}
+
+.fcff-calculation-header span:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.fcff-total-row .fcff-calculation-label,
+.fcff-total-row .fcff-calculation-value {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Component explanations */
+
+.fcff-explanation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.fcff-explanation-details h5 {
+    margin-bottom: 0;
+}
+
+.fcff-explanation-item {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.fcff-explanation-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.fcff-explanation-item strong {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.fcff-explanation-item p + p {
+    margin-top: 8px;
+}
+
+#dcf-fcff-calculation-section {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+
+.fcff-section-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #1f201f;
+    border: 1px solid #2a2b29;
+    border-radius: 10px;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.fcff-section-toggle > span:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.fcff-section-toggle:hover {
+    background: #2c2b27;
+}
+
+.fcff-section-chevron {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+    right: 10px;
+    top: -2px
+}
+
+.fcff-section-toggle.is-active {
+    border-radius: 10px 10px 0 0;
+}
+
+.fcff-section-toggle.is-active .fcff-section-chevron {
+    transform: rotate(180deg);
+}
+
+#dcf-fcff-calculation-content {
+    padding: 20px;
+    background: #1f201f;
+    border: 1px solid #2a2b29;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+}

@@ -1,0 +1,149 @@
+                        <!-- Profitability and Growth -->
+                        <section id="profitability-growth" class="dashboard-section">
+                            <h2 class="section-heading">Profitability and Growth</h2>
+
+                            <div class="metrics-subsection">
+                                <h3>Revenue growth</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            5-year CAGR
+                                            <button type="button" class="metric-info" data-metric="revenue-cagr-5y" aria-label="Explain 5-year revenue CAGR">i</button>
+                                        </span>
+                                        <span class="metric-value" id="revenue-cagr-5y"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            3-year CAGR
+                                            <button type="button" class="metric-info" data-metric="revenue-cagr-3y" aria-label="Explain 3-year revenue CAGR">i</button>
+                                        </span>
+                                        <span class="metric-value" id="revenue-cagr-3y"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Year over year
+                                            <button type="button" class="metric-info" data-metric="revenue-yoy" aria-label="Explain year-over-year revenue growth">i</button>
+                                        </span>
+                                        <span class="metric-value" id="revenue-yoy"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="metrics-subsection">
+                                <h3>EPS growth</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            5-year CAGR
+                                            <button type="button" class="metric-info" data-metric="eps-cagr-5y" aria-label="Explain 5-year EPS CAGR">i</button>
+                                        </span>
+                                        <span class="metric-value" id="eps-cagr-5y"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            3-year CAGR
+                                            <button type="button" class="metric-info" data-metric="eps-cagr-3y" aria-label="Explain 3-year EPS CAGR">i</button>
+                                        </span>
+                                        <span class="metric-value" id="eps-cagr-3y"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Year over year
+                                            <button type="button" class="metric-info" data-metric="eps-yoy" aria-label="Explain year-over-year EPS growth">i</button>
+                                        </span>
+                                        <span class="metric-value" id="eps-yoy"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="metrics-subsection">
+                                <h3>Margins and cash flow</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Gross margin
+                                            <button type="button" class="metric-info" data-metric="gross-margin" aria-label="Explain gross margin">i</button>
+                                        </span>
+                                        <span class="metric-value" id="gross-margin"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Operating margin
+                                            <button type="button" class="metric-info" data-metric="operating-margin" aria-label="Explain operating margin">i</button>
+                                        </span>
+                                        <span class="metric-value" id="operating-margin"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Free cash flow
+                                            <button type="button" class="metric-info" data-metric="free-cash-flow" aria-label="Explain free cash flow">i</button>
+                                        </span>
+                                        <span class="metric-value" id="free-cash-flow"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            FCF margin
+                                            <button type="button" class="metric-info" data-metric="fcf-margin" aria-label="Explain free cash flow margin">i</button>
+                                        </span>
+                                        <span class="metric-value" id="fcf-margin"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            FCF year over year
+                                            <button type="button" class="metric-info" data-metric="fcf-yoy" aria-label="Explain year-over-year free cash flow growth">i</button>
+                                        </span>
+                                        <span class="metric-value" id="fcf-yoy"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="metrics-subsection">
+                                <h3>Returns</h3>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Return on equity (ROE)
+                                            <button type="button" class="metric-info" data-metric="roe" aria-label="Explain return on equity">i</button>
+                                        </span>
+                                        <span class="metric-value" id="roe"></span>
+                                    </div>
+                                    <div class="metric-card">
+                                        <span class="metric-label">
+                                            Return on invested capital (ROIC)
+                                            <button type="button" class="metric-info" data-metric="roic" aria-label="Explain return on invested capital">i</button>
+                                        </span>
+                                        <span class="metric-value" id="roic"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="metrics-subsection">
+                                <h3>Historical trends</h3>
+                                <div class="historical-chart-grid">
+                                    <div class="historical-chart">
+                                        <h4>Revenue</h4>
+                                        <canvas id="historical-revenue-chart" role="img" aria-label="Historical annual revenue"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Earnings per share (EPS)</h4>
+                                        <canvas id="historical-eps-chart" role="img" aria-label="Historical annual earnings per share"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Gross margin</h4>
+                                        <canvas id="historical-gross-margin-chart" role="img" aria-label="Historical gross margin"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Operating margin</h4>
+                                        <canvas id="historical-operating-margin-chart" role="img" aria-label="Historical operating margin"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>Free cash flow</h4>
+                                        <canvas id="historical-fcf-chart" role="img" aria-label="Historical free cash flow"></canvas>
+                                    </div>
+                                    <div class="historical-chart">
+                                        <h4>FCF margin</h4>
+                                        <canvas id="historical-fcf-margin-chart" role="img" aria-label="Historical free cash flow margin"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>

@@ -1,0 +1,356 @@
+/* ---------- DCF assumptions ---------- */
+
+#dcf-assumptions-section {
+    margin-top: var(--space-7);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border-strong);
+}
+
+#dcf-assumptions-section > .section-heading {
+    margin-bottom: var(--space-5);
+}
+
+/* Assumptions grid */
+
+.dcf-assumptions-grid {
+    width: 100%;
+    border-top: 1px solid var(--border);
+}
+
+/* Column headers */
+
+.dcf-assumptions-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(90px, 1fr));
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-3);
+    border-bottom: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-align: right;
+    text-transform: uppercase;
+}
+
+/* Individual assumption rows */
+
+.dcf-assumption {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(90px, 1fr));
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition-fast);
+}
+
+.dcf-assumption:hover {
+    background: rgb(255 255 255 / 2%);
+    cursor: pointer;
+}
+
+.dcf-assumption:last-child {
+    border-bottom: 0;
+}
+
+.dcf-assumptions-header span:first-child {
+    text-align: left;
+}
+
+/* Assumption labels */
+
+.dcf-assumption-label {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Default warning */
+
+.dcf-assumption-status.is-default {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--negative);
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dcf-assumption-status.is-default::before {
+    content: "!";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    font-weight: 700;
+}
+
+/* Assumption values */
+
+.dcf-assumption-value {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Highlight currently selected scenario */
+
+.dcf-assumptions-grid.selected-bear .dcf-assumptions-header span:nth-child(2),
+.dcf-assumptions-grid.selected-bear .dcf-assumption-value:nth-child(2),
+.dcf-assumptions-grid.selected-base .dcf-assumptions-header span:nth-child(3),
+.dcf-assumptions-grid.selected-base .dcf-assumption-value:nth-child(3),
+.dcf-assumptions-grid.selected-bull .dcf-assumptions-header span:nth-child(4),
+.dcf-assumptions-grid.selected-bull .dcf-assumption-value:nth-child(4) {
+    color: var(--gold);
+}
+/* ---------- DCF assumption accordion ---------- */
+
+.dcf-assumption-container {
+    border-bottom: 1px solid var(--border);
+}
+
+.dcf-assumption-container .dcf-assumption {
+    border-bottom: none;
+}
+
+/* Clickable assumption label */
+
+.dcf-assumption-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 5px 8px;
+    margin-left: -8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-fast),
+                color var(--transition-fast),
+                border-color var(--transition-fast);
+}
+
+
+/* Chevron */
+
+.dcf-assumption-chevron {
+    position: relative;
+    top: 1.5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+    line-height: 1;
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    transform: rotate(-90deg);
+}
+
+.dcf-assumption-container.is-expanded .dcf-assumption-chevron {
+    transform: rotate(0deg);
+    top: -3.5px;
+}
+
+/* ---------- DCF assumption explanation ---------- */
+
+.assumption-explanation-content {
+    padding: 20px 24px;
+    background: rgb(255 255 255 / 3%);
+    border-top: 1px solid var(--border);
+}
+
+/* Intro */
+
+.assumption-explanation-intro {
+    margin-bottom: 24px;
+}
+
+.assumption-explanation-intro h4 {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.assumption-explanation-intro p {
+    max-width: 700px;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Default warning */
+
+.assumption-explanation-warning {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+    border: 1px solid var(--warning-border);
+    border-radius: 6px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Section headings */
+
+.assumption-explanation-inputs h5,
+.assumption-explanation-formula h5 {
+    margin: 0 0 12px;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Historical inputs */
+
+.assumption-explanation-inputs {
+    margin-bottom: 20px;
+}
+
+.assumption-explanation-table {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+}
+
+.assumption-explanation-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 80px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.assumption-explanation-row span:first-child {
+    color: var(--text-secondary);
+}
+
+.assumption-explanation-row span:not(:first-child) {
+    color: var(--text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Weighted average formula */
+
+.assumption-explanation-formula {
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.assumption-explanation-formula > p {
+    margin: 0;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+/* Calculation result */
+
+.assumption-explanation-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.assumption-explanation-result span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.assumption-explanation-result strong {
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+    .assumption-explanation-content {
+        padding: 16px;
+    }
+
+    .assumption-explanation-row {
+        grid-template-columns: 1fr 75px 60px;
+        gap: 8px;
+        font-size: 0.82rem;
+    }
+
+    .assumption-explanation-formula {
+        padding: 12px;
+    }
+
+    .assumption-explanation-formula > p {
+        font-size: 0.78rem;
+    }
+}
+/* Responsive */
+
+@media (max-width: 600px) {
+    .dcf-assumptions-grid {
+        overflow-x: auto;
+    }
+
+    .dcf-assumptions-header,
+    .dcf-assumption {
+        min-width: 520px;
+        grid-template-columns: minmax(140px, 1.6fr) repeat(3, minmax(90px, 1fr));
+        gap: var(--space-2);
+    }
+
+    .dcf-assumptions-header {
+        font-size: 0.65rem;
+    }
+
+    .dcf-assumption {
+        padding: var(--space-3) var(--space-2);
+    }
+
+    .dcf-assumption-label {
+        font-size: 0.78rem;
+    }
+
+    .dcf-assumption-value {
+        font-size: 0.82rem;
+    }
+}

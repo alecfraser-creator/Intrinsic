@@ -1,0 +1,41 @@
+/* Intrinsic — editorial dark theme: design tokens */
+
+/* ---------- Tokens ---------- */
+
+:root {
+    --bg: #111110;
+    --surface: #181816;
+    --border: #2a2926;
+    --border-strong: #3b3a35;
+
+    --text: #ebe7df;
+    --text-secondary: #b8b3a8;
+    --text-muted: #9a958a;
+    --text-faint: #646056;
+
+    --gold: #c8a45c;
+    --gold-hover: #d8b872;
+    --gold-ink: #17130a;
+
+    --positive: #7fb58a;
+    --negative: #d27b72;
+
+    --radius: 4px;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2.5rem;
+    --space-7: 4rem;
+    --space-8: 5.5rem;
+
+    --header-height: 60px;
+    --content-width: 1080px;
+    --sidebar-width: 260px;
+
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-serif: var(--font-sans);
+    --font-mono: var(--font-sans);
+}

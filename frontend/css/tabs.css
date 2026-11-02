@@ -1,0 +1,42 @@
+/* ---------- Analysis tabs ---------- */
+
+.analysis-tabs {
+    display: flex;
+    gap: var(--space-6);
+    margin-top: var(--space-4);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.analysis-tab {
+    position: relative;
+    padding: var(--space-3) 0;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.analysis-tab:hover {
+    color: var(--text);
+}
+
+.analysis-tab.is-active {
+    color: var(--gold);
+}
+
+.analysis-tab.is-active::after {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--gold);
+    content: "";
+}
+
+.analysis-tab:focus-visible {
+    outline-offset: 2px;
+}

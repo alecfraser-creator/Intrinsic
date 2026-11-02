@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+/* Narrow screens: the sidebar stacks above the content instead of fixed left */
+@media (max-width: 960px) {
+    body {
+        padding-left: 0;
+    }
+
+    .watchlist-sidebar {
+        position: static;
+        width: auto;
+        padding: 0 0 var(--space-4);
+        margin-bottom: var(--space-6);
+        background: transparent;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        overflow: visible;
+    }
+}
+
+@media (max-width: 720px) {
+    .dashboard {
+        padding: var(--space-6) var(--space-4) var(--space-7);
+        gap: var(--space-6);
+    }
+
+    .search-controls {
+        flex-direction: column;
+    }
+
+    .search-controls button {
+        width: 100%;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .company-summary {
+        gap: var(--space-5);
+    }
+
+    /* Allow the company name and its controls to wrap on smaller screens */
+    .company-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .watchlist-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #watchlist-actions {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .company-header {
+        flex-wrap: wrap;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
