@@ -1,4 +1,3 @@
-
 from ..utils import to_float
 
 
@@ -113,7 +112,7 @@ def calculate_dcf(
 
     terminal_value_percentage = (
         pv_terminal_value / enterprise_value
-        if enterprise_value != 0 else None
+        if enterprise_value > 0 else None
     )
 
     # =========================

@@ -1,8 +1,5 @@
-# next: separate html, js and css into multiple files 
-# next: make the front end flag what inputs are missing
-# next: separate the dcf calculation from the quant analysis to be able to refresh financials without overwriting dcf
-# make assumptions customisable (final assumptions but also their components)
-
+# next: make terminal growth behave like other rows when modifying input
+# next: fix tax rate displaying in wacc input
 
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
@@ -45,7 +42,13 @@ with open(BASE_DIR / "data" / "market_assumptions.json", "r") as file:
 # COMPANY ANALYSIS
 # =========================
 
-def analyze_company(ticker):
+
+def analyze_company(
+    ticker,
+    existing_assumptions=None,
+    existing_scenarios=None,
+    existing_terminal_growth_input=None
+):
     ticker = ticker.strip().upper()
 
     # -------------------------
@@ -212,7 +215,10 @@ def analyze_company(ticker):
         cash=cash,
         total_debt=total_debt,
         tax_rate=tax_rate,
-        shares_outstanding=shares_outstanding
+        shares_outstanding=shares_outstanding,
+        existing_assumptions=existing_assumptions,
+        existing_scenarios=existing_scenarios,
+        existing_terminal_growth_input=existing_terminal_growth_input
     )
 
     # Keep the existing valuation structure used by the frontend.
@@ -234,6 +240,160 @@ def analyze_company(ticker):
         "history": history,
         "dcf": dcf
     }
+
+
+def recalculate_company_dcf(
+    ticker,
+    existing_assumptions=None,
+    existing_scenarios=None,
+    existing_terminal_growth_input=None
+):
+    ticker = ticker.strip().upper()
+
+    # -------------------------
+    # Retrieve SEC data
+    # -------------------------
+
+    sec_data = get_sec_data(ticker)
+
+    if sec_data is None:
+        return None
+
+    profile = sec_data["profile"]
+    income_annual = sec_data["income"]
+    income_ttm = sec_data["income_ttm"]
+    balance_quarter = sec_data["balance_quarter"]
+    balance_annual = sec_data["balance_annual"]
+    cashflow_annual = sec_data["cashflow"]
+    cashflow_ttm = sec_data["cashflow_ttm"]
+
+    # -------------------------
+    # Calculate DCF dependencies
+    # -------------------------
+
+    profitability = calculate_profitability(
+        income_annual,
+        income_ttm,
+        balance_quarter,
+        cashflow_ttm
+    )
+
+    # Historical prices and shares are not needed for the
+    # operating margin series used by the DCF assumptions.
+    history = calculate_history(
+        income_annual,
+        cashflow_annual,
+        [],
+        balance_annual,
+        {},
+        {}
+    )
+
+    # -------------------------
+    # Retrieve market data
+    # -------------------------
+
+    historical_data = None
+
+    if config.DATA_PROVIDER == "free":
+
+        fmp_data = get_fmp_data(ticker)
+
+        if fmp_data is None:
+            return None
+
+        price_latest = to_float(
+            fmp_data["profile"].get("price")
+        )
+
+    elif config.DATA_PROVIDER == "sec_finazon":
+
+        price_latest = get_latest_price(ticker)
+
+        if price_latest is None:
+            return None
+
+        historical_data = get_historical_price(ticker)
+
+    else:
+        raise ValueError(
+            f"Unknown data provider: {config.DATA_PROVIDER}"
+        )
+
+    # -------------------------
+    # Prepare DCF inputs
+    # -------------------------
+
+    shares = to_float(profile.get("shares_outstanding"))
+
+    market_cap = (
+        price_latest * shares
+        if price_latest is not None and shares is not None
+        else None
+    )
+
+    beta = (
+        calculate_beta(historical_data)
+        if historical_data is not None
+        else None
+    )
+
+    risk_free_rate = get_risk_free_rate()
+
+    equity_risk_premium = (
+        MARKET_ASSUMPTIONS["US"]["equity_risk_premium"]
+    )
+
+    latest_balance = (
+        balance_quarter[0]
+        if balance_quarter
+        else {}
+    )
+
+    latest_income = (
+        income_ttm[0]
+        if income_ttm
+        else {}
+    )
+
+    total_debt = to_float(
+        latest_balance.get("total_debt")
+    )
+
+    cash = to_float(
+        latest_balance.get("cash")
+    )
+
+    tax_rate = to_float(
+        latest_income.get("tax_rate")
+    )
+
+    shares_outstanding = shares
+
+    # -------------------------
+    # Run DCF analysis
+    # -------------------------
+
+    dcf = run_dcf_analysis(
+        profitability=profitability,
+        history=history,
+        income_annual=income_annual,
+        cashflow_annual=cashflow_annual,
+        balance_annual=balance_annual,
+        risk_free_rate=risk_free_rate,
+        beta=beta,
+        equity_risk_premium=equity_risk_premium,
+        market_cap=market_cap,
+        cash=cash,
+        total_debt=total_debt,
+        tax_rate=tax_rate,
+        shares_outstanding=shares_outstanding,
+        existing_assumptions=existing_assumptions,
+        existing_scenarios=existing_scenarios,
+        existing_terminal_growth_input=existing_terminal_growth_input
+    )
+
+    return dcf
 
 
 # =========================

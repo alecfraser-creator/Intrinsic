@@ -65,3 +65,27 @@ function formatTimestamp(timestamp) {
         timeStyle: "short"
     });
 }
+
+function renderCalculationInput(row, assumptionKey, scenario) {
+    const value = explainIsNum(row.value)
+        ? (row.value * 100).toFixed(1)
+        : "";
+
+    const displayValue = explainFmt.percent(row.value);
+
+    return `
+        <span class="assumption-input-cell">
+            <span class="assumption-display">${displayValue}</span>
+
+            <input
+                class="assumption-input is-hidden"
+                type="number"
+                step="0.1"
+                value="${value}"
+                data-assumption="${assumptionKey}"
+                data-input="${row.key}"
+                data-scenario="${scenario}"
+            >
+        </span>
+    `;
+}

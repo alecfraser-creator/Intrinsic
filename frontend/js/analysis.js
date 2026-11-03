@@ -6,6 +6,7 @@ function displayAnalysis(data) {
     currentQuantAnalysis = data.quant_analysis;
     currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
     lastFinancialsRefresh = data.last_financials_refresh;
+    currentInWatchlist = data.in_watchlist;
 
     
     displayTimestamps(data);

@@ -2,19 +2,69 @@
 from ..utils import to_float, fiscal_year_key
 
 
+def get_effective_value(assumption):
+    """
+    Returns the effective value of an assumption.
+
+    Priority:
+    1. Scenario-specific value
+    2. Top-level custom override
+    3. Calculated value
+
+    Custom calculation inputs are already reflected in the
+    calculated result and are not read directly here.
+    """
+    if assumption is None:
+        return None
+
+    if assumption.get("scenario_value") is not None:
+        return assumption["scenario_value"]
+
+    if assumption.get("custom") is not None:
+        return assumption["custom"]
+
+    return assumption.get("calculated")
+
+
 def forecast_fcff(
     income_annual,
     balance_annual,
     forecast_assumptions,
     forecast_years=5
 ):
-    # Extract forecast assumptions
-    revenue_growth = forecast_assumptions["revenue_growth"]["forecast"]
-    operating_margin = forecast_assumptions["operating_margin"]["forecast"]
-    tax_rate = forecast_assumptions["tax_rate"]["forecast"]
-    da_rate = forecast_assumptions["da_rate"]["forecast"]
-    capex_rate = forecast_assumptions["capex_rate"]["forecast"]
-    nwc_rate = forecast_assumptions["nwc_rate"]["forecast"]
+    # Extract effective forecast assumptions.
+    def get_scenario_value(assumption):
+        if assumption is None:
+            return None
+
+        if assumption.get("scenario_value") is not None:
+            return assumption["scenario_value"]
+
+        return get_effective_value(assumption)
+
+    revenue_growth = get_scenario_value(
+        forecast_assumptions.get("revenue_growth")
+    )
+
+    operating_margin = get_scenario_value(
+        forecast_assumptions.get("operating_margin")
+    )
+
+    tax_rate = get_scenario_value(
+        forecast_assumptions.get("tax_rate")
+    )
+
+    da_rate = get_scenario_value(
+        forecast_assumptions.get("da_rate")
+    )
+
+    capex_rate = get_scenario_value(
+        forecast_assumptions.get("capex_rate")
+    )
+
+    nwc_rate = get_scenario_value(
+        forecast_assumptions.get("nwc_rate")
+    )
 
     latest_income = income_annual[0]
 
@@ -108,3 +158,13 @@ def forecast_fcff(
         previous_revenue = revenue
 
     return forecast
+
+
+def get_scenario_value(assumption):
+    if assumption is None:
+        return None
+
+    if assumption.get("scenario_value") is not None:
+        return assumption["scenario_value"]
+
+    return get_effective_value(assumption)

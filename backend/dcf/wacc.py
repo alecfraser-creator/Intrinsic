@@ -17,43 +17,115 @@ def calculate_cost_of_equity(risk_free_rate, beta, equity_risk_premium):
     return risk_free_rate + beta * equity_risk_premium
 
 
+
 def calculate_cost_of_debt(balance_annual, income_annual):
-    if not balance_annual or not income_annual:
-        return None
+    # Always return the same structure, even when data is missing.
+    result = {
+        "cost_of_debt": None,
+        "interest_expense": None,
+        "current_debt": None,
+        "previous_debt": None,
+        "average_debt": None,
+    }
 
-    income_sorted = sorted(income_annual, key=lambda x: int(x["year"]), reverse=True)
-    latest_income = income_sorted[0]
+    balance_annual = balance_annual or []
+    income_annual = income_annual or []
 
-    interest_expense = to_float(latest_income.get("interest_expense"))
-    if interest_expense is None:
-        return None
+    if not balance_annual:
+        return result
 
-    balance_by_year = {str(b["year"]): b for b in balance_annual}
-    latest_year = str(latest_income["year"])
+    # Sort financial statements by year.
+    balance_sorted = sorted(
+        balance_annual,
+        key=lambda x: int(x["year"]),
+        reverse=True
+    )
+
+    income_sorted = sorted(
+        income_annual,
+        key=lambda x: int(x["year"]),
+        reverse=True
+    )
+
+    # Use the latest income year when available.
+    # Otherwise, use the latest balance sheet year.
+    latest_year = (
+        str(income_sorted[0]["year"])
+        if income_sorted
+        else str(balance_sorted[0]["year"])
+    )
+
+    balance_by_year = {
+        str(balance["year"]): balance
+        for balance in balance_sorted
+    }
 
     current_balance = balance_by_year.get(latest_year)
-    if not current_balance:
-        return None
 
-    previous_balance = balance_by_year.get(str(int(latest_year) - 1))
+    if current_balance is None:
+        return result
 
-    current_debt = to_float(current_balance.get("total_debt"))
+    previous_balance = balance_by_year.get(
+        str(int(latest_year) - 1)
+    )
+
+    # Retrieve debt figures independently of interest expense.
+    current_debt = to_float(
+        current_balance.get("total_debt")
+    )
+
+    previous_debt = (
+        to_float(previous_balance.get("total_debt"))
+        if previous_balance
+        else None
+    )
+
+    result["current_debt"] = current_debt
+    result["previous_debt"] = previous_debt
+
     if current_debt is None:
-        return None
+        return result
 
-    previous_debt = to_float(previous_balance.get("total_debt")) if previous_balance else None
-    average_debt = (current_debt + previous_debt) / 2 if previous_debt is not None else current_debt
+    # Use average debt when both years are available.
+    # Otherwise, use current debt as a fallback.
+    average_debt = (
+        (current_debt + previous_debt) / 2
+        if previous_debt is not None
+        else current_debt
+    )
+
+    result["average_debt"] = average_debt
 
     if average_debt <= 0:
-        return None
+        return result
 
-    return {
-        "cost_of_debt": abs(interest_expense) / average_debt,
-        "interest_expense": abs(interest_expense),
-        "average_debt": average_debt,
-        "current_debt": current_debt,
-        "previous_debt": previous_debt,
-    }
+    # Interest expense is only available if the income statement
+    # contains the corresponding year.
+    latest_income = next(
+        (
+            income for income in income_sorted
+            if str(income["year"]) == latest_year
+        ),
+        None
+    )
+
+    if latest_income is None:
+        return result
+
+    interest_expense = to_float(
+        latest_income.get("interest_expense")
+    )
+
+    if interest_expense is None:
+        return result
+
+    interest_expense = abs(interest_expense)
+
+    result["interest_expense"] = interest_expense
+    result["cost_of_debt"] = interest_expense / average_debt
+
+    return result
+
 
 def calculate_wacc(
     cost_of_equity,

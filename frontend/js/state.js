@@ -81,3 +81,4 @@ const qualitativeFieldMap = {
     ]
 };
 let lastFinancialsRefresh = null;
+let currentInWatchlist = false;

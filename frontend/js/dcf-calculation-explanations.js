@@ -1,616 +1,353 @@
-// fcff  and valuation calculation explanantion
+// ==========================================================================
+// DCF calculation explanations
+//
+//   FCFF forecast    revenue -> EBIT -> NOPAT -> FCFF            (one column per year)
+//   DCF valuation    inputs -> PV of FCFF -> terminal value -> enterprise value
+//                    -> equity value -> value per share
+//
+// Same structure as the assumption explanations:
+//   build*Model()   pure data, no HTML
+//   render*()       HTML only, no calculations
+// Layout helpers (flowRow / flowStep / flowUsage) and explainIsNum come from
+// dcf-assumption-explanations.js, which must be loaded before this file.
+//
+// Editable-later hooks: assumption-driven rows carry data-input="<key>" and each
+// per-year cell carries data-field="<year>".
+// ==========================================================================
 
-function explainFcffForecast(scenarioData) {
-    const forecast = scenarioData?.forecast;
 
-    if (!Array.isArray(forecast) || forecast.length === 0) {
-        return `
-            <div class="fcff-explanation-content">
-                <p>FCFF forecast data is not available.</p>
-            </div>
-        `;
-    }
+// ---------- Formatting ----------
 
-    const formatAmount = value => {
-        if (value === null || value === undefined || !Number.isFinite(value)) {
-            return "—";
-        }
+// Numbers may arrive as strings; null / "" / non-numeric -> null.
+const calcNum = value => {
+    if (value === null || value === undefined || value === "") return null;
 
-        const absValue = Math.abs(value);
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+};
 
-        if (absValue >= 1e12) {
-            return `${(value / 1e12).toFixed(2)}T`;
-        }
+const calcFmt = {
+    missing: "—",
 
-        if (absValue >= 1e9) {
-            return `${(value / 1e9).toFixed(2)}B`;
-        }
+    // 1.23T / 4.56B / 7.89M / 1.23K
+    amount(value) {
+        const number = calcNum(value);
+        if (number === null) return calcFmt.missing;
 
-        if (absValue >= 1e6) {
-            return `${(value / 1e6).toFixed(2)}M`;
-        }
-
-        return value.toLocaleString("en-US", {
-            maximumFractionDigits: 2
-        });
-    };
-
-    const formatPercent = value => {
-        if (value === null || value === undefined || !Number.isFinite(value)) {
-            return "—";
-        }
-
-        return `${(value * 100).toFixed(2)}%`;
-    };
-
-    const formatSignedAmount = value => {
-        if (value === null || value === undefined || !Number.isFinite(value)) {
-            return "—";
-        }
-
-        if (value > 0) {
-            return `+${formatAmount(value)}`;
-        }
-
-        return formatAmount(value);
-    };
-
-    const rows = [
-        {
-            label: "Revenue",
-            getValue: year => formatAmount(year.revenue)
-        },
-        {
-            label: "Revenue growth",
-            getValue: year => formatPercent(year.revenue_growth)
-        },
-        {
-            label: "Operating margin",
-            getValue: year => formatPercent(year.operating_margin)
-        },
-        {
-            label: "EBIT",
-            getValue: year => formatAmount(year.ebit)
-        },
-        {
-            label: "Tax rate",
-            getValue: year => formatPercent(year.tax_rate)
-        },
-        {
-            label: "NOPAT",
-            getValue: year => formatAmount(year.nopat)
-        },
-        {
-            label: "D&A",
-            getValue: year => formatSignedAmount(year.da)
-        },
-        {
-            label: "CapEx",
-            getValue: year => formatSignedAmount(-year.capex)
-        },
-        {
-            label: "Change in NWC",
-            getValue: year => formatSignedAmount(-year.change_nwc)
-        },
-        {
-            label: "Projected FCFF",
-            className: "fcff-total-row",
-            getValue: year => formatAmount(year.fcff)
-        }
-    ];
-
-    const tableRows = rows.map(row => `
-        <div class="fcff-calculation-row ${row.className || ""}">
-            <span class="fcff-calculation-label">${row.label}</span>
-
-            ${forecast.map(year => `
-                <span class="fcff-calculation-value">
-                    ${row.getValue(year)}
-                </span>
-            `).join("")}
-        </div>
-    `).join("");
-
-    return `
-        <div class="fcff-explanation-content">
-
-            <div class="fcff-explanation-intro">
-                <h4>How is free cash flow to the firm calculated?</h4>
-
-                <p>
-                    Intrinsic projects the company's free cash flow to the firm
-                    (FCFF) by starting with operating profit after taxes,
-                    then adjusting for non-cash expenses, capital investments
-                    and changes in operating working capital.
-                </p>
-
-                <p>
-                    The calculation uses the selected scenario's forecast
-                    assumptions. Each year's FCFF is calculated independently
-                    using the projected financial figures shown below.
-                </p>
-            </div>
-
-            <div class="fcff-calculation-formula">
-                <h5>FCFF formula</h5>
-
-                <p>
-                    FCFF = NOPAT + D&A − CapEx − Change in NWC
-                </p>
-
-                <p>
-                    NOPAT represents operating profit after taxes.
-                    D&A is added back because it is a non-cash expense,
-                    while CapEx and increases in working capital represent
-                    cash outflows.
-                </p>
-            </div>
-
-            <div class="fcff-calculation-breakdown">
-                <h5>Forecast calculation</h5>
-
-                <p>
-                    All figures are expressed in the same currency as
-                    the company's financial statements.
-                </p>
-
-                <div class="fcff-calculation-table">
-
-                    <div class="fcff-calculation-row fcff-calculation-header">
-                        <span>Component</span>
-
-                        ${forecast.map(year => `
-                            <span>${year.year}</span>
-                        `).join("")}
-                    </div>
-
-                    ${tableRows}
-
-                </div>
-            </div>
-
-            <div class="fcff-explanation-details">
-
-                <h5>Understanding the components</h5>
-
-                <div class="fcff-explanation-item">
-                    <strong>NOPAT</strong>
-                    <p>
-                        Net Operating Profit After Taxes is calculated by
-                        applying the forecast tax rate to EBIT.
-                    </p>
-                    <p>
-                        NOPAT = EBIT × (1 − Tax Rate)
-                    </p>
-                </div>
-
-                <div class="fcff-explanation-item">
-                    <strong>Depreciation and amortization</strong>
-                    <p>
-                        D&A is added back to NOPAT because it reduces
-                        accounting profit without representing a cash
-                        outflow in the current period. It is forecast
-                        as a percentage of revenue.
-                    </p>
-                </div>
-
-                <div class="fcff-explanation-item">
-                    <strong>Capital expenditures</strong>
-                    <p>
-                        CapEx represents investments in long-term assets
-                        and is deducted from cash flow. It is forecast
-                        as a percentage of revenue.
-                    </p>
-                </div>
-
-                <div class="fcff-explanation-item">
-                    <strong>Change in net working capital</strong>
-                    <p>
-                        Net working capital is calculated as operating
-                        current assets minus operating current liabilities.
-                        Its forecast is based on the historical weighted
-                        average NWC-to-revenue ratio.
-                    </p>
-                    <p>
-                        An increase in NWC consumes cash and reduces FCFF.
-                        A decrease releases cash and increases FCFF.
-                    </p>
-                </div>
-
-            </div>
-
-        </div>
-    `;
-}
-
-function explainDcfValuation(scenarioData) {
-
-    if (!scenarioData) {
-        return `<p>DCF valuation data is unavailable.</p>`;
-    }
-
-    const {
-        present_values,
-        pv_forecast,
-        terminal_fcff,
-        terminal_value,
-        pv_terminal_value,
-        terminal_value_percentage,
-        enterprise_value,
-        equity_value,
-        net_cash,
-        intrinsic_value_per_share,
-        assumptions
-    } = scenarioData;
-
-    const {
-        wacc,
-        terminal_growth,
-        cash,
-        total_debt,
-        shares_outstanding
-    } = assumptions;
-
-    // FORMATTERS
-
-    function formatAmount(value) {
-        if (value == null || !Number.isFinite(Number(value))) return "N/A";
-
-        const number = Number(value);
         const absolute = Math.abs(number);
 
-        if (absolute >= 1e12) {
-            return `${(number / 1e12).toFixed(2)}T`;
-        }
-
-        if (absolute >= 1e9) {
-            return `${(number / 1e9).toFixed(2)}B`;
-        }
-
-        if (absolute >= 1e6) {
-            return `${(number / 1e6).toFixed(2)}M`;
-        }
-
-        if (absolute >= 1e3) {
-            return `${(number / 1e3).toFixed(2)}K`;
-        }
+        if (absolute >= 1e12) return `${(number / 1e12).toFixed(2)}T`;
+        if (absolute >= 1e9) return `${(number / 1e9).toFixed(2)}B`;
+        if (absolute >= 1e6) return `${(number / 1e6).toFixed(2)}M`;
+        if (absolute >= 1e3) return `${(number / 1e3).toFixed(2)}K`;
 
         return number.toFixed(2);
-    }
+    },
 
-    function formatPercent(value) {
-        if (value == null || !Number.isFinite(Number(value))) return "N/A";
-        return `${(Number(value) * 100).toFixed(2)}%`;
-    }
+    // Same as amount, with an explicit "+" on positive values
+    signed(value) {
+        const number = calcNum(value);
+        if (number === null) return calcFmt.missing;
 
-    function formatShares(value) {
-        if (value == null || !Number.isFinite(Number(value))) return "N/A";
+        return number > 0 ? `+${calcFmt.amount(number)}` : calcFmt.amount(number);
+    },
 
-        const number = Number(value);
+    percent(value) {
+        const number = calcNum(value);
+        return number === null ? calcFmt.missing : `${(number * 100).toFixed(2)}%`;
+    },
+
+    factor(value) {
+        const number = calcNum(value);
+        return number === null ? calcFmt.missing : `${number.toFixed(4)}x`;
+    },
+
+    shares(value) {
+        const number = calcNum(value);
+        if (number === null) return calcFmt.missing;
+
         const absolute = Math.abs(number);
 
         if (absolute >= 1e9) return `${(number / 1e9).toFixed(2)}B`;
         if (absolute >= 1e6) return `${(number / 1e6).toFixed(2)}M`;
         if (absolute >= 1e3) return `${(number / 1e3).toFixed(2)}K`;
 
-        return number.toLocaleString("en-US", {
-            maximumFractionDigits: 2
-        });
+        return number.toLocaleString("en-US", { maximumFractionDigits: 2 });
+    },
+
+    perShare(value) {
+        const number = calcNum(value);
+
+        return number === null
+            ? calcFmt.missing
+            : number.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
     }
+};
 
-    function formatFactor(value) {
-        if (value == null || !Number.isFinite(Number(value))) return "N/A";
-        return `${Number(value).toFixed(4)}x`;
-    }
+// Row label with a muted formula underneath
+const calcLabel = (label, formula) =>
+    formula ? `${label}<small>${formula}</small>` : label;
 
-    function calculationRow(label, values, extraClass = "") {
-        return `
-            <div class="fcff-calculation-row ${extraClass}">
-                <span class="fcff-calculation-label">${label}</span>
-                ${values.map(value => `
-                    <span class="fcff-calculation-value">${value}</span>
-                `).join("")}
-            </div>
-        `;
-    }
+const CALC_ROW_CLASS = {
+    input: "is-input",
+    calc: "",
+    subtotal: "is-subtotal",
+    total: "is-total"
+};
 
-    // PRESENT VALUE OF FORECAST FCFF
-
-    const forecastRows = (present_values || []).map(item => {
-        return `
-            <div class="fcff-calculation-row">
-                <span class="fcff-calculation-label">
-                    Year ${item.discount_period}
-                </span>
-                <span class="fcff-calculation-value">
-                    ${formatAmount(item.fcff)}
-                </span>
-                <span class="fcff-calculation-value">
-                    ${formatFactor(item.discount_factor)}
-                </span>
-                <span class="fcff-calculation-value">
-                    ${formatAmount(item.present_value)}
-                </span>
-            </div>
-        `;
-    }).join("");
-
-    // TERMINAL VALUE
-
-    const terminalFcffLastYear =
-        present_values?.[present_values.length - 1]?.fcff;
-
+function calcUnavailable(message) {
     return `
-        <div class="fcff-explanation-content">
-
-            <!-- INTRODUCTION -->
-
-            <div class="fcff-explanation-intro">
-                <h3>How the DCF valuation is calculated</h3>
-                <p>
-                    The DCF model estimates the company's intrinsic value
-                    by calculating the present value of its projected free
-                    cash flows and its terminal value. It then adjusts
-                    enterprise value for net cash or debt and divides the
-                    result by shares outstanding.
-                </p>
-            </div>
-
-            <!-- PRESENT VALUE OF FORECAST -->
-
-            <div class="fcff-calculation-breakdown">
-
-                <h3>1. Present value of forecast cash flows</h3>
-
-                <p>
-                    Each year's projected free cash flow is discounted
-                    back to today's value using the weighted average
-                    cost of capital (WACC).
-                </p>
-
-                <div class="fcff-calculation-formula">
-                    <strong>Present Value = FCFF ÷ (1 + WACC)<sup>t</sup></strong>
-                    <small>
-                        t represents the number of years into the future.
-                    </small>
-                </div>
-
-                <div class="fcff-calculation-table">
-
-                    <div class="fcff-calculation-row fcff-calculation-header">
-                        <span>Year</span>
-                        <span>Forecast FCFF</span>
-                        <span>Discount factor</span>
-                        <span>Present value</span>
-                    </div>
-
-                    ${forecastRows}
-
-                    ${calculationRow(
-                        "Total present value",
-                        [
-                            "",
-                            "",
-                            formatAmount(pv_forecast)
-                        ],
-                        "fcff-total-row"
-                    )}
-
-                </div>
-
-                <div class="fcff-explanation-details">
-                    <p>
-                        <strong>WACC:</strong> ${formatPercent(wacc)}
-                    </p>
-                    <p>
-                        A higher WACC reduces the present value of future
-                        cash flows, while a lower WACC increases it.
-                    </p>
-                </div>
-
-            </div>
-
-            <!-- TERMINAL VALUE -->
-
-            <div class="fcff-calculation-breakdown">
-
-                <h3>2. Terminal value</h3>
-
-                <p>
-                    The terminal value estimates the value of all cash flows
-                    generated after the explicit forecast period. It assumes
-                    that FCFF grows at a constant rate indefinitely.
-                </p>
-
-                <div class="fcff-calculation-formula">
-                    <strong>
-                        Terminal Value = FCFF₅ × (1 + g) ÷ (WACC − g)
-                    </strong>
-                    <small>
-                        g represents the perpetual growth rate.
-                    </small>
-                </div>
-
-                <div class="fcff-explanation-details">
-
-                    <p>
-                        <strong>Final forecast FCFF:</strong>
-                        ${formatAmount(terminalFcffLastYear)}
-                    </p>
-
-                    <p>
-                        <strong>Terminal growth rate:</strong>
-                        ${formatPercent(terminal_growth)}
-                    </p>
-
-                    <p>
-                        <strong>Terminal year FCFF:</strong>
-                        ${formatAmount(terminal_fcff)}
-                    </p>
-
-                    <p>
-                        <strong>Terminal value:</strong>
-                        ${formatAmount(terminal_value)}
-                    </p>
-
-                </div>
-
-                <h4>Discounting the terminal value</h4>
-
-                <p>
-                    Since the terminal value is calculated at the end of
-                    the forecast period, it must also be discounted back
-                    to today's value.
-                </p>
-
-                <div class="fcff-calculation-formula">
-                    <strong>
-                        PV of Terminal Value =
-                        Terminal Value ÷ (1 + WACC)⁵
-                    </strong>
-                </div>
-
-                <div class="fcff-explanation-details">
-                    <p>
-                        <strong>Present value of terminal value:</strong>
-                        ${formatAmount(pv_terminal_value)}
-                    </p>
-                </div>
-
-            </div>
-
-            <!-- ENTERPRISE AND EQUITY VALUE -->
-
-            <div class="fcff-calculation-breakdown">
-
-                <h3>3. Enterprise value and equity value</h3>
-
-                <p>
-                    Enterprise value is the sum of the present value of
-                    forecast cash flows and the present value of terminal
-                    value. To obtain equity value, net cash or debt is
-                    added to enterprise value.
-                </p>
-
-                <div class="fcff-calculation-formula">
-                    <strong>
-                        Enterprise Value = PV of Forecast FCFF + PV of Terminal Value
-                    </strong>
-                </div>
-
-                <div class="fcff-explanation-details">
-
-                    <p>
-                        <strong>PV of forecast FCFF:</strong>
-                        ${formatAmount(pv_forecast)}
-                    </p>
-
-                    <p>
-                        <strong>PV of terminal value:</strong>
-                        ${formatAmount(pv_terminal_value)}
-                    </p>
-
-                    <p>
-                        <strong>Enterprise value:</strong>
-                        ${formatAmount(enterprise_value)}
-                    </p>
-
-                </div>
-
-                <div class="fcff-calculation-formula">
-                    <strong>
-                        Equity Value = Enterprise Value + Cash − Total Debt
-                    </strong>
-                </div>
-
-                <div class="fcff-explanation-details">
-
-                    <p>
-                        <strong>Cash:</strong>
-                        ${formatAmount(cash)}
-                    </p>
-
-                    <p>
-                        <strong>Total debt:</strong>
-                        ${formatAmount(total_debt)}
-                    </p>
-
-                    <p>
-                        <strong>Net cash / (debt):</strong>
-                        ${formatAmount(net_cash)}
-                    </p>
-
-                    <p>
-                        <strong>Equity value:</strong>
-                        ${formatAmount(equity_value)}
-                    </p>
-
-                </div>
-
-            </div>
-
-            <!-- INTRINSIC VALUE PER SHARE -->
-
-            <div class="fcff-calculation-breakdown">
-
-                <h3>4. Intrinsic value per share</h3>
-
-                <p>
-                    Finally, equity value is divided by the number of
-                    outstanding shares to estimate the intrinsic value
-                    of one share.
-                </p>
-
-                <div class="fcff-calculation-formula">
-                    <strong>
-                        Intrinsic Value Per Share =
-                        Equity Value ÷ Shares Outstanding
-                    </strong>
-                </div>
-
-                <div class="fcff-explanation-details">
-
-                    <p>
-                        <strong>Equity value:</strong>
-                        ${formatAmount(equity_value)}
-                    </p>
-
-                    <p>
-                        <strong>Shares outstanding:</strong>
-                        ${formatShares(shares_outstanding)}
-                    </p>
-
-                    <p>
-                        <strong>Intrinsic value per share:</strong>
-                        ${formatAmount(intrinsic_value_per_share)}
-                    </p>
-
-                </div>
-
-            </div>
-
-            <!-- TERMINAL VALUE DEPENDENCY -->
-
-            <div class="fcff-explanation-details">
-
-                <h3>Terminal value contribution</h3>
-
-                <p>
-                    The terminal value represents
-                    <strong>${formatPercent(terminal_value_percentage)}</strong>
-                    of total enterprise value.
-                </p>
-
-                <p>
-                    This indicates how much the valuation depends on cash
-                    flows beyond the explicit forecast period. A high
-                    percentage means the valuation is particularly
-                    sensitive to assumptions such as WACC and perpetual
-                    growth.
-                </p>
-
-            </div>
-
+        <div class="calc-flow">
+            ${flowStep({
+                rows: [flowRow(message, [], { className: "is-missing" })]
+            })}
         </div>
     `;
+}
+
+
+// ---------- FCFF forecast ----------
+
+// kind: input = comes from the assumptions table, calc = computed from other rows,
+// subtotal / total = result of the rows above. `negate` flips the sign so the table
+// shows the cash impact (CapEx and NWC increases are outflows).
+const FCFF_ROWS = [
+    { key: "revenue_growth", label: "Revenue growth", formula: "assumption", kind: "input", format: "percent" },
+    { key: "revenue", label: "Revenue", formula: "Prior × (1 + growth)", kind: "calc", format: "amount" },
+    { key: "operating_margin", label: "Operating margin", formula: "assumption", kind: "input", format: "percent" },
+    { key: "ebit", label: "EBIT", formula: "Revenue × margin", kind: "subtotal", format: "amount" },
+    { key: "tax_rate", label: "Tax rate", formula: "assumption", kind: "input", format: "percent" },
+    { key: "nopat", label: "NOPAT", formula: "EBIT × (1 − tax)", kind: "subtotal", format: "amount" },
+    { key: "da", label: "D&amp;A", formula: "Revenue × D&amp;A rate", kind: "calc", format: "signed" },
+    { key: "capex", label: "CapEx", formula: "Revenue × CapEx rate", kind: "calc", format: "signed", negate: true },
+    { key: "change_nwc", label: "Change in NWC", formula: "NWC(t) − NWC(t−1)", kind: "calc", format: "signed", negate: true },
+    { key: "fcff", label: "FCFF", formula: "", kind: "total", format: "amount" }
+];
+
+function buildFcffModel(scenarioData) {
+    const forecast = scenarioData?.forecast;
+
+    if (!Array.isArray(forecast) || forecast.length === 0) return null;
+
+    return {
+        years: forecast.map(year => year.year),
+        wacc: scenarioData.assumptions?.wacc,
+        rows: FCFF_ROWS.map(definition => ({
+            ...definition,
+            cells: forecast.map(year => {
+                const value = calcNum(year[definition.key]);
+
+                return {
+                    year: year.year,
+                    value: definition.negate && value !== null ? -value : value
+                };
+            })
+        }))
+    };
+}
+
+function renderFcffForecast(model) {
+    const rowsHtml = model.rows.map(row => flowRow(
+        calcLabel(row.label, row.formula),
+        row.cells.map(cell => ({
+            field: String(cell.year),
+            text: calcFmt[row.format](cell.value)
+        })),
+        {
+            className: CALC_ROW_CLASS[row.kind],
+            input: row.kind === "input" ? row.key : ""
+        }
+    ));
+
+    const waccText = explainIsNum(model.wacc) ? calcFmt.percent(model.wacc) : "WACC";
+
+    return `
+        <div class="calc-flow" data-calculation="fcff">
+            <div class="calc-flow-scroll">
+                ${flowStep({
+                    title: "FCFF forecast",
+                    formula: "FCFF = NOPAT + D&amp;A − CapEx − ΔNWC",
+                    cols: model.years.length,
+                    head: ["", ...model.years.map(String)],
+                    rows: rowsHtml
+                })}
+            </div>
+            ${flowUsage(`PV = FCFF ÷ (1 + ${waccText})<sup>t</sup>`)}
+        </div>
+    `;
+}
+
+function explainFcffForecast(scenarioData) {
+    const model = buildFcffModel(scenarioData);
+
+    return model
+        ? renderFcffForecast(model)
+        : calcUnavailable("FCFF forecast data is not available");
+}
+
+
+// ---------- DCF valuation ----------
+
+function buildDcfValuationModel(scenarioData) {
+    if (!scenarioData) return null;
+
+    const assumptions = scenarioData.assumptions ?? {};
+    const presentValues = scenarioData.present_values ?? [];
+    const lastYear = presentValues[presentValues.length - 1];
+
+    return {
+        // inputs (from the assumptions)
+        wacc: assumptions.wacc,
+        terminalGrowth: assumptions.terminal_growth,
+        cash: assumptions.cash,
+        totalDebt: assumptions.total_debt,
+        sharesOutstanding: assumptions.shares_outstanding,
+
+        // 1. present value of the forecast
+        years: presentValues.map(item => ({
+            period: item.discount_period,
+            fcff: item.fcff,
+            discountFactor: item.discount_factor,
+            presentValue: item.present_value
+        })),
+        pvForecast: scenarioData.pv_forecast,
+
+        // 2. terminal value
+        finalFcff: lastYear?.fcff,
+        terminalFcff: scenarioData.terminal_fcff,
+        terminalValue: scenarioData.terminal_value,
+        terminalDiscountFactor: lastYear?.discount_factor,
+        terminalPeriod: lastYear?.discount_period ?? (presentValues.length || null),
+        pvTerminalValue: scenarioData.pv_terminal_value,
+
+        // 3. enterprise and equity value
+        enterpriseValue: scenarioData.enterprise_value,
+        terminalShare: scenarioData.terminal_value_percentage,
+        equityValue: scenarioData.equity_value,
+
+        // 4. per share
+        intrinsicValuePerShare: scenarioData.intrinsic_value_per_share
+    };
+}
+
+function renderDcfValuation(model) {
+    const fmt = calcFmt;
+
+    const waccText = explainIsNum(model.wacc) ? fmt.percent(model.wacc) : "WACC";
+    const growthText = explainIsNum(model.terminalGrowth)
+        ? fmt.percent(model.terminalGrowth)
+        : "g";
+
+    // Inputs
+    const inputsStep = flowStep({
+        title: "Inputs",
+        rows: [
+            flowRow("WACC", [fmt.percent(model.wacc)], { input: "wacc" }),
+            flowRow("Terminal growth (g)", [fmt.percent(model.terminalGrowth)], { input: "terminal_growth" }),
+            flowRow("Cash", [fmt.amount(model.cash)], { input: "cash" }),
+            flowRow("Total debt", [fmt.amount(model.totalDebt)], { input: "total_debt" }),
+            flowRow("Shares outstanding", [fmt.shares(model.sharesOutstanding)], { input: "shares_outstanding" })
+        ]
+    });
+
+    // 1. Present value of forecast FCFF
+    const forecastRows = model.years.map(item => flowRow(
+        `Year ${item.period}`,
+        [
+            fmt.amount(item.fcff),
+            fmt.factor(item.discountFactor),
+            fmt.amount(item.presentValue)
+        ]
+    ));
+
+    forecastRows.push(flowRow(
+        "PV of forecast FCFF",
+        ["", "", fmt.amount(model.pvForecast)],
+        { className: "is-total" }
+    ));
+
+    const forecastStep = flowStep({
+        title: "1 · Present value of forecast FCFF",
+        formula: `FCFF ÷ (1 + ${waccText})<sup>t</sup>`,
+        cols: 3,
+        head: ["Year", "FCFF", "× Factor", "= PV"],
+        rows: forecastRows
+    });
+
+    // 2. Terminal value
+    const terminalStep = flowStep({
+        title: "2 · Terminal value",
+        formula: `FCFF<sub>N</sub> × (1 + ${growthText}) ÷ (${waccText} − ${growthText})`,
+        rows: [
+            flowRow("Final forecast FCFF (FCFF<sub>N</sub>)", [fmt.amount(model.finalFcff)]),
+            flowRow(
+                calcLabel("Terminal-year FCFF", "FCFF<sub>N</sub> × (1 + g)"),
+                [fmt.amount(model.terminalFcff)]
+            ),
+            flowRow(
+                calcLabel("Terminal value", "Terminal-year FCFF ÷ (WACC − g)"),
+                [fmt.amount(model.terminalValue)],
+                { className: "is-subtotal" }
+            ),
+            flowRow(
+                calcLabel(
+                    `Discount factor (year ${model.terminalPeriod ?? "N"})`,
+                    "1 ÷ (1 + WACC)<sup>N</sup>"
+                ),
+                [fmt.factor(model.terminalDiscountFactor)]
+            ),
+            flowRow(
+                calcLabel("PV of terminal value", "Terminal value × factor"),
+                [fmt.amount(model.pvTerminalValue)],
+                { className: "is-total" }
+            )
+        ]
+    });
+
+    // 3. Enterprise value -> equity value
+    const equityStep = flowStep({
+        title: "3 · Enterprise value to equity value",
+        formula: "EV + Cash − Debt",
+        rows: [
+            flowRow("PV of forecast FCFF", [fmt.amount(model.pvForecast)]),
+            flowRow("PV of terminal value", [fmt.signed(model.pvTerminalValue)]),
+            flowRow("Enterprise value", [fmt.amount(model.enterpriseValue)], { className: "is-subtotal" }),
+            flowRow("Terminal value share of EV", [fmt.percent(model.terminalShare)], { className: "is-input" }),
+            flowRow("Cash", [fmt.signed(model.cash)]),
+            flowRow("Total debt", [fmt.signed(calcNum(model.totalDebt) === null ? null : -calcNum(model.totalDebt))]),
+            flowRow("Equity value", [fmt.amount(model.equityValue)], { className: "is-total" })
+        ]
+    });
+
+    // 4. Value per share
+    const perShareStep = flowStep({
+        title: "4 · Intrinsic value per share",
+        formula: "Equity value ÷ Shares",
+        rows: [
+            flowRow("Equity value", [fmt.amount(model.equityValue)]),
+            flowRow("÷ Shares outstanding", [fmt.shares(model.sharesOutstanding)]),
+            flowRow("Intrinsic value per share", [fmt.perShare(model.intrinsicValuePerShare)], { className: "is-total" })
+        ]
+    });
+
+    return `
+        <div class="calc-flow" data-calculation="dcf-valuation">
+            ${inputsStep}
+            <div class="calc-flow-scroll">${forecastStep}</div>
+            ${terminalStep}
+            ${equityStep}
+            ${perShareStep}
+        </div>
+    `;
+}
+
+function explainDcfValuation(scenarioData) {
+    const model = buildDcfValuationModel(scenarioData);
+
+    return model
+        ? renderDcfValuation(model)
+        : calcUnavailable("DCF valuation data is unavailable");
 }
