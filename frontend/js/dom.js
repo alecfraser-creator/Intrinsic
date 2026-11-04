@@ -33,6 +33,9 @@ const statusMessage = document.querySelector("#status-message");
 const refreshfFinancials = document.querySelector("#refresh-financials");
 const analysisContent = document.querySelector("#analysis-content");
 const historicalCharts = {};
+const FiveYearPriceChart = document.querySelector("#five-year-price-chart");
+const OneYearPriceChart = document.querySelector("#one-year-price-chart");
+
 
 // Watchlist
 const watchlistCompanies = document.querySelector("#watchlist-companies");

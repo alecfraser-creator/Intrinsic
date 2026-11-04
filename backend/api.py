@@ -29,7 +29,6 @@ def home():
     return {"message": "Intrinsic API is running"}
 
 
-
 @app.get("/company/{ticker}")
 def get_company(ticker: str):
     isdata = get_saved_company(ticker)
@@ -41,6 +40,7 @@ def get_company(ticker: str):
             "in_watchlist": True,
             "updated_at": isdata["updated_at"],
             "last_financials_refresh": isdata["last_financials_refresh"],
+            "historical_data": isdata["historical_price"],
         }
 
     results = analyze_company(ticker)
@@ -59,10 +59,8 @@ def get_company(ticker: str):
         "in_watchlist": False,
         "last_financials_refresh": last_financials_refresh,
         "updated_at": None,
+        "historical_data": results["historical_data"],
     }
-
-
-
 
 
 @app.put("/watchlist/{ticker}")
@@ -113,10 +111,8 @@ def fresh_analysis(ticker: str):
         "qual_analysis": qual_analysis,
         "in_watchlist": saved_company is not None,
         "last_financials_refresh": last_financials_refresh,
+        "historical_data": results["historical_data"],
     }
-
-
-
 
 
 @app.post("/watchlist/{ticker}")
@@ -124,13 +120,14 @@ def update_database(ticker: str, data: dict):
     quant_analysis = data["quant_analysis"]
     qual_analysis = data["qual_analysis"]
     last_financials_refresh = data["last_financials_refresh"]
-
+    historical_data = data["historical_data"]
 
     updated_at = insert_company(
         ticker,
         quant_analysis,
         last_financials_refresh,
-        qual_analysis
+        qual_analysis,
+        historical_data
     )
 
     return {
@@ -138,7 +135,6 @@ def update_database(ticker: str, data: dict):
         "updated_at": updated_at,
         "last_financials_refresh": last_financials_refresh,
     }
-
 
 
 
@@ -200,7 +196,8 @@ def recalculate_dcf(ticker: str, data: dict = None):
             "qual_analysis": saved_company["qual_analysis"],
             "in_watchlist": True,
             "updated_at": saved_company["updated_at"],
-            "last_financials_refresh": saved_company["last_financials_refresh"]
+            "last_financials_refresh": saved_company["last_financials_refresh"],
+            "historical_data": saved_company["historical_data"]
         }
 
     # Otherwise, return just the newly calculated DCF.

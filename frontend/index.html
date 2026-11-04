@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
     <script src="js/state.js" defer></script>
     <script src="js/dom.js" defer></script>
     <script src="js/metric-explanations.js" defer></script>
@@ -46,6 +47,7 @@
     <script src="js/events-search.js" defer></script>
     <script src="js/events-watchlist.js" defer></script>
     <script src="js/events-dcf.js" defer></script>
+    <script src="js/price-chart.js" defer></script>
     <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -205,7 +207,7 @@
                         id="quantitative-panel"
                         role="tabpanel"
                         aria-labelledby="quantitative-tab"
-                    >
+                                            >
 
                         
                         <div class="quantitative-top">
@@ -230,7 +232,14 @@
                             </div>
                         </div>
 
-
+                        <div id="price-chart-container">
+                            <div id="price-chart-header">
+                                <h3>Price Chart</h3>
+                                <button class="price-chart-period" id="five-year-price-chart" data-period="5y">5y</button>
+                                <button class="price-chart-period active" id="one-year-price-chart" data-period="1y">1y</button>
+                            </div>
+                            <canvas id="price-chart"></canvas>
+                        </div>
 
                         <!-- Financial Strength -->
                         <section id="financial-strength" class="dashboard-section">

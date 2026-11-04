@@ -3,5 +3,6 @@ CREATE TABLE IF NOT EXISTS companies (
     Quant_analysis TEXT NOT NULL,
     Last_saved_at TEXT NOT NULL,
     Last_financials_refresh TEXT,
-    Qual_analysis TEXT
+    Qual_analysis TEXT, 
+    Historical_price TEXT
 );

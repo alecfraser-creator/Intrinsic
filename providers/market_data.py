@@ -12,6 +12,8 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 def calculate_beta(historical_data):
 
+    if not historical_data:
+        return None
     stock = pd.DataFrame(historical_data)
 
     stock["date"] = pd.to_datetime(stock["t"], unit="s", utc=True)

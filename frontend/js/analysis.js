@@ -7,6 +7,7 @@ function displayAnalysis(data) {
     currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
     lastFinancialsRefresh = data.last_financials_refresh;
     currentInWatchlist = data.in_watchlist;
+    currentHistoricalData = data.historical_data;
 
     
     displayTimestamps(data);
@@ -42,6 +43,11 @@ function displayAnalysis(data) {
 
     displayValue("company-ceo", currentQuantAnalysis.profile.ceo ?? "N/A");
 
+    // --------------------------------------
+    // Price chart
+    // --------------------------------------
+    
+    displayPriceChart(currentHistoricalData);
 
     // --------------------------------------
     // Financial strength
@@ -133,7 +139,7 @@ function displayAnalysis(data) {
         currentQuantAnalysis.profitability["Free Cashflow"] != null
             ? `$${formatMetric(currentQuantAnalysis.profitability["Free Cashflow"] / 1e9, "B")}`
             : "N/A"
-    );
+    ); 
 
     displayValue(
         "fcf-margin",

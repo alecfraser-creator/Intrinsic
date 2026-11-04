@@ -1,5 +1,4 @@
-# next: make terminal growth behave like other rows when modifying input
-# next: fix tax rate displaying in wacc input
+# implement price chart
 
 #next: display a warning when the user is about to change company or close the tool without saving his chamges
 
@@ -69,7 +68,7 @@ def analyze_company(
     cashflow_ttm = sec_data["cashflow_ttm"]
 
     historical_data = None
-    historical_prices = {}
+    historical_prices_annual = {}
     shares_by_year = {}
 
     # -------------------------
@@ -94,10 +93,10 @@ def analyze_company(
 
         if price_latest is None:
             return None
-
+        
         historical_data = get_historical_price(ticker)
-
-        historical_prices = get_fiscal_year_end_prices(
+        
+        historical_prices_annual = get_fiscal_year_end_prices(
             historical_data,
             sec_data["fiscal_year_ends"]
         )
@@ -108,7 +107,7 @@ def analyze_company(
 
         ratios_annual = calculate_historical_pe(
             income_annual,
-            historical_prices
+            historical_prices_annual
         )
 
     else:
@@ -162,7 +161,7 @@ def analyze_company(
         cashflow_annual,
         ratios_annual,
         balance_annual,
-        historical_prices,
+        historical_prices_annual,
         shares_by_year
     )
 
@@ -238,7 +237,8 @@ def analyze_company(
         "profitability": profitability,
         "valuation": valuation,
         "history": history,
-        "dcf": dcf
+        "dcf": dcf,
+        "historical_data": historical_data[::-1],
     }
 
 
@@ -405,11 +405,13 @@ def main():
 
     results = analyze_company(ticker)
 
+    print(results["historical_data"][:20])
+
     if results is None:
         print("Unable to retrieve company data.")
         return
 
-    print(json.dumps(results, indent=2, default=str))
+
 
 
 if __name__ == "__main__":

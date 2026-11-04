@@ -4,23 +4,25 @@ from .connection import connect
 from datetime import datetime, timezone
 
 
-def insert_company(ticker, quant_analysis, last_financials_refresh, qual_analysis):
+def insert_company(ticker, quant_analysis, last_financials_refresh, qual_analysis, historical_data):
     connection = connect()
     date = datetime.now(timezone.utc).isoformat()
 
     connection.execute(
         """
         INSERT INTO Companies (
-            Ticker, Quant_analysis, Updated_at, Last_financials_refresh, Qual_analysis
+            Ticker, Quant_analysis, Updated_at, Last_financials_refresh,
+            Qual_analysis, Historical_price
         )
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(Ticker) DO UPDATE SET
             Quant_analysis = excluded.Quant_analysis,
             Updated_at = excluded.Updated_at,
             Last_financials_refresh = excluded.Last_financials_refresh,
-            Qual_analysis = excluded.Qual_analysis
+            Qual_analysis = excluded.Qual_analysis,
+            Historical_price = excluded.Historical_price
         """,
-        (ticker, json.dumps(quant_analysis), date, last_financials_refresh, json.dumps(qual_analysis))
+        (ticker, json.dumps(quant_analysis), date, last_financials_refresh, json.dumps(qual_analysis), json.dumps(historical_data))
     )
 
     connection.commit()
@@ -45,7 +47,7 @@ def get_saved_company(ticker):
 
     cursor = connection.execute(
         """
-        SELECT Ticker, Quant_analysis, Updated_at, Last_financials_refresh, Qual_analysis
+        SELECT Ticker, Quant_analysis, Updated_at, Last_financials_refresh, Qual_analysis, Historical_price
         FROM Companies
         WHERE Ticker = ?
         """,
@@ -63,7 +65,8 @@ def get_saved_company(ticker):
         "quant_analysis": json.loads(company[1]),
         "updated_at": company[2],
         "last_financials_refresh": company[3],
-        "qual_analysis": json.loads(company[4]) if company[4] else None
+        "qual_analysis": json.loads(company[4]) if company[4] else None,
+        "historical_price": json.loads(company[5]) if company[5] else None
     }
 
 

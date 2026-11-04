@@ -1,5 +1,5 @@
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import sys
 from pathlib import Path
 
@@ -8,8 +8,6 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backend import config
-
-
 
 
 
@@ -47,50 +45,54 @@ def get_fiscal_year_end_prices(historical_data, fiscal_year_ends):
 
 
 def get_historical_price(ticker):
-    latest_date = datetime.now(timezone.utc)
-
-    start_at = int(
-        latest_date.replace(year=latest_date.year - 10).timestamp()
-    ) - 7 * 86400
-
-    end_at = int(latest_date.timestamp()) + 86400
-
+    now = datetime.now(timezone.utc)
+    start_at = int((now - timedelta(days=7 * 365 + 7)).timestamp())
+    end_at = int(now.timestamp()) + 86400
     page_size = 1000
-    all_rows = []
 
-    for page in range(10):
-        url = (
-            "https://api.finazon.io/latest/finazon/us_stocks_essential/time_series"
-            f"?ticker={ticker}"
-            "&interval=1d"
-            f"&start_at={start_at}"
-            f"&end_at={end_at}"
-            f"&page={page}"
-            f"&page_size={page_size}"
-            "&order=desc"
-            "&adjust=splits"
-            f"&apikey={config.API_KEY_FINAZON}"
-        )
+    rows_by_t = {}
+
+    for _ in range(10):  # safety limit
+        params = {
+            "ticker": ticker,
+            "interval": "1d",
+            "start_at": start_at,
+            "end_at": end_at,
+            "page_size": page_size,
+            "order": "desc",
+            "adjust": "splits",
+            "apikey": config.API_KEY_FINAZON,
+        }
 
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(
+                "https://api.finazon.io/latest/finazon/us_stocks_essential/time_series",
+                params=params,
+                timeout=10,
+            )
             response.raise_for_status()
             data = response.json()
         except (requests.RequestException, ValueError) as e:
             print(f"Finazon historical prices request failed: {e}")
             break
 
-        if not isinstance(data, dict) or not isinstance(data.get("data"), list):
+        rows = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(rows, list) or not rows:
             break
 
-        rows = data["data"]
-        all_rows.extend(rows)
+        new_rows = 0
+        for row in rows:
+            if row["t"] not in rows_by_t:
+                rows_by_t[row["t"]] = row
+                new_rows += 1
 
-        if len(rows) < page_size:
+        # Stop on the last page, or if the API returned nothing new.
+        if len(rows) < page_size or new_rows == 0:
             break
 
-    return all_rows
+        end_at = min(row["t"] for row in rows) - 1
 
+    return sorted(rows_by_t.values(), key=lambda r: r["t"], reverse=True)
 
 def get_latest_price(ticker):
     url = (

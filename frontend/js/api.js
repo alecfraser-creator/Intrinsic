@@ -16,7 +16,7 @@ async function fetchAnalysis(ticker) {
 }
 
 
-async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh) {
+async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh, historicalData) {
     const response = await fetch(
         `http://127.0.0.1:8000/watchlist/${ticker}`,
         {
@@ -27,7 +27,8 @@ async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRef
             body: JSON.stringify({
                 quant_analysis: quantAnalysis,
                 last_financials_refresh: lastFinancialsRefresh,
-                qual_analysis: qualAnalysis
+                qual_analysis: qualAnalysis,
+                historical_data: historicalData
             })
         }
     );

@@ -695,10 +695,11 @@ async function recalculateDcf() {
         // Persist the updated analysis only if already watchlisted.
         if (currentInWatchlist) {
             await addCompany(
-                ticker,
+                currentQuantAnalysis.ticker,
                 currentQuantAnalysis,
                 currentQualAnalysis,
-                lastFinancialsRefresh
+                lastFinancialsRefresh,
+                currentHistoricalData
             );
         }
 

@@ -41,7 +41,13 @@ saveCompany.addEventListener("click", async (event) => {
 
     try {
         collectQualAnalysis();
-        await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);
+        await addCompany(
+            currentQuantAnalysis.ticker,
+            currentQuantAnalysis,
+            currentQualAnalysis,
+            lastFinancialsRefresh,
+            currentHistoricalData
+        );
 
         // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
@@ -63,7 +69,13 @@ updateCompany.addEventListener("click", async (event) => {
 
     try {
         collectQualAnalysis()
-        await addCompany(currentQuantAnalysis.ticker, currentQuantAnalysis, currentQualAnalysis, lastFinancialsRefresh);;
+        await addCompany(
+            currentQuantAnalysis.ticker,
+            currentQuantAnalysis,
+            currentQualAnalysis,
+            lastFinancialsRefresh,
+            currentHistoricalData
+        );
 
         const originalText = updateCompany.textContent;
         updateCompany.textContent = "Analysis saved!";
@@ -149,7 +161,8 @@ watchlistAdd.addEventListener("click", () => {
                 ticker,
                 data.quant_analysis,
                 data.qual_analysis,
-                data.last_financials_refresh
+                data.last_financials_refresh,
+                data.historical_data
             );
 
             // Success: stop listening, then close the input
