@@ -47,7 +47,7 @@ function displayAnalysis(data) {
     // Price chart
     // --------------------------------------
     
-    displayPriceChart(currentHistoricalData);
+    displayPriceChart(currentHistoricalData, selectedPricePeriod);
 
     // --------------------------------------
     // Financial strength

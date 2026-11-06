@@ -60,7 +60,7 @@ def get_historical_price(ticker):
             "end_at": end_at,
             "page_size": page_size,
             "order": "desc",
-            "adjust": "splits",
+            "adjust": "all",
             "apikey": config.API_KEY_FINAZON,
         }
 
@@ -89,8 +89,14 @@ def get_historical_price(ticker):
         # Stop on the last page, or if the API returned nothing new.
         if len(rows) < page_size or new_rows == 0:
             break
+        
+    
+
+        if len(rows) < page_size or new_rows == 0:
+            break
 
         end_at = min(row["t"] for row in rows) - 1
+
 
     return sorted(rows_by_t.values(), key=lambda r: r["t"], reverse=True)
 

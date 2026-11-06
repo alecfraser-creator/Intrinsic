@@ -46,7 +46,8 @@ saveCompany.addEventListener("click", async (event) => {
             currentQuantAnalysis,
             currentQualAnalysis,
             lastFinancialsRefresh,
-            currentHistoricalData
+            currentHistoricalData,
+            "update"
         );
 
         // Ensure the content remains visible
@@ -74,7 +75,8 @@ updateCompany.addEventListener("click", async (event) => {
             currentQuantAnalysis,
             currentQualAnalysis,
             lastFinancialsRefresh,
-            currentHistoricalData
+            currentHistoricalData,
+            "new_version"
         );
 
         const originalText = updateCompany.textContent;
@@ -162,7 +164,8 @@ watchlistAdd.addEventListener("click", () => {
                 data.quant_analysis,
                 data.qual_analysis,
                 data.last_financials_refresh,
-                data.historical_data
+                data.historical_data,
+                "update"
             );
 
             // Success: stop listening, then close the input

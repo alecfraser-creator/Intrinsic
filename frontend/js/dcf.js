@@ -692,16 +692,6 @@ async function recalculateDcf() {
             newDcf.scenarios[selectedScenario]
         );
 
-        // Persist the updated analysis only if already watchlisted.
-        if (currentInWatchlist) {
-            await addCompany(
-                currentQuantAnalysis.ticker,
-                currentQuantAnalysis,
-                currentQualAnalysis,
-                lastFinancialsRefresh,
-                currentHistoricalData
-            );
-        }
 
     } catch (error) {
         console.error("DCF recalculation failed:", error);

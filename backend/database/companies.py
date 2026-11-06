@@ -30,16 +30,7 @@ def insert_company(ticker, quant_analysis, last_financials_refresh, qual_analysi
     return date
 
 
-def refresh_latest_financial(ticker, last_financials_refresh):
-    connection = connect()
 
-    connection.execute(
-        "UPDATE Companies SET Last_financials_refresh = ? WHERE Ticker = ?",
-        (last_financials_refresh, ticker)
-    )
-
-    connection.commit()
-    connection.close()
 
 
 def get_saved_company(ticker):
@@ -100,3 +91,22 @@ def get_all_companies():
         })
 
     return results
+
+
+
+def insert_historical_analysis(ticker, quant_analysis, last_financials_refresh, qual_analysis, historical_data, last_saved_at):
+    connection = connect()
+
+    connection.execute(
+        """
+        INSERT INTO analysis_history (
+            Ticker, Quant_analysis, Last_financials_refresh,
+            Qual_analysis, Historical_price, Last_saved_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (ticker, json.dumps(quant_analysis), last_financials_refresh, json.dumps(qual_analysis), json.dumps(historical_data), last_saved_at)
+    )
+
+    connection.commit()
+    connection.close()

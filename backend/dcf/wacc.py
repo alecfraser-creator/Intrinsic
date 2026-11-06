@@ -13,8 +13,11 @@ def calculate_cost_of_equity(risk_free_rate, beta, equity_risk_premium):
         equity_risk_premium
     ]):
         return None
+    
+
 
     return risk_free_rate + beta * equity_risk_premium
+
 
 
 
@@ -139,6 +142,9 @@ def calculate_wacc(
     market_cap = to_float(market_cap)
     total_debt = to_float(total_debt)
     tax_rate = to_float(tax_rate)
+
+
+  
 
     if any(value is None for value in [
         cost_of_equity,

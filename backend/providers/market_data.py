@@ -26,6 +26,7 @@ def calculate_beta(historical_data):
 
     stock_returns = stock.pct_change()
 
+
     sp500 = pd.read_csv(
         BASE_DIR / "data" / "sp500.csv",
         parse_dates=["observation_date"]
@@ -55,6 +56,9 @@ def calculate_beta(historical_data):
         return None
 
     beta = returns.iloc[:, 0].cov(returns["SP500"]) / market_variance
+
+    if beta < -2 or beta > 3:
+        return None
 
     return beta
 

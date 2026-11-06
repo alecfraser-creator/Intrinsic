@@ -1,6 +1,15 @@
-# implement price chart
+# next: handle adding an already saved company in the watchlist with the + buttons
 
-#next: display a warning when the user is about to change company or close the tool without saving his chamges
+# next: display a warning when the user is about to change company or close the tool without saving his changes, 
+# and make it so that when the user saves an analysis, he can either choose to modify the current analysis or 
+# create a new analysis and keep the old version saved at a different point in time
+
+# next: create a "analysis history" tab, that shows every saved analysis 
+
+# next: make the history tab work by displaying analysis in read only, with a banner at the top that explains it
+# and contains a button to return to latest analysis 
+
+# next: create a way of comparing two quant analysis
 
 
 import json

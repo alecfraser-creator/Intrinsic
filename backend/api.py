@@ -9,7 +9,7 @@ from .database.companies import (
     insert_company,
     delete_company,
     get_all_companies,
-    refresh_latest_financial,
+    insert_historical_analysis
 )
 
 
@@ -61,6 +61,7 @@ def get_company(ticker: str):
         "updated_at": None,
         "historical_data": results["historical_data"],
     }
+
 
 
 @app.put("/watchlist/{ticker}")
@@ -115,26 +116,78 @@ def fresh_analysis(ticker: str):
     }
 
 
+
 @app.post("/watchlist/{ticker}")
 def update_database(ticker: str, data: dict):
-    quant_analysis = data["quant_analysis"]
-    qual_analysis = data["qual_analysis"]
-    last_financials_refresh = data["last_financials_refresh"]
-    historical_data = data["historical_data"]
 
-    updated_at = insert_company(
-        ticker,
-        quant_analysis,
-        last_financials_refresh,
-        qual_analysis,
-        historical_data
-    )
+    save_mode = data["save_mode"]
 
-    return {
-        "message": "Company added to watchlist",
-        "updated_at": updated_at,
-        "last_financials_refresh": last_financials_refresh,
-    }
+    if save_mode == "update":
+        quant_analysis = data["quant_analysis"]
+        qual_analysis = data["qual_analysis"]
+        last_financials_refresh = data["last_financials_refresh"]
+        historical_data = data["historical_data"]
+
+        updated_at_old = insert_company(
+            ticker,
+            quant_analysis,
+            last_financials_refresh,
+            qual_analysis,
+            historical_data
+        )
+
+        return {
+            "message": "Company added to watchlist",
+            "updated_at": updated_at_old,
+            "last_financials_refresh": last_financials_refresh,
+        }
+    
+    elif save_mode == "new_version":
+    
+        # write old analysis in the analysis_history table
+        analysis_old = get_saved_company(ticker)
+
+        if analysis_old is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        quant_analysis_old = analysis_old["quant_analysis"]
+        qual_analysis_old = analysis_old["qual_analysis"]
+        last_financials_refresh_old = analysis_old["last_financials_refresh"]
+        historical_data_old = analysis_old["historical_price"]
+        last_saved_at_old = analysis_old["updated_at"]
+
+        
+        insert_historical_analysis(
+            ticker, 
+            quant_analysis_old, 
+            last_financials_refresh_old, 
+            qual_analysis_old, 
+            historical_data_old, 
+            last_saved_at_old
+        )
+
+        #add the new version to companies
+        quant_analysis_new = data["quant_analysis"]
+        qual_analysis_new = data["qual_analysis"]
+        last_financials_refresh_new = data["last_financials_refresh"]
+        historical_data_new = data["historical_data"]
+
+        updated_at_new = insert_company(
+            ticker,
+            quant_analysis_new,
+            last_financials_refresh_new,
+            qual_analysis_new,
+            historical_data_new
+        )
+
+        return {
+            "message": "Company added to watchlist",
+            "updated_at": updated_at_new,
+            "last_financials_refresh": last_financials_refresh_new,
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid save mode")
 
 
 
