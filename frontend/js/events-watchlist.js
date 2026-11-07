@@ -154,6 +154,22 @@ watchlistAdd.addEventListener("click", () => {
         const ticker = watchlistInput.value.trim().toUpperCase();
         if (!ticker) return;
 
+        const savedTickers = watchlistCompanies.querySelectorAll(".watchlist-item");
+
+        const savedTickersArray = [...savedTickers];
+
+        const alreadyExists = savedTickersArray.some(savedTicker => savedTicker.dataset.ticker=== ticker);
+        if (alreadyExists) {
+            overlay.textContent = "Company already added to watchlist.";
+            overlay.classList.remove("is-hidden");
+            setTimeout(() => {
+                watchlistInput.value = "";
+                overlay.classList.add("is-hidden");
+            }, 2000);
+            return 
+        }
+
+
         loading = true;
         overlay.classList.remove("is-hidden");
 
