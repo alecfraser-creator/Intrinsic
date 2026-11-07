@@ -73,9 +73,13 @@ def get_saved_company(ticker):
 def delete_company(ticker):
     connection = connect()
 
-    try: 
+    try:
         connection.execute(
             "DELETE FROM Companies WHERE Ticker = ?",
+            (ticker,)
+        )
+        connection.execute(
+            "DELETE FROM analysis_history WHERE Ticker = ?",
             (ticker,)
         )
         connection.commit()
@@ -125,6 +129,6 @@ def insert_historical_analysis(ticker, quant_analysis, last_financials_refresh, 
         )
 
         connection.commit()
-        
+
     finally:
         connection.close()

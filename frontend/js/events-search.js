@@ -2,27 +2,23 @@
 //  SEARCH EVENT LISTENER
 // ==========================================
 
-searchForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    if (event.submitter !== analyzeButton) {
-        return;
-    }
-
+async function runAnalysis(ticker) {
     analysisContent.classList.add("is-hidden");
     welcomeMessage.classList.add("is-hidden");
     statusMessage.textContent = "Analyzing company...";
     statusMessage.classList.remove("is-hidden");
     analyzeButton.disabled = true;
 
-    const ticker = tickerInput.value.trim().toUpperCase();
-
     try {
-    const data = await fetchAnalysis(ticker);
-    currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
-    populateQualAnalysis();
-    displayAnalysis(data);
+        const data = await fetchAnalysis(ticker);
 
+        currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
+        populateQualAnalysis();
+
+        displayAnalysis(data);
+
+        // The new company is freshly loaded, so there is nothing unsaved
+        isDirty = false;
 
     } catch (error) {
         statusMessage.textContent =
@@ -33,4 +29,23 @@ searchForm.addEventListener("submit", async (event) => {
     } finally {
         analyzeButton.disabled = false;
     }
+}
+
+searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    if (event.submitter !== analyzeButton) {
+        return;
+    }
+
+    const ticker = tickerInput.value.trim().toUpperCase();
+
+    // Unsaved changes: ask first, and leave the current analysis untouched
+    // until the user has saved or discarded.
+    if (isDirty && currentQuantAnalysis) {
+        openUnsavedChangesModal(() => runAnalysis(ticker));
+        return;
+    }
+
+    runAnalysis(ticker);
 });

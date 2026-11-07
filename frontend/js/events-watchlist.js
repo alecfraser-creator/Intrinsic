@@ -24,8 +24,12 @@ refreshFinancials.addEventListener("click", async (event) => {
 
         const data = await response.json();
 
+
         displayTimestamps(data)
         displayAnalysis(data);
+
+        markDirty()
+
     } catch (error) {
     statusMessage.textContent = "Unable to refresh financials.";
     statusMessage.classList.remove("is-hidden");
@@ -49,6 +53,9 @@ saveCompany.addEventListener("click", async (event) => {
             currentHistoricalData,
             "update"
         );
+
+        isSaved = true;
+        isDirty = false;
 
         // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
@@ -92,6 +99,9 @@ removeCompany.addEventListener("click", async (event) => {
 
     try {
         await deleteCompany(ticker);
+
+        isSaved = false;
+        isDirty = false;
 
         saveCompany.classList.remove("is-hidden");
         watchlistActions.classList.add("is-hidden");
@@ -144,7 +154,7 @@ watchlistAdd.addEventListener("click", () => {
             const data = await fetchAnalysis(ticker);
 
             if (data.in_watchlist) {
-                duplicate = true 
+                duplicate = true;
                 overlay.textContent = "Company already added to watchlist.";
                 overlay.classList.remove("is-hidden");
                 setTimeout(() => {

@@ -1,0 +1,45 @@
+    <div id="unsaved-changes-modal" class="modal is-hidden">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="unsaved-changes-title">
+
+            <h2 id="unsaved-changes-title">Unsaved changes</h2>
+
+            <div id="unsaved-changes-options">
+                <p>Your current analysis contains changes that haven't been saved. How would you like to proceed?</p>
+
+                <div class="update-options">
+
+                    <button type="button" id="navigation-update-analysis" class="save-update-btn">
+                        <span>Update current analysis</span>
+                        <small>Replace the currently saved version with your changes.</small>
+                    </button>
+
+                    <button type="button" id="navigation-new-analysis" class="save-new-btn">
+                        <span>Create new analysis</span>
+                        <small>Save a new version while keeping the previous analysis in your history.</small>
+                    </button>
+
+                </div>
+
+                <button type="button" id="discard-and-continue">
+                    Discard changes and continue
+                </button>
+
+                <button type="button" id="cancel-navigation">
+                    Cancel
+                </button>
+            </div>
+
+            <div id="navigation-save-success" class="is-hidden">
+                <i data-lucide="check-circle"></i>
+
+                <h2>Analysis saved!</h2>
+
+                <p>Your changes have been successfully saved.</p>
+
+                <button type="button" id="continue-after-save">
+                    Continue
+                </button>
+            </div>
+
+        </div>
+    </div>

@@ -6,15 +6,15 @@ function displayAnalysis(data) {
     currentQuantAnalysis = data.quant_analysis;
     currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
     lastFinancialsRefresh = data.last_financials_refresh;
-    currentInWatchlist = data.in_watchlist;
     currentHistoricalData = data.historical_data;
 
+    isSaved = data.in_watchlist;
     
     displayTimestamps(data);
 
     tickerInput.value = currentQuantAnalysis.ticker;
 
-    if (data.in_watchlist) {
+    if (isSaved) {
         saveCompany.classList.add("is-hidden");
         watchlistActions.classList.remove("is-hidden");
     } else {

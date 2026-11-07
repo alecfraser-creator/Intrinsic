@@ -1,7 +1,6 @@
-# next: make it so that when the user saves an analysis, he can either choose to modify the current analysis or 
-# create a new analysis and keep the old version saved at a different point in time
-
 # next: display a warning when the user is about to change company or close the tool without saving his changes,
+
+# next: fix the update button reset when adding a company to the watchlist with another company displayed
 
 # next: create a "analysis history" tab, that shows every saved analysis 
 

@@ -12,6 +12,7 @@ function collectQualAnalysis() {
 
     return currentQualAnalysis;
 }
+
 function populateQualAnalysis() {
     for (const [section, fieldIds] of Object.entries(qualitativeFieldMap)) {
         for (const fieldId of fieldIds) {
@@ -20,6 +21,7 @@ function populateQualAnalysis() {
         }
     }
 }
+
 function createEmptyQualAnalysis() {
     const analysis = {};
 
@@ -32,4 +34,13 @@ function createEmptyQualAnalysis() {
     }
 
     return analysis;
+}
+
+
+for (const fieldIds of Object.values(qualitativeFieldMap)) {
+    for (const fieldId of fieldIds) {
+        document.getElementById(fieldId).addEventListener("input", () => {
+            markDirty()
+        });
+    }
 }

@@ -89,3 +89,8 @@ function renderCalculationInput(row, assumptionKey, scenario) {
         </span>
     `;
 }
+
+
+function markDirty () {
+    isDirty = true;
+}

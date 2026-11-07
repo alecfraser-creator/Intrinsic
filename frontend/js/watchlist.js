@@ -2,6 +2,28 @@
 // WATCHLIST DATA AND RENDERING
 // ==========================================
 
+async function openWatchlistCompany(ticker) {
+    welcomeMessage.classList.add("is-hidden");
+    statusMessage.classList.add("is-hidden");
+
+    try {
+        const data = await fetchAnalysis(ticker);
+
+        currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
+        populateQualAnalysis();
+
+        displayAnalysis(data);
+
+        // The new company is freshly loaded, so there is nothing unsaved
+        isDirty = false;
+
+    } catch (error) {
+        statusMessage.textContent = "Unable to load this company.";
+        statusMessage.classList.remove("is-hidden");
+        console.error(error);
+    }
+}
+
 async function loadWatchlist() {
     watchlistCompanies.replaceChildren();
 
@@ -29,15 +51,16 @@ async function loadWatchlist() {
 
                 companyElement.classList.add("watchlist-item");
                 companyElement.textContent = `${ticker} - ${name}`;
-                
-                companyElement.addEventListener("click", async () => {
-                    welcomeMessage.classList.add("is-hidden");
-                    statusMessage.classList.add("is-hidden");
 
-                    const data = await fetchAnalysis(ticker);
-                    currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
-                    populateQualAnalysis();
-                    displayAnalysis(data);
+                companyElement.addEventListener("click", () => {
+                    // Unsaved changes: ask first, and leave the current analysis
+                    // untouched until the user has saved or discarded.
+                    if (isDirty && currentQuantAnalysis) {
+                        openUnsavedChangesModal(() => openWatchlistCompany(ticker));
+                        return;
+                    }
+
+                    openWatchlistCompany(ticker);
                 });
 
                 companyElementDelete.classList.add("watchlistItem-delete");

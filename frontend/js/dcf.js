@@ -277,6 +277,8 @@ function displayDcfForecastChart(scenario) {
         }
     });
 }
+
+
 function displayDcfAssumptions(selectedScenario) {
     const scenarios = currentQuantAnalysis.dcf.scenarios;
     const scenarioKeys = ["bear", "base", "bull"];
@@ -398,6 +400,7 @@ function displayDcfAssumptions(selectedScenario) {
     setupDcfRecalculation();
 }
 
+
 function setupDcfAssumptionEditing() {
     const button = document.querySelector("#edit-dcf-assumptions");
     const container = document.querySelector("#dcf-assumptions-section");
@@ -419,6 +422,8 @@ function setupDcfAssumptionEditing() {
 
         // Save values when leaving edit mode
         if (isEditing) {
+            let hasChanges = false;
+
             inputs.forEach(input => {
                 if (input.value.trim() === "") return;
 
@@ -433,6 +438,7 @@ function setupDcfAssumptionEditing() {
                 const assumption = input.dataset.assumption;
 
                 saveAssumptionValue(scenario, assumption, newValue);
+                hasChanges = true;
             });
 
             container.classList.remove("is-editing");
@@ -448,15 +454,17 @@ function setupDcfAssumptionEditing() {
             // Reopen the same explanation panels
             const newContainer = document.querySelector("#dcf-assumptions-section");
 
+            if (hasChanges) markDirty();
+
             expandedAssumptions.forEach(key => {
                 const toggle = newContainer.querySelector(
                     `.dcf-assumption-toggle[data-assumption="${key}"]`
                 );
 
                 toggle?.click();
-});
+            });
 
-return;
+            return;
         }
 
         // Enter edit mode
@@ -475,6 +483,7 @@ return;
         button.textContent = "Done editing";
     });
 }
+
 
 
 function setupFcffCalculationAccordion() {
@@ -527,6 +536,7 @@ function displayDcfValuation(scenarioData) {
 
     container.innerHTML = explainDcfValuation(scenarioData);
 }
+
 
 
 function setupDcfCalculationInputReset() {
@@ -604,6 +614,9 @@ function setupDcfCalculationInputReset() {
             scenarioData.original_assumptions = {};
         }
 
+        // The reset modifies the current analysis.
+        markDirty();
+
         // Re-render the table and reopen previously expanded explanations.
         const container = document.querySelector("#dcf-assumptions-section");
 
@@ -679,6 +692,9 @@ async function recalculateDcf() {
             "Discounted Cash Flow (DCF) Valuation"
         ] = newDcf.intrinsic_value_per_share;
 
+        // Recalculation modified the current analysis.
+        markDirty();
+
         // Refresh the DCF UI.
         displayDcfScenarios();
         displayDcfForecastChart(selectedScenario);
@@ -697,7 +713,7 @@ async function recalculateDcf() {
         console.error("DCF recalculation failed:", error);
 
         alert(
-            currentInWatchlist
+            isSaved
                 ? "DCF recalculation or saving failed. Check the console for details."
                 : "DCF recalculation failed. Check the console for details."
         );

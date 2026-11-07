@@ -1,10 +1,10 @@
 
-/* ---------- Analysis Update Dialog ---------- */
+/* ---------- Modal Overlays ---------- */
 
-#analysis-update-modal {
+#analysis-update-modal,
+#unsaved-changes-modal {
     position: fixed;
     inset: 0;
-    z-index: 1000;
 
     display: flex;
     justify-content: center;
@@ -14,11 +14,24 @@
     background: rgba(0, 0, 0, 0.7);
 }
 
-#analysis-update-modal.is-hidden {
+#analysis-update-modal {
+    z-index: 1000;
+}
+
+#unsaved-changes-modal {
+    z-index: 1100;
+}
+
+#analysis-update-modal.is-hidden,
+#unsaved-changes-modal.is-hidden {
     display: none;
 }
 
-#analysis-update-modal .modal-content {
+
+/* ---------- Shared Modal Content ---------- */
+
+#analysis-update-modal .modal-content,
+#unsaved-changes-modal .modal-content {
     width: 100%;
     max-width: 440px;
     padding: var(--space-5);
@@ -28,7 +41,11 @@
     border-radius: var(--radius);
 }
 
-#analysis-update-title {
+
+/* ---------- Modal Titles ---------- */
+
+#analysis-update-title,
+#unsaved-changes-title {
     margin: 0 0 var(--space-2);
 
     color: var(--text);
@@ -37,13 +54,18 @@
     font-weight: 600;
 }
 
-#analysis-update-modal p {
+
+/* ---------- Modal Paragraphs ---------- */
+
+#analysis-update-modal p,
+#unsaved-changes-modal p {
     margin: 0 0 var(--space-5);
 
     color: var(--text-secondary);
     font-size: 0.9rem;
     line-height: 1.5;
 }
+
 
 /* ---------- Update Options ---------- */
 
@@ -90,7 +112,8 @@
     line-height: 1.5;
 }
 
-/* ---------- Cancel ---------- */
+
+/* ---------- Cancel Save Modal ---------- */
 
 #close-analysis-update-modal {
     margin-top: var(--space-4);
@@ -112,28 +135,31 @@
 }
 
 
-
 /* ---------- Save Success ---------- */
 
-#save-success {
+#save-success,
+#navigation-save-success {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
 }
 
-#save-success.is-hidden {
+#save-success.is-hidden,
+#navigation-save-success.is-hidden {
     display: none;
 }
 
-#save-success [data-lucide="check-circle"] {
+#save-success [data-lucide="check-circle"],
+#navigation-save-success [data-lucide="check-circle"] {
     width: 42px;
     height: 42px;
     color: var(--gold);
     margin-bottom: var(--space-3);
 }
 
-#save-success h2 {
+#save-success h2,
+#navigation-save-success h2 {
     margin: 0 0 var(--space-2);
 
     color: var(--text);
@@ -142,7 +168,8 @@
     font-weight: 600;
 }
 
-#save-success p {
+#save-success p,
+#navigation-save-success p {
     margin: 0 0 var(--space-5);
 
     color: var(--text-secondary);
@@ -150,7 +177,8 @@
     line-height: 1.5;
 }
 
-#close-save-success {
+#close-save-success,
+#continue-after-save {
     width: 100%;
     padding: var(--space-3);
 
@@ -167,6 +195,36 @@
     transition: opacity 0.2s ease;
 }
 
-#close-save-success:hover {
+#close-save-success:hover,
+#continue-after-save:hover {
     opacity: 0.85;
+}
+
+
+/* ---------- Discard and Cancel Navigation ---------- */
+
+#discard-and-continue,
+#cancel-navigation {
+    width: 100%;
+    padding: var(--space-3);
+
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+#discard-and-continue {
+    margin-top: var(--space-3);
+}
+
+#discard-and-continue:hover,
+#cancel-navigation:hover {
+    color: var(--text);
 }

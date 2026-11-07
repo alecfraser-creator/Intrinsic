@@ -53,11 +53,19 @@ const removeCompany = document.querySelector("#remove_watchlist");
 // Analysis update modal
 const updateAnalysisModal = document.querySelector("#analysis-update-modal")
 const updateCurrentVersionButton = document.querySelector("#update-current-analysis")
-const saveNewVersionButton = document.querySelector("#new-analysis-version")
-const closeModalButton = document.querySelector("#close-analysis-update-modal")
+const saveNewVersion = document.querySelector("#new-analysis-version")
+const closeUpdateModal = document.querySelector("#close-analysis-update-modal")
 const saveSelection = document.querySelector("#save-selection")
 const saveSuccess = document.querySelector("#save-success")
 const closeSaveSuccess = document.querySelector("#close-save-success")
+
+// Unsaved changes modal
+const unsavedChangesModal = document.querySelector("#unsaved-changes-modal");
+const navigationUpdateButton = document.querySelector("#navigation-update-analysis");
+const navigationNewButton = document.querySelector("#navigation-new-analysis");
+const cancelNavigationButton = document.querySelector("#cancel-navigation");
+const discardAndContinueButton = document.querySelector("#discard-and-continue");
+const continueAfterSaveButton = document.querySelector("#continue-after-save");
 
 
 // Metric info buttons
