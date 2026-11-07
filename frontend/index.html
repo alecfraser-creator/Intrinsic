@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="css/footer.css">
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/update-analysis-modal.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
     <script src="js/state.js" defer></script>
@@ -48,6 +49,7 @@
     <script src="js/events-watchlist.js" defer></script>
     <script src="js/events-dcf.js" defer></script>
     <script src="js/price-chart.js" defer></script>
+    <script src="js/update-analysis-modal.js" defer></script>
     <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -730,6 +732,50 @@
             <button id="close-metric-info" type="button" aria-label="Close explanation">&times;</button>
             <h2 id="metric-info-title"></h2>
             <div id="metric-info-content"></div>
+        </div>
+    </div>
+
+    <div id="analysis-update-modal" class="modal is-hidden">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="analysis-update-title">
+
+            <h2 id="analysis-update-title">Save analysis</h2>
+
+            <div id="save-selection">
+                <p>How would you like to save your changes?</p>
+
+                <div class="update-options">
+                    
+                    
+                    <button type="button" id="update-current-analysis">
+                        <span>Update current analysis</span>
+                        <small>Replace the currently saved version with your changes.</small>
+                    </button>
+
+                    <button type="button" id="new-analysis-version">
+                        <span>Create new analysis</span>
+                        <small>Save a new version while keeping the previous analysis in your history.</small>
+                    </button>
+                </div>
+
+                <button type="button" id="close-analysis-update-modal">
+                    Cancel
+                </button>
+            </div>
+
+            <div id="save-success" class="is-hidden">
+                <i data-lucide="check-circle"></i>
+
+                <h2>Analysis saved!</h2>
+
+                <p>Your changes have been successfully saved.</p>
+
+                <button type="button" id="close-save-success">
+                    Done
+                </button>
+            </div>
+
+            
+
         </div>
     </div>
 

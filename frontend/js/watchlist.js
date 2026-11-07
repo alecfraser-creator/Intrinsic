@@ -29,8 +29,7 @@ async function loadWatchlist() {
 
                 companyElement.classList.add("watchlist-item");
                 companyElement.textContent = `${ticker} - ${name}`;
-                companyElement.dataset.ticker = ticker;
-
+                
                 companyElement.addEventListener("click", async () => {
                     welcomeMessage.classList.add("is-hidden");
                     statusMessage.classList.add("is-hidden");

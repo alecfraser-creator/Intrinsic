@@ -3,12 +3,12 @@
 // ==========================================
 
 // update financials
-refreshfFinancials.addEventListener("click", async (event) => {
+refreshFinancials.addEventListener("click", async (event) => {
     analysisContent.classList.add("is-hidden");
     welcomeMessage.classList.add("is-hidden");
     statusMessage.textContent = "Updating financials...";
     statusMessage.classList.remove("is-hidden");
-    refreshfFinancials.disabled = true;
+    refreshFinancials.disabled = true;
 
     const ticker = currentQuantAnalysis.ticker;
 
@@ -31,7 +31,7 @@ refreshfFinancials.addEventListener("click", async (event) => {
     statusMessage.classList.remove("is-hidden");
     console.error(error);
     } finally {
-        refreshfFinancials.disabled = false;
+        refreshFinancials.disabled = false;
     }
 })
 
@@ -68,27 +68,9 @@ saveCompany.addEventListener("click", async (event) => {
 updateCompany.addEventListener("click", async (event) => {
     event.preventDefault();
 
-    try {
-        collectQualAnalysis()
-        await addCompany(
-            currentQuantAnalysis.ticker,
-            currentQuantAnalysis,
-            currentQualAnalysis,
-            lastFinancialsRefresh,
-            currentHistoricalData,
-            "new_version"
-        );
-
-        const originalText = updateCompany.textContent;
-        updateCompany.textContent = "Analysis saved!";
-
-        setTimeout(() => {
-            updateCompany.textContent = originalText;
-        }, 3000);
-
-    } catch (error) {
-        console.error("Error saving analysis:", error);
-    }
+    saveSelection.classList.remove("is-hidden")
+    saveSuccess.classList.add("is-hidden")
+    updateAnalysisModal.classList.remove("is-hidden")
 });
 
 
@@ -144,6 +126,7 @@ watchlistAdd.addEventListener("click", () => {
     watchlistInput.focus();
 
     let loading = false;
+    let duplicate = false 
 
     // Esc / click outside closes the input, except while a request is running
     const stopDismiss = enableDismiss(watchlistInput, restoreHeader, () => !loading);
@@ -154,27 +137,23 @@ watchlistAdd.addEventListener("click", () => {
         const ticker = watchlistInput.value.trim().toUpperCase();
         if (!ticker) return;
 
-        const savedTickers = watchlistCompanies.querySelectorAll(".watchlist-item");
-
-        const savedTickersArray = [...savedTickers];
-
-        const alreadyExists = savedTickersArray.some(savedTicker => savedTicker.dataset.ticker=== ticker);
-        if (alreadyExists) {
-            overlay.textContent = "Company already added to watchlist.";
-            overlay.classList.remove("is-hidden");
-            setTimeout(() => {
-                watchlistInput.value = "";
-                overlay.classList.add("is-hidden");
-            }, 2000);
-            return 
-        }
-
-
         loading = true;
         overlay.classList.remove("is-hidden");
 
         try {
             const data = await fetchAnalysis(ticker);
+
+            if (data.in_watchlist) {
+                duplicate = true 
+                overlay.textContent = "Company already added to watchlist.";
+                overlay.classList.remove("is-hidden");
+                setTimeout(() => {
+                    watchlistInput.value = "";
+                    overlay.classList.add("is-hidden");
+                }, 2000);
+                return 
+            }
+
             await addCompany(
                 ticker,
                 data.quant_analysis,
@@ -183,6 +162,7 @@ watchlistAdd.addEventListener("click", () => {
                 data.historical_data,
                 "update"
             );
+
 
             // Success: stop listening, then close the input
             stopDismiss();
@@ -194,7 +174,9 @@ watchlistAdd.addEventListener("click", () => {
 
         } finally {
             loading = false;
-            overlay.classList.add("is-hidden");
+            if (duplicate == false) {
+                overlay.classList.add("is-hidden");
+            }
         }
     });
 });

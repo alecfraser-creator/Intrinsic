@@ -30,7 +30,7 @@ const welcomeMessage = document.querySelector("#welcome-message");
 const statusMessage = document.querySelector("#status-message");
 
 //Quantitative analysis
-const refreshfFinancials = document.querySelector("#refresh-financials");
+const refreshFinancials = document.querySelector("#refresh-financials");
 const analysisContent = document.querySelector("#analysis-content");
 const historicalCharts = {};
 const FiveYearPriceChart = document.querySelector("#five-year-price-chart");
@@ -49,6 +49,16 @@ const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");
 const updateCompany = document.querySelector("#update_analysis");
 const removeCompany = document.querySelector("#remove_watchlist");
+
+// Analysis update modal
+const updateAnalysisModal = document.querySelector("#analysis-update-modal")
+const updateCurrentVersionButton = document.querySelector("#update-current-analysis")
+const saveNewVersionButton = document.querySelector("#new-analysis-version")
+const closeModalButton = document.querySelector("#close-analysis-update-modal")
+const saveSelection = document.querySelector("#save-selection")
+const saveSuccess = document.querySelector("#save-success")
+const closeSaveSuccess = document.querySelector("#close-save-success")
+
 
 // Metric info buttons
 const metricInfoButtons = document.querySelectorAll(".metric-info");

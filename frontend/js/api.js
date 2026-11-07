@@ -52,6 +52,8 @@ async function deleteCompany(ticker) {
         }
     );
 
+    console.log("Delete response:", response.status, await response.text());
+
     if (!response.ok) {
         throw new Error("Unable to delete company from watchlist");
     }

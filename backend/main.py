@@ -1,8 +1,7 @@
-# next: handle adding an already saved company in the watchlist with the + buttons
-
-# next: display a warning when the user is about to change company or close the tool without saving his changes, 
-# and make it so that when the user saves an analysis, he can either choose to modify the current analysis or 
+# next: make it so that when the user saves an analysis, he can either choose to modify the current analysis or 
 # create a new analysis and keep the old version saved at a different point in time
+
+# next: display a warning when the user is about to change company or close the tool without saving his changes,
 
 # next: create a "analysis history" tab, that shows every saved analysis 
 
