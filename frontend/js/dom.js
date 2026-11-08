@@ -18,7 +18,6 @@ const tabs = {
         tab: document.getElementById("valuation-tab"),
         panel: document.getElementById("valuation-panel")
     }
-    
 };
 
 

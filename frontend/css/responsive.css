@@ -74,3 +74,33 @@
         transition: none !important;
     }
 }
+
+
+@media (max-width: 760px) {
+    .analysis-history-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .analysis-history-companies {
+        max-height: 280px;
+        overflow-y: auto;
+    }
+
+    .analysis-history-detail {
+        padding: var(--space-4);
+    }
+
+    #analysis-history-placeholder {
+        padding: var(--space-5) var(--space-3);
+    }
+}
+
+@media (max-width: 420px) {
+    .analysis-history-company-header {
+        flex-direction: column;
+    }
+
+    .analysis-history-section-header {
+        align-items: flex-start;
+    }
+}

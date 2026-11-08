@@ -2,6 +2,7 @@
 // WATCHLIST BUTTON EVENT LISTENERS
 // ==========================================
 
+
 // update financials
 refreshFinancials.addEventListener("click", async (event) => {
     analysisContent.classList.add("is-hidden");

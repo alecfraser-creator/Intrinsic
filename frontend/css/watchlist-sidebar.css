@@ -6,12 +6,25 @@
     left: 0;
     bottom: 0;
     width: var(--sidebar-width);
+    min-width: 200px;
+    max-width: 450px;
     padding: var(--space-6) var(--space-4);
     background: var(--surface);
     border-right: 1px solid var(--border);
     overflow-y: auto;
     z-index: 10;
 }
+
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 20;
+}
+
 
 .watchlist-sidebar h2 {
     margin-bottom: var(--space-3);
@@ -116,7 +129,7 @@
 
 .watchlistItem-delete:hover {
     color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .watchlistItem-delete svg {
@@ -127,4 +140,127 @@
 .watchlist-item:hover {
     background: rgb(255 255 255 / 3%);
     opacity: 1;
+}
+
+
+.history-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.history-toggle:hover {
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+
+.history-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+.history-toggle.is-open {
+    transform: rotate(180deg);
+}
+
+.latest-analysis-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--surface-hover);
+    border-radius: 6px;
+    border-left: 3px solid var(--gold);
+}
+
+.latest-analysis-container span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.latest-analysis-container p {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ---------- Analysis history ---------- */
+
+.watchlist-history {
+    padding: 10px 8px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.latest-analysis-container {
+    cursor: pointer;
+}
+
+.latest-analysis-container > div:first-child {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.previous-analysis-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+}
+
+.previous-analyses-heading {
+    margin-bottom: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.previous-analysis-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+
+    cursor: pointer;
+    transition: background 0.15s ease,
+                border-color 0.15s ease,
+                color 0.15s ease;
+}
+
+.previous-analysis-entry:hover {
+    background: var(--surface-hover);
+    border-color: var(--gold);
+    color: var(--text);
+}
+
+.previous-analysis-container span {
+    font-size: 0.8rem;
+    color: inherit;
+}
+
+.previous-analysis-container > span {
+    padding: 6px 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }

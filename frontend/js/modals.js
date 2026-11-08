@@ -107,12 +107,10 @@ closeSaveSuccess.addEventListener("click", () => {
 // --------------------------------------------------
 
 navigationUpdateButton.addEventListener("click", () => {
-    console.log("Navigation: update clicked");
     updateAnalysis("update", unsavedChangesModal);
 });
 
 navigationNewButton.addEventListener("click", () => {
-    console.log("Navigation: new version clicked");
     updateAnalysis("new_version", unsavedChangesModal);
 });
 
