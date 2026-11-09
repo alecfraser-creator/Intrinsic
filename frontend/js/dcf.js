@@ -401,6 +401,8 @@ function displayDcfAssumptions(selectedScenario) {
 }
 
 
+
+
 function setupDcfAssumptionEditing() {
     const button = document.querySelector("#edit-dcf-assumptions");
     const container = document.querySelector("#dcf-assumptions-section");
@@ -414,6 +416,14 @@ function setupDcfAssumptionEditing() {
     inputs.forEach(input => {
         input.addEventListener("click", event => {
             event.stopPropagation();
+        });
+
+        // Pressing Enter saves all changes and exits edit mode
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                button.click();
+            }
         });
     });
 
@@ -445,14 +455,17 @@ function setupDcfAssumptionEditing() {
 
             // Remember which explanation panels are currently open
             const expandedAssumptions = [
-                ...container.querySelectorAll(".dcf-assumption-explanation:not(.is-hidden)")
+                ...container.querySelectorAll(
+                    ".dcf-assumption-explanation:not(.is-hidden)"
+                )
             ].map(panel => panel.dataset.explanation);
 
             // Re-render to update values and Custom indicators
             displayDcfAssumptions(container.dataset.selectedScenario);
 
             // Reopen the same explanation panels
-            const newContainer = document.querySelector("#dcf-assumptions-section");
+            const newContainer =
+                document.querySelector("#dcf-assumptions-section");
 
             if (hasChanges) markDirty();
 
@@ -483,6 +496,7 @@ function setupDcfAssumptionEditing() {
         button.textContent = "Done editing";
     });
 }
+
 
 
 

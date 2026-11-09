@@ -8,8 +8,11 @@ from .database.companies import (
     get_saved_company,
     insert_company,
     delete_company,
-    get_all_companies,
-    insert_historical_analysis
+    get_watchlist_companies,
+    insert_historical_analysis,
+    get_all_historical_analyses,
+    get_old_analysis,
+    delete_past_analysis
 )
 
 
@@ -61,6 +64,28 @@ def get_company(ticker: str):
         "updated_at": None,
         "historical_data": results["historical_data"],
     }
+
+@app.get("/company/history/{id}")
+def get_analysis_history(id):
+    isdata = get_old_analysis(id)
+
+    if isdata is not None:
+        return {
+            "ticker": isdata["ticker"],
+            "quant_analysis": isdata["quant_analysis"],
+            "qual_analysis": isdata["qual_analysis"],
+            "in_watchlist": True,
+            "updated_at": isdata["updated_at"],
+            "last_financials_refresh": isdata["last_financials_refresh"],
+            "historical_data": isdata["historical_price"],
+        }
+
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="Historical analysis not found",
+        )
+
 
 
 
@@ -250,7 +275,7 @@ def recalculate_dcf(ticker: str, data: dict = None):
             "in_watchlist": True,
             "updated_at": saved_company["updated_at"],
             "last_financials_refresh": saved_company["last_financials_refresh"],
-            "historical_data": saved_company["historical_data"]
+            "historical_data": saved_company["historical_price"]
         }
 
     # Otherwise, return just the newly calculated DCF.
@@ -268,6 +293,17 @@ def delete_in_database(ticker: str):
     delete_company(ticker)
 
 
+@app.delete("/watchlist/historical/{id}")
+def delete_from_history(id):
+    delete_past_analysis(id)
+
+
 @app.get("/watchlist")
 def get_watchlist():
-    return get_all_companies()
+    companies = get_watchlist_companies()
+    history = get_all_historical_analyses()
+
+    return {
+        "companies": companies,
+        "history": history
+    }

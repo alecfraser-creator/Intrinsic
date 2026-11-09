@@ -73,6 +73,23 @@ async function deleteCompany(ticker) {
     await loadWatchlist();
 }
 
+async function deletePastAnalysis(id) {
+    const response = await fetch(
+        `http://127.0.0.1:8000/watchlist/historical/${id}`,
+        {
+            method: "DELETE"
+        }
+    )
+
+    console.log("Delete response:", response.status, await response.text())
+
+    if (!response.ok) {
+        throw new Error("Unable to delete analysis from watchlist")
+    }
+
+    await loadWatchlist();
+}
+
 
 async function recalculateDcf(
     ticker,

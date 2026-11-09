@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="css/utilities.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/historical-view-notice.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
     <script src="js/state.js" defer></script>
@@ -50,6 +51,7 @@
     <script src="js/events-dcf.js" defer></script>
     <script src="js/price-chart.js" defer></script>
     <script src="js/modals.js" defer></script>
+    <script src="js/historical-view.js" defer></script>
     <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -106,6 +108,21 @@
                 <!-- Company Analysis -->
                 <div id="analysis-content" class="is-hidden">
 
+                    <div id="historical-view-notice" class="historical-view-notice is-hidden">
+                        <div class="historical-view-notice-icon">
+                            <i data-lucide="history"></i>
+                        </div>
+
+                        <div class="historical-view-notice-content">
+                            <strong>Historical Analysis — View Only</strong>
+                            <p>
+                                You're viewing a previously saved analysis.
+                                Editing and updating are disabled in this mode.
+                                Return to the latest analysis to make changes.
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Company Overview -->
                     <section id="company-overview" class="company-header">
                         <div class="company-top">
@@ -126,15 +143,6 @@
                                         <button type="button" id="in_watchlist" disabled>
                                             <i data-lucide="bookmark-check"></i>
                                             In watchlist
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            id="remove_watchlist"
-                                            aria-label="Remove from watchlist"
-                                            title="Remove from watchlist"
-                                        >
-                                            <i data-lucide="trash-2"></i>
                                         </button>
                                     </div>
 

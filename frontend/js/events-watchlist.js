@@ -27,7 +27,10 @@ refreshFinancials.addEventListener("click", async (event) => {
 
 
         displayTimestamps(data)
+        
         displayAnalysis(data);
+
+        setHistoricalViewMode(false);
 
         markDirty()
 
@@ -81,42 +84,6 @@ updateCompany.addEventListener("click", async (event) => {
     updateAnalysisModal.classList.remove("is-hidden")
 });
 
-
-// Remove company from watchlist
-removeCompany.addEventListener("click", async (event) => {
-    event.preventDefault();
-
-    const confirmed = confirm(
-        "Are you sure you want to remove this company from your watchlist? This will delete all your past analyses"
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    removeCompany.disabled = true;
-
-    const ticker = currentQuantAnalysis.ticker;
-
-    try {
-        await deleteCompany(ticker);
-
-        isSaved = false;
-        isDirty = false;
-
-        saveCompany.classList.remove("is-hidden");
-        watchlistActions.classList.add("is-hidden");
-
-    } catch (error) {
-        statusMessage.textContent =
-            "Unable to delete company data.";
-        statusMessage.classList.remove("is-hidden");
-        console.error(error);
-
-    } finally {
-        removeCompany.disabled = false;
-    }
-});
 
 
 // Add company to watchlist using the sidebar

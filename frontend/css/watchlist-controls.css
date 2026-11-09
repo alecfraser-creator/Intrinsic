@@ -115,25 +115,8 @@
     white-space: nowrap;
 }
 
-/* Compact bin button */
-#remove_watchlist {
-    width: 40px;
-    padding: 0;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-}
 
-#remove_watchlist:hover {
-    background: rgb(210 123 114 / 8%);
-    border-color: var(--negative);
-    color: var(--negative);
-}
 
-#remove_watchlist:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
 /* Keep Lucide icons consistent */
 .watchlist-controls svg {

@@ -2,6 +2,8 @@
 // DOM ELEMENTS
 // ==========================================
 
+const historicalViewNotice = document.getElementById("historical-view-notice");
+
 // Tabs and pannels
 
  
@@ -47,7 +49,6 @@ const watchlistAdd = document.getElementById("watchlist-add");
 const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");
 const updateCompany = document.querySelector("#update_analysis");
-const removeCompany = document.querySelector("#remove_watchlist");
 
 // Analysis update modal
 const updateAnalysisModal = document.querySelector("#analysis-update-modal")

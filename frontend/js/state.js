@@ -86,3 +86,5 @@ let currentHistoricalData = null;
 let isSaved = false
 
 let isDirty = false
+
+let isViewingOldAnalysis = false;

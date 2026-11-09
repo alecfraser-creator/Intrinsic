@@ -38,8 +38,6 @@ def insert_company(ticker, quant_analysis, last_financials_refresh, qual_analysi
 
 
 
-
-
 def get_saved_company(ticker):
     connection = connect()
     try: 
@@ -70,6 +68,34 @@ def get_saved_company(ticker):
         connection.close()
 
 
+
+def get_old_analysis(id):
+    connection = connect()
+    try:
+        cursor = connection.execute(
+            """
+            SELECT Ticker, Quant_analysis, Last_saved_at, Last_financials_refresh, Qual_analysis, Historical_price
+            FROM analysis_history
+            WHERE id = ?
+            """,
+            (id,),
+        )
+        
+        analysis = cursor.fetchone()
+        if analysis is None:
+            return None
+        return {
+                    "ticker": analysis[0],
+                    "quant_analysis": json.loads(analysis[1]),
+                    "updated_at": analysis[2],
+                    "last_financials_refresh": analysis[3],
+                    "qual_analysis": json.loads(analysis[4]) if analysis[4] else None,
+                    "historical_price": json.loads(analysis[5]) if analysis[5] else None
+                }
+    finally:
+        connection.close()
+
+
 def delete_company(ticker):
     connection = connect()
 
@@ -87,12 +113,25 @@ def delete_company(ticker):
         connection.close()
 
 
-def get_all_companies():
+def delete_past_analysis(id):
+    connection = connect()
+
+    try:
+        connection.execute(
+            "DELETE FROM analysis_history WHERE ID = ?",
+            (id,)
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+
+def get_watchlist_companies():
     connection = connect()
 
     try:
         cursor = connection.execute(
-            "SELECT * FROM Companies"
+            "SELECT Ticker, Quant_analysis, Updated_at FROM Companies"
         )
 
         companies = cursor.fetchall()
@@ -104,6 +143,7 @@ def get_all_companies():
             results.append({
                 "ticker": company[0],
                 "name": quant_analysis["profile"]["name"],
+                "updated_at": company[2]                
             })
 
         return results
@@ -130,5 +170,35 @@ def insert_historical_analysis(ticker, quant_analysis, last_financials_refresh, 
 
         connection.commit()
 
+    finally:
+        connection.close()
+
+
+def get_all_historical_analyses():
+    connection = connect()
+
+    try:
+        cursor = connection.execute(
+            "SELECT Ticker, Quant_analysis, Last_saved_at, ID FROM analysis_history " \
+            "ORDER BY Last_saved_at DESC"
+        )
+
+        historical_analysis = cursor.fetchall()
+        
+        companies = {}
+
+        for company in historical_analysis:
+            quant_analysis = json.loads(company[1])
+            ticker = company[0]
+
+            companies.setdefault(ticker, []).append({
+                "ticker": ticker,
+                "name": quant_analysis["profile"]["name"],
+                "updated_at": company[2],
+                "id": company[3]
+            })
+
+        return companies
+    
     finally:
         connection.close()

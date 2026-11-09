@@ -1,12 +1,3 @@
-# next: display a warning when the user is about to change company or close the tool without saving his changes,
-
-# next: fix the update button reset when adding a company to the watchlist with another company displayed
-
-# next: create a "analysis history" tab, that shows every saved analysis 
-
-# next: make the history tab work by displaying analysis in read only, with a banner at the top that explains it
-# and contains a button to return to latest analysis 
-
 # next: create a way of comparing two quant analysis
 
 

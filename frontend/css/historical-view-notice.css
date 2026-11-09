@@ -1,0 +1,41 @@
+.historical-view-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+
+    background: rgba(214, 166, 75, 0.08);
+    border: 1px solid rgba(214, 166, 75, 0.3);
+    border-radius: 8px;
+}
+
+.historical-view-notice-icon {
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+}
+
+.historical-view-notice-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.historical-view-notice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.historical-view-notice-content strong {
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.historical-view-notice-content p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}

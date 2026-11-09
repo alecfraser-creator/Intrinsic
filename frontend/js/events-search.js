@@ -14,8 +14,11 @@ async function runAnalysis(ticker) {
 
         currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
         populateQualAnalysis();
-
+    
         displayAnalysis(data);
+
+        setHistoricalViewMode(false);
+
 
         // The new company is freshly loaded, so there is nothing unsaved
         isDirty = false;

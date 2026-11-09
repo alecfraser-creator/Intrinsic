@@ -56,8 +56,11 @@ async function openWatchlistCompany(ticker) {
 
         currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
         populateQualAnalysis();
+    
 
         displayAnalysis(data);
+
+        setHistoricalViewMode(false);
 
         // The new company is freshly loaded, so there is nothing unsaved
         isDirty = false;
@@ -85,6 +88,8 @@ async function displayOldAnalysis (id) {
 
         displayAnalysis(data);
 
+        setHistoricalViewMode(true);
+
         // The new company is freshly loaded, so there is nothing unsaved
         isDirty = false;
     } catch (error) {
@@ -99,13 +104,22 @@ async function displayOldAnalysis (id) {
 
 
 
+
+
 async function loadWatchlist() {
+
+    // Preserve currently expanded company sections before rebuilding the DOM
+    const openCompanies = new Set(
+        [...watchlistCompanies.querySelectorAll(".watchlist-history:not(.is-hidden)")]
+            .map(container => container.dataset.ticker)
+    );
+
     watchlistCompanies.replaceChildren();
 
     try {
         // Fetch watchlist
         const response = await fetch(
-            `http://127.0.0.1:8000/watchlist`
+            "http://127.0.0.1:8000/watchlist"
         );
 
         if (!response.ok) {
@@ -116,12 +130,12 @@ async function loadWatchlist() {
 
         // Handle empty watchlist
         if (watchlist.companies.length === 0) {
-            watchlistCompanies.appendChild(watchlistEmpty);
-            watchlistEmpty.textContent = "Your watchlist is empty. Analyze a company and add it to your watchlist to keep its analysis saved here.";
-        }
-        else {
-            for (const company of watchlist.companies) {
+            watchlistEmpty.textContent =
+                "Your watchlist is empty. Analyze a company and add it to your watchlist to keep its analysis saved here.";
 
+            watchlistCompanies.appendChild(watchlistEmpty);
+        } else {
+            for (const company of watchlist.companies) {
                 const ticker = company.ticker;
                 const name = company.name;
                 const companyHistory = watchlist.history[ticker] ?? [];
@@ -148,9 +162,20 @@ async function loadWatchlist() {
                 latestAnalysisContainer.classList.add("analysis-entry", "latest-analysis");
                 previousAnalysesContainer.classList.add("previous-analysis-container");
 
+                // Associate history container with its company
+                historyContainer.dataset.ticker = ticker;
+
+                // Restore expanded state
+                if (openCompanies.has(ticker)) {
+                    historyContainer.classList.remove("is-hidden");
+                    historyToggle.classList.add("is-open");
+                }
+
                 // Populate elements
                 companyHeader.textContent = `${ticker} - ${name}`;
                 companyElementDelete.innerHTML = '<i data-lucide="trash-2"></i>';
+                companyElementDelete.setAttribute("aria-label", "Delete company");
+
                 historyToggle.innerHTML = '<i data-lucide="chevron-down"></i>';
 
                 latestAnalysisEntry.textContent = "Latest Analysis";
@@ -165,22 +190,58 @@ async function loadWatchlist() {
                     const emptyHistory = document.createElement("span");
                     emptyHistory.textContent = "No previous analyses.";
                     previousAnalysesContainer.appendChild(emptyHistory);
-                }
-                else {
+                } else {
                     for (const analysis of companyHistory) {
                         const previousAnalysisEntry = document.createElement("div");
                         const previousAnalysisDate = document.createElement("span");
+                        const previousAnalysisDelete = document.createElement("button");
 
                         previousAnalysisEntry.classList.add("analysis-entry");
                         previousAnalysisDate.textContent = formatTimestamp(analysis.updated_at);
 
-                        previousAnalysisEntry.appendChild(previousAnalysisDate);
-                        previousAnalysesContainer.appendChild(previousAnalysisEntry);
+                        // Historical analysis delete button
+                        previousAnalysisDelete.classList.add("historical-analysis-delete");
+                        previousAnalysisDelete.innerHTML = '<i data-lucide="trash-2"></i>';
+                        previousAnalysisDelete.setAttribute(
+                            "aria-label",
+                            "Delete historical analysis"
+                        );
+
+                        // Group date and delete button
+                        const previousAnalysisActions = document.createElement("div");
+                        previousAnalysisActions.classList.add("previous-analysis-actions");
+
+                        previousAnalysisActions.appendChild(previousAnalysisDate);
+                        previousAnalysisActions.appendChild(previousAnalysisDelete);
+                        previousAnalysisEntry.appendChild(previousAnalysisActions);
 
                         // Open selected historical analysis
                         previousAnalysisEntry.addEventListener("click", () => {
                             displayOldAnalysis(analysis.id);
                         });
+
+                        // Delete selected historical analysis
+                        previousAnalysisDelete.addEventListener("click", async (event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+
+                            const confirmed = confirm(
+                                "Are you sure you want to permanently delete this historical analysis?"
+                            );
+
+                            if (!confirmed) return;
+
+                            try {
+                                await deletePastAnalysis(analysis.id);
+                            } catch (error) {
+                                statusMessage.textContent =
+                                    "Unable to delete historical analysis.";
+                                statusMessage.classList.remove("is-hidden");
+                                console.error(error);
+                            }
+                        });
+
+                        previousAnalysesContainer.appendChild(previousAnalysisEntry);
                     }
                 }
 
@@ -216,25 +277,23 @@ async function loadWatchlist() {
                     event.preventDefault();
 
                     const confirmed = confirm(
-                        "Are you sure you want to remove this company from your watchlist? This will delete all your past analyses"
+                        "Are you sure you want to remove this company from your watchlist? This will delete all its past analyses."
                     );
 
-                    if (!confirmed) {
-                        return;
-                    }
+                    if (!confirmed) return;
 
                     try {
                         await deleteCompany(ticker);
 
                         if (currentQuantAnalysis?.ticker === ticker) {
                             isSaved = false;
+                            isDirty = false;
                             saveCompany.classList.remove("is-hidden");
                             watchlistActions.classList.add("is-hidden");
                         }
 
                     } catch (error) {
-                        statusMessage.textContent =
-                            "Unable to delete company data.";
+                        statusMessage.textContent = "Unable to delete company data.";
                         statusMessage.classList.remove("is-hidden");
                         console.error(error);
                     }
@@ -248,7 +307,7 @@ async function loadWatchlist() {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("Error loading watchlist:", error);
     }
 }
 
