@@ -42,6 +42,12 @@ document.addEventListener("mouseup", () => {
 
 
 async function openWatchlistCompany(ticker) {
+
+    if (isDirty && currentQuantAnalysis) {
+        openUnsavedChangesModal(() => openWatchlistCompany(ticker));
+        return;
+    }
+    
     welcomeMessage.classList.add("is-hidden");
     statusMessage.classList.add("is-hidden");
 
@@ -62,6 +68,33 @@ async function openWatchlistCompany(ticker) {
         console.error(error);
     }
 }
+
+async function displayOldAnalysis (id) {
+    if (isDirty && currentQuantAnalysis) {
+        openUnsavedChangesModal(() => displayOldAnalysis(id));
+        return;
+    }
+
+    welcomeMessage.classList.add("is-hidden");
+    statusMessage.classList.add("is-hidden");
+
+    try {
+        const data = await fetchOldAnalysis(id);
+        currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
+        populateQualAnalysis();
+
+        displayAnalysis(data);
+
+        // The new company is freshly loaded, so there is nothing unsaved
+        isDirty = false;
+    } catch (error) {
+        statusMessage.textContent = "Unable to load this analysis.";
+        statusMessage.classList.remove("is-hidden");
+        console.error(error);
+    }
+
+}
+
 
 
 
@@ -92,7 +125,6 @@ async function loadWatchlist() {
                 const ticker = company.ticker;
                 const name = company.name;
                 const companyHistory = watchlist.history[ticker] ?? [];
-                const latestAnalysisDate = document.createElement("span");
 
                 // Create elements
                 const companyElement = document.createElement("div");
@@ -103,18 +135,18 @@ async function loadWatchlist() {
 
                 const latestAnalysisContainer = document.createElement("div");
                 const latestAnalysisEntry = document.createElement("div");
+                const latestAnalysisDate = document.createElement("span");
 
                 const previousAnalysesContainer = document.createElement("div");
-                const previousAnalysesHeading = document.createElement("div");
 
                 // Assign classes
                 companyHeader.classList.add("watchlist-item");
                 historyContainer.classList.add("watchlist-history", "is-hidden");
                 companyElementDelete.classList.add("watchlistItem-delete");
                 historyToggle.classList.add("history-toggle");
-                latestAnalysisContainer.classList.add("latest-analysis-container");
+
+                latestAnalysisContainer.classList.add("analysis-entry", "latest-analysis");
                 previousAnalysesContainer.classList.add("previous-analysis-container");
-                previousAnalysesHeading.classList.add("previous-analyses-heading");
 
                 // Populate elements
                 companyHeader.textContent = `${ticker} - ${name}`;
@@ -124,11 +156,11 @@ async function loadWatchlist() {
                 latestAnalysisEntry.textContent = "Latest Analysis";
                 latestAnalysisDate.textContent = formatTimestamp(company.updated_at);
 
-                previousAnalysesHeading.textContent = "Previous Analyses";
+                // Build latest analysis entry
+                latestAnalysisContainer.appendChild(latestAnalysisEntry);
+                latestAnalysisContainer.appendChild(latestAnalysisDate);
 
                 // Populate historical analyses
-                previousAnalysesContainer.appendChild(previousAnalysesHeading);
-
                 if (companyHistory.length === 0) {
                     const emptyHistory = document.createElement("span");
                     emptyHistory.textContent = "No previous analyses.";
@@ -139,12 +171,16 @@ async function loadWatchlist() {
                         const previousAnalysisEntry = document.createElement("div");
                         const previousAnalysisDate = document.createElement("span");
 
-                        previousAnalysisEntry.classList.add("previous-analysis-entry");
-
+                        previousAnalysisEntry.classList.add("analysis-entry");
                         previousAnalysisDate.textContent = formatTimestamp(analysis.updated_at);
 
                         previousAnalysisEntry.appendChild(previousAnalysisDate);
                         previousAnalysesContainer.appendChild(previousAnalysisEntry);
+
+                        // Open selected historical analysis
+                        previousAnalysisEntry.addEventListener("click", () => {
+                            displayOldAnalysis(analysis.id);
+                        });
                     }
                 }
 
@@ -158,16 +194,12 @@ async function loadWatchlist() {
                 historyContainer.appendChild(latestAnalysisContainer);
                 historyContainer.appendChild(previousAnalysesContainer);
 
-                latestAnalysisContainer.appendChild(latestAnalysisEntry);
-                latestAnalysisContainer.appendChild(latestAnalysisDate);
-
                 // Open latest analysis
-                companyHeader.addEventListener("click", () => {
-                    if (isDirty && currentQuantAnalysis) {
-                        openUnsavedChangesModal(() => openWatchlistCompany(ticker));
-                        return;
-                    }
+                latestAnalysisContainer.addEventListener("click", () => {
+                    openWatchlistCompany(ticker);
+                });
 
+                companyHeader.addEventListener("click", () => {
                     openWatchlistCompany(ticker);
                 });
 
@@ -219,5 +251,6 @@ async function loadWatchlist() {
         console.error(error);
     }
 }
+
 
 

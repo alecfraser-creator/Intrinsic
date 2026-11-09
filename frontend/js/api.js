@@ -15,6 +15,18 @@ async function fetchAnalysis(ticker) {
     return data;
 }
 
+async function fetchOldAnalysis(id) {
+    const response = await fetch(
+        `http://127.0.0.1:8000/company/history/${id}`
+    )
+
+    if (!response.ok) {
+        throw new Error("Unable to retrieve company data.");
+    }
+    const data = await response.json();
+    return data;
+}
+
 
 async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh, historicalData, saveMode) {
     const response = await fetch(

@@ -25,7 +25,6 @@
     z-index: 20;
 }
 
-
 .watchlist-sidebar h2 {
     margin-bottom: var(--space-3);
     padding-bottom: var(--space-3);
@@ -89,7 +88,8 @@
     color: var(--text-muted);
 }
 
-/* Ruled rows, same language as the metrics */
+/* ---------- Company rows ---------- */
+
 .watchlist-item {
     width: 100%;
     display: flex;
@@ -106,6 +106,13 @@
     cursor: pointer;
     transition: background 0.15s ease;
 }
+
+.watchlist-item:hover {
+    background: rgb(255 255 255 / 3%);
+    opacity: 1;
+}
+
+/* Delete button */
 
 .watchlistItem-delete {
     display: flex;
@@ -137,11 +144,7 @@
     height: 16px;
 }
 
-.watchlist-item:hover {
-    background: rgb(255 255 255 / 3%);
-    opacity: 1;
-}
-
+/* History toggle */
 
 .history-toggle {
     display: flex;
@@ -171,29 +174,6 @@
     transform: rotate(180deg);
 }
 
-.latest-analysis-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    background: var(--surface-hover);
-    border-radius: 6px;
-    border-left: 3px solid var(--gold);
-}
-
-.latest-analysis-container span {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.latest-analysis-container p {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text);
-}
-
 /* ---------- Analysis history ---------- */
 
 .watchlist-history {
@@ -201,62 +181,56 @@
     border-bottom: 1px solid var(--border);
 }
 
-.latest-analysis-container {
-    cursor: pointer;
-}
+/* Shared latest and historical analysis entries */
 
-.latest-analysis-container > div:first-child {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text);
-}
 
-.previous-analysis-container {
+
+.analysis-entry {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 8px 12px;
-}
-
-.previous-analyses-heading {
-    margin-bottom: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.previous-analysis-entry {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    gap: 4px;
     padding: 10px 12px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: var(--surface);
 
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-
+    color: var(--text);
     cursor: pointer;
+
     transition: background 0.15s ease,
                 border-color 0.15s ease,
                 color 0.15s ease;
 }
 
-.previous-analysis-entry:hover {
+.analysis-entry:hover {
     background: var(--surface-hover);
     border-color: var(--gold);
     color: var(--text);
 }
 
-.previous-analysis-container span {
+.analysis-entry.is-active {
+    border-color: var(--gold);
+}
+
+.analysis-entry > div {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.analysis-entry span {
     font-size: 0.8rem;
-    color: inherit;
+    color: var(--text);
+}
+
+/* Historical entries container */
+
+.previous-analysis-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 0;
 }
 
 .previous-analysis-container > span {
