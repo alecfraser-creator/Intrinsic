@@ -1,0 +1,81 @@
+/* ==========================================
+   WATCHLIST COMPARISON ACTION
+========================================== */
+
+.watchlist-comparison {
+    flex-shrink: 0;
+    padding: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+#compare-analyses {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#compare-analyses:hover {
+    background: var(--border);
+    border-color: var(--gold);
+}
+
+/* Ready to compare */
+#compare-analyses.comparison-ready {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #171717;
+}
+
+#compare-analyses.comparison-ready:hover {
+    filter: brightness(1.1);
+}
+
+#compare-analyses i,
+#compare-analyses svg {
+    width: 16px;
+    height: 16px;
+}
+
+.watchlist-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+#watchlist-companies {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.watchlist-comparison {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+
+#comparison-instructions,
+#comparison-selection-count {
+    padding: var(--space-1);
+    background: var(--surface);
+    color: var(--gold);
+    font-size: 0.8rem;
+}
+
+#comparison-selection-count {
+    margin-bottom: 15px;
+}

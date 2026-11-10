@@ -45,6 +45,12 @@ const watchlistElement = document.querySelector(".watchlist-item");
 const watchlistHeader = document.querySelector(".watchlist-header");
 const watchlistAdd = document.getElementById("watchlist-add");
 
+//Watchlist comparing mode
+const compareSelectButton = document.getElementById("compare-analyses")
+const compareSelectionCount = document.getElementById("omparison-selection-count")
+const comparisonInstructions = document.getElementById("comparison-instructions")
+const comparisonSelectionCount = document.getElementById("comparison-selection-count")
+
 // Watchlist controls in the analysis
 const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");

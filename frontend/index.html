@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/modals.css">
     <link rel="stylesheet" href="css/historical-view-notice.css">
+    <link rel="stylesheet" href="css/comparison.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
     <script src="js/state.js" defer></script>
@@ -52,6 +53,9 @@
     <script src="js/price-chart.js" defer></script>
     <script src="js/modals.js" defer></script>
     <script src="js/historical-view.js" defer></script>
+    <script src="js/comparison/comparison-header.js" defer></script>
+    <script src="js/comparison/comparison-quantitative.js" defer></script>
+    <script src="js/comparison/comparison-selection.js" defer></script>
     <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -61,20 +65,35 @@
 
         <div class="dashboard-layout">
 
+            <!-- Main Dashboard -->
+            <div class="dashboard-main">
+
+                <!-- Normal Dashboard Mode -->
+                <section id="normal-dashboard-view">
+                    <!-- Watchlist Sidebar -->
             <!-- Watchlist Sidebar -->
             <aside class="watchlist-sidebar">
                 <div class="watchlist-header">
                     <h2>Watchlist</h2>
                     <button id="watchlist-add" type="button" aria-label="Add company">+</button>
                 </div>
+                <div id="comparison-instructions" class="is-hidden">
+                    Select two analyses to compare.
+                </div>
                 <div id="watchlist-companies">
                     <p class="watchlist-empty"></p>
                 </div>
+                <div class="watchlist-comparison">
+                    <div id="comparison-selection-count" class="is-hidden">
+                        0 of 2 selected
+                    </div>
+                    <button type="button" id="compare-analyses">
+                        <i data-lucide="git-compare-arrows"></i>
+                        <span>Compare analyses</span>
+                    </button>
+                </div>
                 <div class="resize-handle"></div>
             </aside>
-
-            <!-- Main Dashboard -->
-            <div class="dashboard-main">
 
                 <!-- Search -->
                 <section class="search-section">
@@ -105,8 +124,8 @@
                 <!-- Status Messages -->
                 <p id="status-message" aria-live="polite"></p>
 
-                <!-- Company Analysis -->
-                <div id="analysis-content" class="is-hidden">
+                    <!-- Company Analysis -->
+                    <div id="analysis-content" class="is-hidden">
 
                     <div id="historical-view-notice" class="historical-view-notice is-hidden">
                         <div class="historical-view-notice-icon">
@@ -213,7 +232,6 @@
 
                     </nav>
 
-                    
                     <!-- Quantitative Analysis -->
                     <div
                         id="quantitative-panel"
@@ -720,12 +738,30 @@
                         </section>
                     </div>
 
+                        <p class="status-message" role="status" aria-live="polite"></p>
+
+                    </div>
+
+                </section>
+
+                <!-- Comparison Mode -->
+                <section id="comparison-view"  class="is-hidden">
+
+
+
+
+
+
+
                     <p class="status-message" role="status" aria-live="polite"></p>
-                </div>
+
+                </section>
+
             </div>
         </div>
     </main>
 
+    <!-- Overlays -->
     <div id="loadingOverlay" class="is-hidden">
         <p>Adding company to watchlist...</p>
     </div>
@@ -744,6 +780,7 @@
         </div>
     </div>
 
+    <!-- Modals -->
 
     <div id="analysis-update-modal" class="modal is-hidden">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="analysis-update-title">
@@ -833,6 +870,7 @@
         </div>
     </div>
 
+    <!-- Footer -->
     <footer class="site-footer">
         <p>Intrinsic — Independent Investment Analysis</p>
         <p>For informational purposes only. Not investment advice.</p>

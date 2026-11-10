@@ -4,8 +4,20 @@
                     <h2>Watchlist</h2>
                     <button id="watchlist-add" type="button" aria-label="Add company">+</button>
                 </div>
+                <div id="comparison-instructions" class="is-hidden">
+                    Select two analyses to compare.
+                </div>
                 <div id="watchlist-companies">
                     <p class="watchlist-empty"></p>
+                </div>
+                <div class="watchlist-comparison">
+                    <div id="comparison-selection-count" class="is-hidden">
+                        0 of 2 selected
+                    </div>
+                    <button type="button" id="compare-analyses">
+                        <i data-lucide="git-compare-arrows"></i>
+                        <span>Compare analyses</span>
+                    </button>
                 </div>
                 <div class="resize-handle"></div>
             </aside>

@@ -88,3 +88,5 @@ let isSaved = false
 let isDirty = false
 
 let isViewingOldAnalysis = false;
+
+let isComparisonMode = false

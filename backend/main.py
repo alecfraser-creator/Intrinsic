@@ -1,4 +1,4 @@
-# next: create a way of comparing two quant analysis
+# next: create tickers for each anaylsis in loadWatchlist and hide them
 
 
 import json

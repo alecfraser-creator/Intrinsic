@@ -19,7 +19,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: 10px;
+    width: 3px;
     height: 100%;
     cursor: col-resize;
     z-index: 20;
@@ -112,6 +112,10 @@
     opacity: 1;
 }
 
+.watchlistItem-actions {
+    display: flex;
+    align-items: center;
+}
 /* Delete button */
 
 .watchlistItem-delete {
@@ -184,14 +188,18 @@
 /* Shared latest and historical analysis entries */
 
 
+.latestAnalysisContainer {
+    display: flex;
+    justify-content: center;
+}
 
 .analysis-entry {
     display: flex;
-    flex-direction: column;
     gap: 4px;
     padding: 10px 12px;
     margin-bottom: 6px;
-
+    justify-content: space-between;
+    align-items: center;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -277,4 +285,28 @@
 .historical-analysis-delete svg {
     width: 14px;
     height: 14px;
+}
+
+
+/*Comparing mode*/
+.analysis-select {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 2px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.analysis-select:hover {
+    padding: 0px;
+}
+
+.analysis-select svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.8;
 }
