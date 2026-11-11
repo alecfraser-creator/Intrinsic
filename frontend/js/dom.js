@@ -51,6 +51,13 @@ const compareSelectionCount = document.getElementById("omparison-selection-count
 const comparisonInstructions = document.getElementById("comparison-instructions")
 const comparisonSelectionCount = document.getElementById("comparison-selection-count")
 
+// Normal and comparison mode
+const normalView = document.getElementById("normal-dashboard-view")
+const comparisonView = document.getElementById("comparison-view")
+
+// Comparison view
+const exitComparisonButton = document.getElementById("exit-comparison")
+
 // Watchlist controls in the analysis
 const saveCompany = document.querySelector("#save_watchlist");
 const watchlistActions = document.querySelector("#watchlist-actions");

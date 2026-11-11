@@ -286,8 +286,6 @@ def recalculate_dcf(ticker: str, data: dict = None):
 
 
 
-
-
 @app.delete("/watchlist/{ticker}")
 def delete_in_database(ticker: str):
     delete_company(ticker)

@@ -1,11 +1,78 @@
+
+/* ==========================================
+   COMPARISON MODE INDICATOR
+========================================== */
+
+#comparison-view .comparison-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 0 4px;
+}
+
+#comparison-view .comparison-mode-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+#comparison-view .comparison-mode-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.10);
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+#comparison-view .comparison-mode-icon svg {
+    width: 15px;
+    height: 15px;
+    stroke-width: 1.8;
+}
+
+#comparison-view .exit-comparison-button {
+    padding: 7px 12px;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease,
+                background 0.2s ease;
+}
+
+#comparison-view .exit-comparison-button:hover {
+    color: var(--text);
+    background: var(--surface);
+    border-color: var(--text-muted);
+}
+
+
 /* ==========================================
    WATCHLIST COMPARISON ACTION
 ========================================== */
 
+body.comparison-mode {
+    padding-left: 0;
+}
+
 .watchlist-comparison {
     flex-shrink: 0;
+    margin-top: auto;
     padding: var(--space-4);
     border-top: 1px solid var(--border);
+    background: var(--surface);
 }
 
 #compare-analyses {
@@ -30,7 +97,6 @@
     border-color: var(--gold);
 }
 
-/* Ready to compare */
 #compare-analyses.comparison-ready {
     background: var(--gold);
     border-color: var(--gold);
@@ -47,26 +113,10 @@
     height: 16px;
 }
 
-.watchlist-sidebar {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-}
 
-#watchlist-companies {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-}
-
-.watchlist-comparison {
-    flex-shrink: 0;
-    margin-top: auto;
-    padding: var(--space-4);
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-}
+/* ==========================================
+   COMPARISON INSTRUCTIONS
+========================================== */
 
 #comparison-instructions,
 #comparison-selection-count {
@@ -78,4 +128,278 @@
 
 #comparison-selection-count {
     margin-bottom: 15px;
+}
+
+
+/* ==========================================
+   COMPARISON MODE
+========================================== */
+
+body.comparison-mode .watchlist-sidebar {
+    display: none;
+}
+
+body.comparison-mode #comparison-view {
+    display: block;
+    width: 100%;
+}
+
+
+/* ==========================================
+   COMPANY COLORS
+========================================== */
+
+#comparison-view {
+    --comparison-color-one: var(--gold);
+    --comparison-color-two: #5aa9e6;
+}
+
+#comparison-view .company-one {
+    --company-color: var(--comparison-color-one);
+}
+
+#comparison-view .company-two {
+    --company-color: var(--comparison-color-two);
+}
+
+
+/* ==========================================
+   STICKY COMPANY IDENTITIES
+========================================== */
+
+#comparison-view .comparison-identities {
+    position: sticky;
+    top: 10px;
+    z-index: 10;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+
+    margin-bottom: 24px;
+    background: transparent;
+}
+
+#comparison-view .comparison-identities .company-identity {
+    min-width: 0;
+    padding: 18px 24px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--company-color);
+    border-radius: 10px;
+
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+}
+
+#comparison-view .comparison-identities h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--company-color);
+}
+
+/* Ticker and last-saved date */
+
+#comparison-view .company-identity-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+#comparison-view .company-identity-meta p {
+    margin: 0;
+}
+
+#comparison-view .company-identity-meta .company-ticker {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+}
+
+#comparison-view .company-last-saved {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+#comparison-view .identity-meta-separator {
+    color: var(--text-muted);
+    opacity: 0.6;
+    font-size: 0.8rem;
+}
+
+
+/* ==========================================
+   COMPANY OVERVIEWS
+========================================== */
+
+#comparison-view .comparison-overviews {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+    align-items: stretch;
+    margin-bottom: 24px;
+}
+
+#comparison-view .company-header {
+    min-width: 0;
+    padding: 24px;
+    box-sizing: border-box;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+#comparison-view .company-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+#comparison-view .company-summary .metric-card {
+    min-width: 0;
+    padding: 4px 0;
+
+    background: transparent;
+    border: none;
+    border-radius: 0;
+
+    transition: opacity 0.2s ease;
+}
+
+#comparison-view .company-summary .metric-card:hover {
+    opacity: 0.85;
+}
+
+
+/* ==========================================
+   COMPARISON METRICS
+========================================== */
+
+#comparison-view .metric-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+#comparison-view .comparison-metric-values {
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    width: auto;
+    margin-left: auto;
+}
+
+#comparison-view .comparison-metric-values .metric-value {
+    min-width: 0;
+    text-align: right;
+}
+
+#comparison-view .comparison-company-value:nth-child(1) .metric-value {
+    color: var(--comparison-color-one);
+}
+
+#comparison-view .comparison-company-value:nth-child(2) .metric-value {
+    color: var(--comparison-color-two);
+}
+
+
+/* ==========================================
+   HISTORICAL COMPARISON CHARTS
+========================================== */
+
+#comparison-view .historical-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+#comparison-view .historical-chart {
+    min-width: 0;
+}
+
+
+/* ==========================================
+   PRICE COMPARISON CHART
+========================================== */
+
+#comparison-view #comparison-price-chart-container {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-3);
+    box-sizing: border-box;
+}
+
+#comparison-view #comparison-price-chart-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--space-3);
+}
+
+#comparison-view #comparison-price-chart-header h3 {
+    margin: 0 auto 0 0;
+}
+
+#comparison-view .comparison-price-chart-period {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#comparison-view .comparison-price-chart-period:hover {
+    background: var(--border);
+    border-color: var(--gold);
+}
+
+#comparison-view .comparison-price-chart-period.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #171717;
+}
+
+#comparison-view #comparison-price-chart {
+    display: block;
+    width: 100%;
+}
+
+
+/* ==========================================
+   RESPONSIVE LAYOUT
+========================================== */
+
+@media (max-width: 768px) {
+    #comparison-view .comparison-overviews {
+        grid-template-columns: 1fr;
+    }
+
+    #comparison-view .historical-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #comparison-view .comparison-identities {
+        gap: 12px;
+    }
+
+    #comparison-view .comparison-identities .company-identity {
+        padding: 14px 10px;
+    }
+
+    #comparison-view .company-identity-meta {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
 }

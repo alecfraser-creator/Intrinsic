@@ -747,11 +747,548 @@
                 <!-- Comparison Mode -->
                 <section id="comparison-view"  class="is-hidden">
 
+                        <!-- Comparison view flag -->
+                        <div class="comparison-mode-bar">
+                            <div class="comparison-mode-label">
+                                <span class="comparison-mode-icon">
+                                    <i data-lucide="git-compare-arrows"></i>
+                                </span>
+                                <span>Comparison mode</span>
+                            </div>
+
+                            <button
+                                id="exit-comparison"
+                                class="exit-comparison-button"
+                                type="button"
+                            >
+                                Exit comparison
+                            </button>
+                        </div>
+
+                        <!-- Company Identities (sticky bar) -->
+                        <div class="comparison-identities">
+                            <div class="company-identity company-one">
+                                <h2 id="comparison-company-one-name"></h2>
+                                <div class="company-identity-meta">
+                                    <p id="comparison-company-one-ticker" class="company-ticker"></p>
+                                    <span class="identity-meta-separator">·</span>
+                                    <p class="company-last-saved">
+                                        Saved <span id="comparison-company-one-last-saved"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="company-identity company-two">
+                                <h2 id="comparison-company-two-name"></h2>
+                                <div class="company-identity-meta">
+                                    <p id="comparison-company-two-ticker" class="company-ticker"></p>
+                                    <span class="identity-meta-separator">·</span>
+                                    <p class="company-last-saved">
+                                        Saved <span id="comparison-company-two-last-saved"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Company Overviews -->
+                        <div class="comparison-overviews">
+
+                            <!-- First Analysis -->
+                            <section id="comparison-company-one" class="company-header company-one">
+                                <div class="company-summary">
+                                    <div class="summary-item">
+                                        <span class="metric-label">Price</span>
+                                        <span class="metric-value" id="comparison-company-one-share-price"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">Market Cap</span>
+                                        <span class="metric-value" id="comparison-company-one-market-cap"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">CEO</span>
+                                        <span class="metric-value" id="comparison-company-one-ceo"></span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Second Analysis -->
+                            <section id="comparison-company-two" class="company-header company-two">
+                                <div class="company-summary">
+                                    <div class="summary-item">
+                                        <span class="metric-label">Price</span>
+                                        <span class="metric-value" id="comparison-company-two-share-price"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">Market Cap</span>
+                                        <span class="metric-value" id="comparison-company-two-market-cap"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">CEO</span>
+                                        <span class="metric-value" id="comparison-company-two-ceo"></span>
+                                    </div>
+                                </div>
+                            </section>
+
+                        </div>
 
 
 
+<!-- Comparison Price Chart -->
+<div id="comparison-price-chart-container">
+    <div id="comparison-price-chart-header">
+        <h3>Price Comparison</h3>
+        <button class="comparison-price-chart-period" data-period="5y">5y</button>
+        <button class="comparison-price-chart-period active" data-period="1y">1y</button>
+    </div>
+
+    <canvas id="comparison-price-chart"></canvas>
+</div>
 
 
+<!-- Financial Strength Comparison -->
+<section id="comparison-financial-strength" class="dashboard-section">
+    <h2 class="section-heading">Financial Strength</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <span class="metric-label">
+                Cash
+                <button type="button" class="metric-info" data-metric="cash" aria-label="Explain cash">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-cash"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-cash"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-label">
+                Total debt
+                <button type="button" class="metric-info" data-metric="total-debt" aria-label="Explain total debt">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-total-debt"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-total-debt"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-label">
+                Net debt
+                <button type="button" class="metric-info" data-metric="net-debt" aria-label="Explain net debt">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-net-debt"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-net-debt"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-label">
+                Debt / equity
+                <button type="button" class="metric-info" data-metric="debt-equity" aria-label="Explain debt to equity">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-debt-equity"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-debt-equity"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-label">
+                Current ratio
+                <button type="button" class="metric-info" data-metric="current-ratio" aria-label="Explain current ratio">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-current-ratio"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-current-ratio"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-label">
+                Interest coverage
+                <button type="button" class="metric-info" data-metric="interest-coverage" aria-label="Explain interest coverage">i</button>
+            </span>
+            <div class="comparison-metric-values">
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-one-interest-coverage"></span>
+                </div>
+                <div class="comparison-company-value">
+                    <span class="metric-value" id="comparison-company-two-interest-coverage"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Profitability and Growth Comparison -->
+<section id="comparison-profitability-growth" class="dashboard-section">
+    <h2 class="section-heading">Profitability and Growth</h2>
+
+    <div class="metrics-subsection">
+        <h3>Revenue growth</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">
+                    5-year CAGR
+                    <button type="button" class="metric-info" data-metric="revenue-cagr-5y" aria-label="Explain 5-year revenue CAGR">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-revenue-cagr-5y"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-revenue-cagr-5y"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    3-year CAGR
+                    <button type="button" class="metric-info" data-metric="revenue-cagr-3y" aria-label="Explain 3-year revenue CAGR">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-revenue-cagr-3y"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-revenue-cagr-3y"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    Year over year
+                    <button type="button" class="metric-info" data-metric="revenue-yoy" aria-label="Explain year-over-year revenue growth">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-revenue-yoy"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-revenue-yoy"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-subsection">
+        <h3>EPS growth</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">
+                    5-year CAGR
+                    <button type="button" class="metric-info" data-metric="eps-cagr-5y" aria-label="Explain 5-year EPS CAGR">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-eps-cagr-5y"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-eps-cagr-5y"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    3-year CAGR
+                    <button type="button" class="metric-info" data-metric="eps-cagr-3y" aria-label="Explain 3-year EPS CAGR">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-eps-cagr-3y"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-eps-cagr-3y"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    Year over year
+                    <button type="button" class="metric-info" data-metric="eps-yoy" aria-label="Explain year-over-year EPS growth">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-eps-yoy"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-eps-yoy"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-subsection">
+        <h3>Margins and cash flow</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">
+                    Gross margin
+                    <button type="button" class="metric-info" data-metric="gross-margin" aria-label="Explain gross margin">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-gross-margin"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-gross-margin"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    Operating margin
+                    <button type="button" class="metric-info" data-metric="operating-margin" aria-label="Explain operating margin">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-operating-margin"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-operating-margin"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    Free cash flow
+                    <button type="button" class="metric-info" data-metric="free-cash-flow" aria-label="Explain free cash flow">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-free-cash-flow"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-free-cash-flow"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    FCF margin
+                    <button type="button" class="metric-info" data-metric="fcf-margin" aria-label="Explain free cash flow margin">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-fcf-margin"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-fcf-margin"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    FCF year over year
+                    <button type="button" class="metric-info" data-metric="fcf-yoy" aria-label="Explain year-over-year free cash flow growth">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-fcf-yoy"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-fcf-yoy"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-subsection">
+        <h3>Returns</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">
+                    Return on equity (ROE)
+                    <button type="button" class="metric-info" data-metric="roe" aria-label="Explain return on equity">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-roe"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-roe"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    Return on invested capital (ROIC)
+                    <button type="button" class="metric-info" data-metric="roic" aria-label="Explain return on invested capital">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-roic"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-roic"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-subsection">
+        <h3>Historical trends</h3>
+        <div class="historical-chart-grid">
+            <div class="historical-chart">
+                <h4>Revenue</h4>
+                <canvas id="comparison-historical-revenue-chart" role="img" aria-label="Historical revenue comparison"></canvas>
+            </div>
+            <div class="historical-chart">
+                <h4>Earnings per share (EPS)</h4>
+                <canvas id="comparison-historical-eps-chart" role="img" aria-label="Historical EPS comparison"></canvas>
+            </div>
+            <div class="historical-chart">
+                <h4>Gross margin</h4>
+                <canvas id="comparison-historical-gross-margin-chart" role="img" aria-label="Historical gross margin comparison"></canvas>
+            </div>
+            <div class="historical-chart">
+                <h4>Operating margin</h4>
+                <canvas id="comparison-historical-operating-margin-chart" role="img" aria-label="Historical operating margin comparison"></canvas>
+            </div>
+            <div class="historical-chart">
+                <h4>Free cash flow</h4>
+                <canvas id="comparison-historical-fcf-chart" role="img" aria-label="Historical free cash flow comparison"></canvas>
+            </div>
+            <div class="historical-chart">
+                <h4>FCF margin</h4>
+                <canvas id="comparison-historical-fcf-margin-chart" role="img" aria-label="Historical FCF margin comparison"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Valuation Comparison -->
+<section id="comparison-valuation" class="dashboard-section">
+    <h2 class="section-heading">Valuation</h2>
+
+    <div class="metrics-subsection">
+        <h3>Multiples</h3>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">
+                    P/E
+                    <button type="button" class="metric-info" data-metric="pe-ratio" aria-label="Explain price-to-earnings ratio">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-pe-ratio"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-pe-ratio"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    P/FCF
+                    <button type="button" class="metric-info" data-metric="p-fcf" aria-label="Explain price-to-free-cash-flow ratio">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-p-fcf"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-p-fcf"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    EV/EBITDA
+                    <button type="button" class="metric-info" data-metric="ev-ebitda" aria-label="Explain enterprise value to EBITDA">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-ev-ebitda"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-ev-ebitda"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <span class="metric-label">
+                    P/B
+                    <button type="button" class="metric-info" data-metric="p-b" aria-label="Explain price-to-book ratio">i</button>
+                </span>
+                <div class="comparison-metric-values">
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-one-p-b"></span>
+                    </div>
+                    <div class="comparison-company-value">
+                        <span class="metric-value" id="comparison-company-two-p-b"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-subsection">
+        <h3>Historical trends</h3>
+        <div class="historical-chart-grid">
+            <div class="historical-chart">
+                <h4>Historical P/E</h4>
+                <canvas id="comparison-historical-pe-chart" role="img" aria-label="Historical P/E comparison"></canvas>
+            </div>
+
+            <div class="historical-chart">
+                <h4>Historical P/FCF</h4>
+                <canvas id="comparison-historical-p-fcf-chart" role="img" aria-label="Historical P/FCF comparison"></canvas>
+            </div>
+
+            <div class="historical-chart">
+                <h4>Historical EV/EBITDA</h4>
+                <canvas id="comparison-historical-ev-ebitda-chart" role="img" aria-label="Historical EV/EBITDA comparison"></canvas>
+            </div>
+
+            <div class="historical-chart">
+                <h4>Historical P/B</h4>
+                <canvas id="comparison-historical-p-b-chart" role="img" aria-label="Historical P/B comparison"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
 
                     <p class="status-message" role="status" aria-live="polite"></p>
 

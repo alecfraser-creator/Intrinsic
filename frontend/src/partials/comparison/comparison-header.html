@@ -1,0 +1,83 @@
+                        <!-- Comparison view flag -->
+                        <div class="comparison-mode-bar">
+                            <div class="comparison-mode-label">
+                                <span class="comparison-mode-icon">
+                                    <i data-lucide="git-compare-arrows"></i>
+                                </span>
+                                <span>Comparison mode</span>
+                            </div>
+
+                            <button
+                                id="exit-comparison"
+                                class="exit-comparison-button"
+                                type="button"
+                            >
+                                Exit comparison
+                            </button>
+                        </div>
+
+                        <!-- Company Identities (sticky bar) -->
+                        <div class="comparison-identities">
+                            <div class="company-identity company-one">
+                                <h2 id="comparison-company-one-name"></h2>
+                                <div class="company-identity-meta">
+                                    <p id="comparison-company-one-ticker" class="company-ticker"></p>
+                                    <span class="identity-meta-separator">·</span>
+                                    <p class="company-last-saved">
+                                        Saved <span id="comparison-company-one-last-saved"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="company-identity company-two">
+                                <h2 id="comparison-company-two-name"></h2>
+                                <div class="company-identity-meta">
+                                    <p id="comparison-company-two-ticker" class="company-ticker"></p>
+                                    <span class="identity-meta-separator">·</span>
+                                    <p class="company-last-saved">
+                                        Saved <span id="comparison-company-two-last-saved"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Company Overviews -->
+                        <div class="comparison-overviews">
+
+                            <!-- First Analysis -->
+                            <section id="comparison-company-one" class="company-header company-one">
+                                <div class="company-summary">
+                                    <div class="summary-item">
+                                        <span class="metric-label">Price</span>
+                                        <span class="metric-value" id="comparison-company-one-share-price"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">Market Cap</span>
+                                        <span class="metric-value" id="comparison-company-one-market-cap"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">CEO</span>
+                                        <span class="metric-value" id="comparison-company-one-ceo"></span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Second Analysis -->
+                            <section id="comparison-company-two" class="company-header company-two">
+                                <div class="company-summary">
+                                    <div class="summary-item">
+                                        <span class="metric-label">Price</span>
+                                        <span class="metric-value" id="comparison-company-two-share-price"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">Market Cap</span>
+                                        <span class="metric-value" id="comparison-company-two-market-cap"></span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="metric-label">CEO</span>
+                                        <span class="metric-value" id="comparison-company-two-ceo"></span>
+                                    </div>
+                                </div>
+                            </section>
+
+                        </div>

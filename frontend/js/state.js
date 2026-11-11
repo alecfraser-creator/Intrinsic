@@ -89,4 +89,4 @@ let isDirty = false
 
 let isViewingOldAnalysis = false;
 
-let isComparisonMode = false
+let isComparisonSelectMode = false

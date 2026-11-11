@@ -1,8 +1,20 @@
 const selectedAnalyses = new Set();
 
 
-compareSelectButton.addEventListener("click", () => {
-    watchlistComparisonSelection()
+compareSelectButton.addEventListener("click", async () => {
+    if (selectedAnalyses.size !== 2) {
+        watchlistComparisonSelection()
+    } else {
+        isComparisonSelectMode = false
+        const analyses = await runComparison()
+        
+        displayComparison(analyses)
+
+        document.body.classList.add("comparison-mode");
+
+        normalView.classList.add("is-hidden")
+        comparisonView.classList.remove("is-hidden")
+    }
 })
 
 watchlistCompanies.addEventListener("click", (event) => {
@@ -19,10 +31,10 @@ watchlistCompanies.addEventListener("click", (event) => {
         const id = checkbox.dataset.analysisId
         const ticker = checkbox.dataset.ticker
         if (id) {
-            selectedAnalyses.delete(id)
+            selectedAnalyses.delete(`id:${id}`)
         }
         else if (ticker) {
-            selectedAnalyses.delete(ticker)
+            selectedAnalyses.delete(`ticker:${ticker}`)
         }
     } else {
         if (selectedAnalyses.size >= 2) return;
@@ -32,10 +44,10 @@ watchlistCompanies.addEventListener("click", (event) => {
         const id = checkbox.dataset.analysisId
         const ticker = checkbox.dataset.ticker
         if (id) {
-            selectedAnalyses.add(id)
+            selectedAnalyses.add(`id:${id}`)
         }
         else if (ticker) {
-            selectedAnalyses.add(ticker)
+            selectedAnalyses.add(`ticker:${ticker}`)
         }
     }
 
@@ -45,28 +57,29 @@ watchlistCompanies.addEventListener("click", (event) => {
     
 });
 
-function watchlistComparisonSelection() {
-    isComparisonMode = !isComparisonMode;
+
+function watchlistComparisonSelection(forceState = !isComparisonSelectMode) {
+    isComparisonSelectMode = forceState;
 
     const compareSelectLabel = compareSelectButton.querySelector("span");
     const compareSelectIcon = compareSelectButton.querySelector("i, svg");
 
-    compareSelectLabel.textContent = isComparisonMode
+    compareSelectLabel.textContent = isComparisonSelectMode
         ? "Cancel selection"
         : "Compare analyses";
 
-    compareSelectIcon.outerHTML = `<i data-lucide="${isComparisonMode ? "x" : "git-compare-arrows"}"></i>`;
+    compareSelectIcon.outerHTML = `<i data-lucide="${isComparisonSelectMode ? "x" : "git-compare-arrows"}"></i>`;
 
     const analysisSelectButtons = document.querySelectorAll(".analysis-select");
     const removeButtons = document.querySelectorAll( ".watchlistItem-delete, .historical-analysis-delete");
 
-    if (isComparisonMode) {
+    if (isComparisonSelectMode) {
         comparisonInstructions.classList.remove("is-hidden")
         comparisonSelectionCount.classList.remove("is-hidden")
 
         // Setup buttons display 
         analysisSelectButtons.forEach(button => {
-             button.classList.remove("is-hidden")
+            button.classList.remove("is-hidden")
         });
 
         removeButtons.forEach(button => {
@@ -112,4 +125,32 @@ function updateComparisonUI() {
         compareSelectLabel.textContent  = "Cancel selection"
 
     }
+}
+
+async function runComparison() {
+    const analyses = []
+
+    for (const analysis of selectedAnalyses) {
+        const parts = analysis.split(":")
+
+        if (parts[0] === "ticker") {
+            const ticker = parts[1]
+            const latestAnalysis = await fetchAnalysis(ticker)
+            analyses.push({
+                "type": "ticker",
+                "analysis": latestAnalysis
+            })
+
+        } else if (parts[0] === "id") {
+            const id = parts[1]
+            const oldAnalysis = await fetchOldAnalysis(id)
+            analyses.push({
+                "type": "id",
+                "analysis": oldAnalysis
+            })
+        }
+        console.log(analyses)
+    }
+
+    return(analyses)
 }
