@@ -3,9 +3,6 @@ load_dotenv()
 
 import os
 
-#If you choose "free"" data provider, you will only be able to analyse top american companies (other option :"sec_finazon")
-DATA_PROVIDER = "sec_finazon"
-
 
 EDGAR_IDENTITY=os.getenv("EDGAR_IDENTITY")
 
@@ -16,3 +13,7 @@ API_KEY_FINAZON = os.getenv("API_KEY_FINAZON")
 
 
 FRED_API_KEY = os.getenv("API_KEY_FRED")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+LOCAL_USER_ID = "00000000-0000-0000-0000-000000000001"

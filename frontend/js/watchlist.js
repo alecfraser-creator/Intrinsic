@@ -72,9 +72,9 @@ async function openWatchlistCompany(ticker) {
     }
 }
 
-async function displayOldAnalysis (id) {
+async function displayOldAnalysis (analysis_id) {
     if (isDirty && currentQuantAnalysis) {
-        openUnsavedChangesModal(() => displayOldAnalysis(id));
+        openUnsavedChangesModal(() => displayOldAnalysis(analysis_id));
         return;
     }
 
@@ -82,7 +82,7 @@ async function displayOldAnalysis (id) {
     statusMessage.classList.add("is-hidden");
 
     try {
-        const data = await fetchOldAnalysis(id);
+        const data = await fetchOldAnalysis(analysis_id);
         currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
         populateQualAnalysis();
 
@@ -99,8 +99,6 @@ async function displayOldAnalysis (id) {
     }
 
 }
-
-
 
 
 
@@ -222,9 +220,9 @@ async function loadWatchlist() {
                         previousAnalysisDate.textContent = formatTimestamp(analysis.updated_at);
 
                         // Associate elements and checkboxes with their analysis
-                        previousAnalysisEntry.dataset.analysisId = analysis.id;
-                        previousAnalysisSelect.dataset.analysisId = analysis.id;
-                        previousAnalysisDelete.dataset.analysisId = analysis.id;
+                        previousAnalysisEntry.dataset.analysisId = analysis.analysis_id
+                        previousAnalysisSelect.dataset.analysisId = analysis.analysis_id
+                        previousAnalysisDelete.dataset.analysisId = analysis.analysis_id
 
                         previousAnalysisSelect.innerHTML = '<i data-lucide="square"></i>';
 

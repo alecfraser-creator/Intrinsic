@@ -73,45 +73,23 @@ def analyze_company(
     # Retrieve market data
     # -------------------------
 
-    if config.DATA_PROVIDER == "free":
+    price_latest = get_latest_price(ticker)
+    
+    historical_data = get_historical_price(ticker)
+    
+    historical_prices_annual = get_fiscal_year_end_prices(
+        historical_data,
+        sec_data["fiscal_year_ends"]
+    )
 
-        fmp_data = get_fmp_data(ticker)
+    shares_by_year = sec_data.get(
+        "shares_outstanding_annual", {}
+    )
 
-        if fmp_data is None:
-            return None
-
-        fmp_profile = fmp_data["profile"]
-
-        price_latest = to_float(fmp_profile.get("price"))
-        ratios_annual = fmp_data["ratios_annual"]
-
-    elif config.DATA_PROVIDER == "sec_finazon":
-
-        price_latest = get_latest_price(ticker)
-
-        if price_latest is None:
-            return None
-        
-        historical_data = get_historical_price(ticker)
-        
-        historical_prices_annual = get_fiscal_year_end_prices(
-            historical_data,
-            sec_data["fiscal_year_ends"]
-        )
-
-        shares_by_year = sec_data.get(
-            "shares_outstanding_annual", {}
-        )
-
-        ratios_annual = calculate_historical_pe(
-            income_annual,
-            historical_prices_annual
-        )
-
-    else:
-        raise ValueError(
-            f"Unknown data provider: {config.DATA_PROVIDER}"
-        )
+    ratios_annual = calculate_historical_pe(
+        income_annual,
+        historical_prices_annual
+    )
 
     # -------------------------
     # Complete company profile

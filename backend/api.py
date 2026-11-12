@@ -4,6 +4,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .main import analyze_company, recalculate_company_dcf
+from .config import LOCAL_USER_ID
+
 from .database.companies import (
     get_saved_company,
     insert_company,
@@ -20,7 +22,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Development only
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,7 +39,9 @@ def home():
 
 @app.get("/company/{ticker}")
 def get_company(ticker: str):
-    isdata = get_saved_company(ticker)
+    user_id = LOCAL_USER_ID
+
+    isdata = get_saved_company(user_id, ticker)
 
     if isdata is not None:
         return {
@@ -54,7 +61,7 @@ def get_company(ticker: str):
             detail="Unable to retrieve company data",
         )
 
-    last_financials_refresh = datetime.now(timezone.utc).isoformat()
+    last_financials_refresh = datetime.now(timezone.utc)
 
     return {
         "quant_analysis": results,
@@ -65,12 +72,15 @@ def get_company(ticker: str):
         "historical_data": results["historical_data"],
     }
 
-@app.get("/company/history/{id}")
-def get_analysis_history(id):
-    isdata = get_old_analysis(id)
+@app.get("/company/history/{analysis_id}")
+def get_analysis_history(analysis_id):
+    user_id = LOCAL_USER_ID
+
+    isdata = get_old_analysis(user_id, analysis_id)
 
     if isdata is not None:
         return {
+            "user_id": user_id,
             "ticker": isdata["ticker"],
             "quant_analysis": isdata["quant_analysis"],
             "qual_analysis": isdata["qual_analysis"],
@@ -91,7 +101,9 @@ def get_analysis_history(id):
 
 @app.put("/watchlist/{ticker}")
 def fresh_analysis(ticker: str):
-    saved_company = get_saved_company(ticker)
+    user_id = LOCAL_USER_ID
+    
+    saved_company = get_saved_company(user_id, ticker)
 
     existing_assumptions = None
     existing_scenarios = None
@@ -130,7 +142,7 @@ def fresh_analysis(ticker: str):
             detail="Unable to retrieve company data",
         )
 
-    last_financials_refresh = datetime.now(timezone.utc).isoformat()
+    last_financials_refresh = datetime.now(timezone.utc)
 
     return {
         "quant_analysis": results,
@@ -144,6 +156,7 @@ def fresh_analysis(ticker: str):
 
 @app.post("/watchlist/{ticker}")
 def update_database(ticker: str, data: dict):
+    user_id = LOCAL_USER_ID
 
     save_mode = data["save_mode"]
 
@@ -154,6 +167,7 @@ def update_database(ticker: str, data: dict):
         historical_data = data["historical_data"]
 
         updated_at_old = insert_company(
+            user_id,
             ticker,
             quant_analysis,
             last_financials_refresh,
@@ -170,7 +184,7 @@ def update_database(ticker: str, data: dict):
     elif save_mode == "new_version":
     
         # write old analysis in the analysis_history table
-        analysis_old = get_saved_company(ticker)
+        analysis_old = get_saved_company(user_id, ticker)
 
         if analysis_old is None:
             raise HTTPException(status_code=404, detail="Company not found")
@@ -183,6 +197,7 @@ def update_database(ticker: str, data: dict):
 
         
         insert_historical_analysis(
+            user_id,
             ticker, 
             quant_analysis_old, 
             last_financials_refresh_old, 
@@ -198,6 +213,7 @@ def update_database(ticker: str, data: dict):
         historical_data_new = data["historical_data"]
 
         updated_at_new = insert_company(
+            user_id,
             ticker,
             quant_analysis_new,
             last_financials_refresh_new,
@@ -219,7 +235,9 @@ def update_database(ticker: str, data: dict):
 @app.post("/company/{ticker}/recalculate-dcf")
 def recalculate_dcf(ticker: str, data: dict = None):
 
-    saved_company = get_saved_company(ticker)
+    user_id = LOCAL_USER_ID
+
+    saved_company = get_saved_company(user_id, ticker)
 
     # Prefer DCF data supplied by the frontend.
     # Otherwise, use the saved DCF if available.
@@ -288,18 +306,23 @@ def recalculate_dcf(ticker: str, data: dict = None):
 
 @app.delete("/watchlist/{ticker}")
 def delete_in_database(ticker: str):
-    delete_company(ticker)
+    user_id = LOCAL_USER_ID
+    delete_company(user_id, ticker)
 
 
-@app.delete("/watchlist/historical/{id}")
-def delete_from_history(id):
-    delete_past_analysis(id)
+@app.delete("/watchlist/historical/{analysis_id}")
+def delete_from_history(analysis_id):
+    user_id = LOCAL_USER_ID
+
+    delete_past_analysis(user_id, analysis_id)
 
 
 @app.get("/watchlist")
 def get_watchlist():
-    companies = get_watchlist_companies()
-    history = get_all_historical_analyses()
+    user_id = LOCAL_USER_ID
+
+    companies = get_watchlist_companies(user_id)
+    history = get_all_historical_analyses(user_id)
 
     return {
         "companies": companies,

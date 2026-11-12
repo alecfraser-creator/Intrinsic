@@ -1,4 +1,3 @@
-
 from datetime import datetime, timezone, timedelta
 import sys
 from pathlib import Path
@@ -8,7 +7,6 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backend import config
-
 
 
 def get_fiscal_year_end_prices(historical_data, fiscal_year_ends):
@@ -39,6 +37,7 @@ def get_fiscal_year_end_prices(historical_data, fiscal_year_ends):
             eligible_prices,
             key=lambda record: record["t"]
         )
+
         prices[year] = latest_record["c"]
 
     return prices
@@ -58,6 +57,7 @@ def get_historical_price(ticker):
             "interval": "1d",
             "start_at": start_at,
             "end_at": end_at,
+            "page": 0,
             "page_size": page_size,
             "order": "desc",
             "adjust": "all",
@@ -119,6 +119,3 @@ def get_latest_price(ticker):
         return None
 
     return data["p"]
-
-
-

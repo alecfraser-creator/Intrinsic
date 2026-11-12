@@ -15,9 +15,9 @@ async function fetchAnalysis(ticker) {
     return data;
 }
 
-async function fetchOldAnalysis(id) {
+async function fetchOldAnalysis(analysisId) {
     const response = await fetch(
-        `http://127.0.0.1:8000/company/history/${id}`
+        `http://127.0.0.1:8000/company/history/${analysisId}`
     )
 
     if (!response.ok) {
@@ -73,9 +73,9 @@ async function deleteCompany(ticker) {
     await loadWatchlist();
 }
 
-async function deletePastAnalysis(id) {
+async function deletePastAnalysis(analysisId) {
     const response = await fetch(
-        `http://127.0.0.1:8000/watchlist/historical/${id}`,
+        `http://127.0.0.1:8000/watchlist/historical/${analysisId}`,
         {
             method: "DELETE"
         }
