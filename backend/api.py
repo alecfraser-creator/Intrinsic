@@ -1,3 +1,6 @@
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
@@ -25,6 +28,7 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:5500",
         "http://localhost:5500",
+        "https://intrinsic-production.up.railway.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -32,9 +36,6 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def home():
-    return {"message": "Intrinsic API is running"}
 
 
 @app.get("/company/{ticker}")
@@ -328,3 +329,12 @@ def get_watchlist():
         "companies": companies,
         "history": history
     }
+
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+app.mount(
+    "/",
+    StaticFiles(directory=FRONTEND_DIR, html=True),
+    name="frontend"
+)

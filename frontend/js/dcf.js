@@ -678,7 +678,7 @@ async function recalculateDcf() {
 
     try {
         const response = await fetch(
-            `http://127.0.0.1:8000/company/${ticker}/recalculate-dcf`,
+            `${api_url}/company/${ticker}/recalculate-dcf`,
             {
                 method: "POST",
                 headers: {

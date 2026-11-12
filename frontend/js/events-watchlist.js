@@ -15,7 +15,7 @@ refreshFinancials.addEventListener("click", async (event) => {
 
     try {
         const response = await fetch(
-            `http://127.0.0.1:8000/watchlist/${ticker}`,
+            `${api_url}/watchlist/${ticker}`,
             { method: "PUT" }
         );
 

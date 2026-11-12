@@ -118,7 +118,7 @@ async function loadWatchlist() {
     try {
         // Fetch watchlist
         const response = await fetch(
-            "http://127.0.0.1:8000/watchlist"
+            "${api_url}/watchlist"
         );
 
         if (!response.ok) {

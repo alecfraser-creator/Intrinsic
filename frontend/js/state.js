@@ -2,6 +2,9 @@
 // GLOBAL STATE
 // ==========================================
 
+const API_URL = window.location.origin;
+
+
 let currentQuantAnalysis = null;
 let savedQuantAnalysis = null;
 let currentQualAnalysis = {

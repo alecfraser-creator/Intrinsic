@@ -4,7 +4,7 @@
 
 async function fetchAnalysis(ticker) {
     const response = await fetch(
-        `http://127.0.0.1:8000/company/${ticker}`
+        `${api_url}/company/${ticker}`
     );
 
     if (!response.ok) {
@@ -17,7 +17,7 @@ async function fetchAnalysis(ticker) {
 
 async function fetchOldAnalysis(analysisId) {
     const response = await fetch(
-        `http://127.0.0.1:8000/company/history/${analysisId}`
+        `${api_url}/company/history/${analysisId}`
     )
 
     if (!response.ok) {
@@ -30,7 +30,7 @@ async function fetchOldAnalysis(analysisId) {
 
 async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh, historicalData, saveMode) {
     const response = await fetch(
-        `http://127.0.0.1:8000/watchlist/${ticker}`,
+        `${api_url}/watchlist/${ticker}`,
         {
             method: "POST",
             headers: {
@@ -58,7 +58,7 @@ async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRef
 
 async function deleteCompany(ticker) {
     const response = await fetch(
-        `http://127.0.0.1:8000/watchlist/${ticker}`,
+        `${api_url}/watchlist/${ticker}`,
         {
             method: "DELETE"
         }
@@ -75,7 +75,7 @@ async function deleteCompany(ticker) {
 
 async function deletePastAnalysis(analysisId) {
     const response = await fetch(
-        `http://127.0.0.1:8000/watchlist/historical/${analysisId}`,
+        `${api_url}/watchlist/historical/${analysisId}`,
         {
             method: "DELETE"
         }
@@ -106,7 +106,7 @@ async function recalculateDcf(
 
     try {
         const response = await fetch(
-            `http://127.0.0.1:8000/company/${ticker}/recalculate-dcf`,
+            `${api_url}/company/${ticker}/recalculate-dcf`,
             {
                 method: "POST",
                 headers: {
