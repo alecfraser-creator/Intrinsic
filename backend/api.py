@@ -6,6 +6,9 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import Depends
+from .auth import get_current_user
+
 from .main import analyze_company, recalculate_company_dcf
 from .config import LOCAL_USER_ID
 
@@ -40,19 +43,7 @@ app.add_middleware(
 
 @app.get("/company/{ticker}")
 def get_company(ticker: str):
-    user_id = LOCAL_USER_ID
 
-    isdata = get_saved_company(user_id, ticker)
-
-    if isdata is not None:
-        return {
-            "quant_analysis": isdata["quant_analysis"],
-            "qual_analysis": isdata["qual_analysis"],
-            "in_watchlist": True,
-            "updated_at": isdata["updated_at"],
-            "last_financials_refresh": isdata["last_financials_refresh"],
-            "historical_data": isdata["historical_price"],
-        }
 
     results = analyze_company(ticker)
 
@@ -75,8 +66,10 @@ def get_company(ticker: str):
 
 
 @app.get("/watchlist/{ticker}")
-def get_saved_analysis(ticker: str):
-    user_id = LOCAL_USER_ID
+def get_saved_analysis(
+    ticker: str,
+    user_id: str = Depends(get_current_user)
+):
 
     isdata = get_saved_company(user_id, ticker)
 
@@ -97,8 +90,10 @@ def get_saved_analysis(ticker: str):
 
 
 @app.get("/company/history/{analysis_id}")
-def get_analysis_history(analysis_id):
-    user_id = LOCAL_USER_ID
+def get_analysis_history(
+    analysis_id: str,
+    user_id: str = Depends(get_current_user)
+):
 
     isdata = get_old_analysis(user_id, analysis_id)
 
@@ -124,8 +119,10 @@ def get_analysis_history(analysis_id):
 
 
 @app.put("/watchlist/{ticker}")
-def fresh_analysis(ticker: str):
-    user_id = LOCAL_USER_ID
+def fresh_analysis(
+    ticker: str,
+    user_id: str = Depends(get_current_user)
+):
     
     saved_company = get_saved_company(user_id, ticker)
 
@@ -179,8 +176,11 @@ def fresh_analysis(ticker: str):
 
 
 @app.post("/watchlist/{ticker}")
-def update_database(ticker: str, data: dict):
-    user_id = LOCAL_USER_ID
+def update_database(
+    ticker: str,
+    data: dict,
+    user_id: str = Depends(get_current_user)
+):
 
     save_mode = data["save_mode"]
 
@@ -257,9 +257,11 @@ def update_database(ticker: str, data: dict):
 
 
 @app.post("/company/{ticker}/recalculate-dcf")
-def recalculate_dcf(ticker: str, data: dict = None):
-
-    user_id = LOCAL_USER_ID
+def recalculate_dcf(
+    ticker: str,
+    data: dict = None,
+    user_id: str = Depends(get_current_user)
+):
 
     saved_company = get_saved_company(user_id, ticker)
 
@@ -329,21 +331,24 @@ def recalculate_dcf(ticker: str, data: dict = None):
 
 
 @app.delete("/watchlist/{ticker}")
-def delete_in_database(ticker: str):
-    user_id = LOCAL_USER_ID
+def delete_in_database(
+    ticker: str,
+    user_id: str = Depends(get_current_user)
+):
     delete_company(user_id, ticker)
 
 
 @app.delete("/watchlist/historical/{analysis_id}")
-def delete_from_history(analysis_id):
-    user_id = LOCAL_USER_ID
+def delete_from_history(
+    analysis_id: str,
+    user_id: str = Depends(get_current_user)
+):
 
     delete_past_analysis(user_id, analysis_id)
 
 
 @app.get("/watchlist")
-def get_watchlist():
-    user_id = LOCAL_USER_ID
+def get_watchlist(user_id: str = Depends(get_current_user)):
 
     companies = get_watchlist_companies(user_id)
     history = get_all_historical_analyses(user_id)
@@ -354,10 +359,20 @@ def get_watchlist():
     }
 
 
+
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+
+
+@app.get("/auth-test")
+def auth_test(user_id: str = Depends(get_current_user)):
+    return {"user_id": user_id}
+
+
 
 app.mount(
     "/",
     StaticFiles(directory=FRONTEND_DIR, html=True),
     name="frontend"
 )
+
