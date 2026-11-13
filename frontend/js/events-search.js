@@ -10,7 +10,9 @@ async function runAnalysis(ticker) {
     analyzeButton.disabled = true;
 
     try {
-        const data = await fetchAnalysis(ticker);
+        const data = watchlistTickers.has(ticker)
+            ? await fetchSavedAnalysis(ticker)
+            : await fetchAnalysis(ticker);
 
         currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
         populateQualAnalysis();

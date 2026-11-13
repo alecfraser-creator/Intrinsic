@@ -46,7 +46,7 @@ refreshFinancials.addEventListener("click", async (event) => {
 // Save company to watchlist
 saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
-
+    
     try {
         collectQualAnalysis();
         await addCompany(
@@ -70,9 +70,13 @@ saveCompany.addEventListener("click", async (event) => {
         watchlistActions.classList.remove("is-hidden");
 
     } catch (error) {
-        console.error("Error adding to watchlist:", error);
+        if (error.message === "Not logged in") {
+            authModal.classList.remove("is-hidden");
+        } else {
+            console.error("Error adding to watchlist:", error);
+        }
     }
-});
+})
 
 
 // Update saved company analysis
@@ -147,7 +151,11 @@ watchlistAdd.addEventListener("click", () => {
             restoreHeader();
 
         } catch (error) {
-            console.error("Error adding company to watchlist:", error);
+            if (error.message === "Not logged in") {
+                authModal.classList.remove("is-hidden");
+            } else {
+                console.error("Error adding to watchlist:", error);
+            }
             alert(`Unable to add ${ticker} to your watchlist. Please check the ticker and try again.`);
 
         } finally {

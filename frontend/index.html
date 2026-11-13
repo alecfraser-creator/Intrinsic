@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="css/modals.css">
     <link rel="stylesheet" href="css/historical-view-notice.css">
     <link rel="stylesheet" href="css/comparison.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" defer></script>
     <script src="js/state.js" defer></script>
@@ -56,6 +57,7 @@
     <script src="js/comparison/comparison-header.js" defer></script>
     <script src="js/comparison/comparison-quantitative.js" defer></script>
     <script src="js/comparison/comparison-selection.js" defer></script>
+    <script src="js/auth.js" defer></script>
     <script src="js/main.js" defer></script>
 </head>
 <body>
@@ -1406,6 +1408,57 @@
 
         </div>
     </div>
+
+
+                    <!-- Authentication Modal -->
+                    <div id="auth-modal" class="modal is-hidden">
+                        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+
+                            <h2 id="auth-title">Log in to Intrinsic</h2>
+
+                            <p id="auth-description">
+                                Create an account or log in to save your analyses and manage your watchlist.
+                            </p>
+
+                            <form id="auth-form">
+
+                                <label for="auth-email">Email</label>
+                                <input
+                                    type="email"
+                                    id="auth-email"
+                                    autocomplete="email"
+                                    placeholder="you@example.com"
+                                    required
+                                >
+
+                                <label for="auth-password">Password</label>
+                                <input
+                                    type="password"
+                                    id="auth-password"
+                                    autocomplete="current-password"
+                                    placeholder="Your password"
+                                    required
+                                    minlength="6"
+                                >
+
+                                <p id="auth-error" class="is-hidden" role="alert"></p>
+
+                                <button type="submit" id="auth-submit">
+                                    Log in
+                                </button>
+
+                            </form>
+
+                            <button type="button" id="auth-toggle">
+                                Don't have an account? Sign up
+                            </button>
+
+                            <button type="button" id="auth-close">
+                                Cancel
+                            </button>
+
+                        </div>
+                    </div>
 
     <!-- Footer -->
     <footer class="site-footer">

@@ -80,6 +80,19 @@ const cancelNavigationButton = document.querySelector("#cancel-navigation");
 const discardAndContinueButton = document.querySelector("#discard-and-continue");
 const continueAfterSaveButton = document.querySelector("#continue-after-save");
 
+// Auth modal 
+const authModal = document.querySelector("#auth-modal")
+const authForm = document.querySelector("#auth-form")
+const authSubmit = document.querySelector("#auth-submit")
+const authEmail = document.querySelector("#auth-email")
+const authPassword = document.querySelector("#auth-password")
+const authError = document.querySelector("#auth-error")
+const authToggle = document.querySelector("#auth-toggle")
+const authTitle = document.querySelector("#auth-title")
+const authDescription = document.querySelector("#auth-description")
+const authClose = document.querySelector("#auth-close");
+
+
 
 // Metric info buttons
 const metricInfoButtons = document.querySelectorAll(".metric-info");
@@ -89,6 +102,7 @@ const metricInfoModal = document.querySelector("#metric-info-modal");
 const metricInfoTitle = document.querySelector("#metric-info-title");
 const metricInfoContent = document.querySelector("#metric-info-content");
 const closeMetricInfoButton = document.querySelector("#close-metric-info");
+
 
 // DCF
 const dcfScenarioButtons = document.querySelectorAll(".dcf-scenario");

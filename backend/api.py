@@ -73,6 +73,29 @@ def get_company(ticker: str):
         "historical_data": results["historical_data"],
     }
 
+
+@app.get("/watchlist/{ticker}")
+def get_saved_analysis(ticker: str):
+    user_id = LOCAL_USER_ID
+
+    isdata = get_saved_company(user_id, ticker)
+
+    if isdata is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Saved analysis not found",
+        )
+
+    return {
+        "quant_analysis": isdata["quant_analysis"],
+        "qual_analysis": isdata["qual_analysis"],
+        "in_watchlist": True,
+        "updated_at": isdata["updated_at"],
+        "last_financials_refresh": isdata["last_financials_refresh"],
+        "historical_data": isdata["historical_price"],
+    }
+
+
 @app.get("/company/history/{analysis_id}")
 def get_analysis_history(analysis_id):
     user_id = LOCAL_USER_ID

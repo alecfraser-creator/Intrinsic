@@ -15,8 +15,21 @@ async function fetchAnalysis(ticker) {
     return data;
 }
 
+async function fetchSavedAnalysis(ticker) {
+    const response = await authenticatedFetch(
+        `${api_url}/watchlist/${ticker}`
+    );
+
+    if (!response.ok) {
+        throw new Error("Unable to retrieve saved analysis.");
+    }
+
+    return await response.json();
+}
+
+
 async function fetchOldAnalysis(analysisId) {
-    const response = await fetch(
+    const response = await authenticatedFetch(
         `${api_url}/company/history/${analysisId}`
     )
 
@@ -29,7 +42,7 @@ async function fetchOldAnalysis(analysisId) {
 
 
 async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRefresh, historicalData, saveMode) {
-    const response = await fetch(
+    const response = await authenticatedFetch(
         `${api_url}/watchlist/${ticker}`,
         {
             method: "POST",
@@ -57,7 +70,7 @@ async function addCompany(ticker, quantAnalysis, qualAnalysis, lastFinancialsRef
 
 
 async function deleteCompany(ticker) {
-    const response = await fetch(
+    const response = await authenticatedFetch(
         `${api_url}/watchlist/${ticker}`,
         {
             method: "DELETE"
@@ -74,7 +87,7 @@ async function deleteCompany(ticker) {
 }
 
 async function deletePastAnalysis(analysisId) {
-    const response = await fetch(
+    const response = await authenticatedFetch(
         `${api_url}/watchlist/historical/${analysisId}`,
         {
             method: "DELETE"
@@ -175,5 +188,24 @@ function setupDcfRecalculation(
             qualAnalysis,
             lastFinancialRefresh
         );
+    });
+}
+
+
+async function authenticatedFetch(url, options = {}) {
+    const session = await getSession()
+
+    if (!session) {
+        throw new Error("Not logged in")
+    }
+
+    const headers = {
+            ...options.headers,
+            Authorization: `Bearer ${session.access_token}`
+        };
+
+    return fetch(url, {
+        ...options,
+        headers: headers
     });
 }

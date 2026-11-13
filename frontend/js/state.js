@@ -1,9 +1,18 @@
 // ==========================================
 // GLOBAL STATE
 // ==========================================
+const api_url = window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000"
+    : window.location.origin;
 
-const API_URL = window.location.origin;
 
+const supabaseClient = window.supabase.createClient(
+    "https://xspgxwmuodmqvjbtnjns.supabase.co",
+    "sb_publishable_kS1gbvyMQxbCL-tKDdbcgw_i4EznIPG"
+);
+
+let watchlistTickers = new Set();
 
 let currentQuantAnalysis = null;
 let savedQuantAnalysis = null;

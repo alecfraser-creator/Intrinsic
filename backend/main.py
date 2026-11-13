@@ -1,4 +1,4 @@
-# next: create tickers for each anaylsis in loadWatchlist and hide them
+# next: 
 
 
 import json
@@ -271,30 +271,14 @@ def recalculate_company_dcf(
 
     historical_data = None
 
-    if config.DATA_PROVIDER == "free":
+    price_latest = get_latest_price(ticker)
 
-        fmp_data = get_fmp_data(ticker)
+    if price_latest is None:
+        return None
 
-        if fmp_data is None:
-            return None
+    historical_data = get_historical_price(ticker)
 
-        price_latest = to_float(
-            fmp_data["profile"].get("price")
-        )
 
-    elif config.DATA_PROVIDER == "sec_finazon":
-
-        price_latest = get_latest_price(ticker)
-
-        if price_latest is None:
-            return None
-
-        historical_data = get_historical_price(ticker)
-
-    else:
-        raise ValueError(
-            f"Unknown data provider: {config.DATA_PROVIDER}"
-        )
 
     # -------------------------
     # Prepare DCF inputs

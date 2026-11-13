@@ -74,7 +74,11 @@ async function updateAnalysis(saveMode, modal) {
         }
 
     } catch (error) {
-        console.error("Error saving analysis:", error);
+        if (error.message === "Not logged in") {
+            authModal.classList.remove("is-hidden");
+        } else {
+            console.error("Error adding to watchlist:", error);
+        }
         alert("Could not save the analysis. Please try again.");
 
     } finally {

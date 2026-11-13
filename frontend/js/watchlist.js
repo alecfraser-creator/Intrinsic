@@ -93,11 +93,14 @@ async function displayOldAnalysis (analysis_id) {
         // The new company is freshly loaded, so there is nothing unsaved
         isDirty = false;
     } catch (error) {
-        statusMessage.textContent = "Unable to load this analysis.";
-        statusMessage.classList.remove("is-hidden");
-        console.error(error);
+        if (error.message === "Not logged in") {
+            authModal.classList.remove("is-hidden");
+        } else {
+            statusMessage.textContent = "Unable to load this analysis.";
+            statusMessage.classList.remove("is-hidden");
+            console.error(error);
+        }
     }
-
 }
 
 
@@ -117,8 +120,8 @@ async function loadWatchlist() {
 
     try {
         // Fetch watchlist
-        const response = await fetch(
-            "${api_url}/watchlist"
+        const response = await authenticatedFetch(
+            `${api_url}/watchlist`
         );
 
         if (!response.ok) {
@@ -127,12 +130,17 @@ async function loadWatchlist() {
 
         const watchlist = await response.json();
 
+        watchlistTickers = new Set(
+            watchlist.companies.map(company => company.ticker)
+        );
+
         // Handle empty watchlist
         if (watchlist.companies.length === 0) {
             watchlistEmpty.textContent =
                 "Your watchlist is empty. Analyze a company and add it to your watchlist to keep its analysis saved here.";
 
             watchlistCompanies.appendChild(watchlistEmpty);
+
         } else {
             for (const company of watchlist.companies) {
                 const ticker = company.ticker;
@@ -266,7 +274,11 @@ async function loadWatchlist() {
         }
 
     } catch (error) {
-        console.error("Error loading watchlist:", error);
+        if (error.message === "Not logged in") {
+            authModal.classList.remove("is-hidden");
+        } else {
+            console.error("Error loading watchlist:", error);
+        }
     }
 }
 
@@ -308,9 +320,13 @@ watchlistCompanies.addEventListener("click", async (event) => {
             }
 
         } catch (error) {
-            statusMessage.textContent = "Unable to delete company data.";
-            statusMessage.classList.remove("is-hidden");
-            console.error(error);
+            if (error.message === "Not logged in") {
+                authModal.classList.remove("is-hidden");
+            } else {
+                statusMessage.textContent = "Unable to delete company data.";
+                statusMessage.classList.remove("is-hidden");
+                console.error(error);
+            }
         }
 
         return;
@@ -333,10 +349,14 @@ watchlistCompanies.addEventListener("click", async (event) => {
         try {
             await deletePastAnalysis(analysisId);
         } catch (error) {
-            statusMessage.textContent =
-                "Unable to delete historical analysis.";
-            statusMessage.classList.remove("is-hidden");
-            console.error(error);
+            if (error.message === "Not logged in") {
+                authModal.classList.remove("is-hidden");
+            } else {
+                statusMessage.textContent =
+                    "Unable to delete historical analysis.";
+                statusMessage.classList.remove("is-hidden");
+                console.error(error);
+            }
         }
 
         return;
