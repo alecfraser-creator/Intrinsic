@@ -93,6 +93,34 @@ const authDescription = document.querySelector("#auth-description")
 const authClose = document.querySelector("#auth-close");
 
 
+// Account modal
+const accountButton = document.querySelector("#account-button")
+const accountModal = document.querySelector("#account-modal")
+const accountModalContent = document.querySelector("#account-modal .account-modal");
+const closeAccountModal = document.querySelector("#close-account-modal")
+const accountMenu = document.querySelector("#account-menu")
+
+const changePasswordForm = document.querySelector("#change-password-form");
+const changePasswordButton = document.querySelector("#change-password-button")
+const changePasswordView = document.querySelector("#change-password-view")
+const closePasswordView = document.querySelector("#close-password-view")
+const newPassword = document.querySelector("#new-password")
+const confirmNewPassword = document.querySelector("#confirm-password")
+const saveNewPassword = document.querySelector("#save-password-button")
+const passwordError = document.querySelector("#password-error")
+const passwordSuccess = document.querySelector("#password-success")
+
+const signOutButton = document.querySelector("#sign-out-button")
+const signoutFeedback = document.querySelector("#account-feedback")
+
+const deleteAccountButton = document.querySelector("#delete-account-button");
+const deleteAccountView = document.querySelector("#delete-account-view");
+const confirmDeleteAccount = document.querySelector("#confirm-delete-account");
+const cancelDeleteAccount = document.querySelector("#cancel-delete-account");
+const closeDeleteAccountView = document.querySelector("#close-delete-account-view");
+const deleteAccountError = document.querySelector("#delete-account-error");
+
+
 
 // Metric info buttons
 const metricInfoButtons = document.querySelectorAll(".metric-info");

@@ -94,3 +94,13 @@ function renderCalculationInput(row, assumptionKey, scenario) {
 function markDirty () {
     isDirty = true;
 }
+
+
+function clearWatchlist() {
+    watchlistTickers.clear();
+
+    watchlistCompanies.replaceChildren();
+
+    watchlistEmpty.textContent = "Sign in to view your watchlist.";
+    watchlistCompanies.appendChild(watchlistEmpty);
+}

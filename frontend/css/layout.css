@@ -20,6 +20,56 @@
     margin-bottom: -1.5rem;
 }
 
+/* ---------- Dashboard Header ---------- */
+
+.dashboard-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-title {
+    font-family: var(--font-sans);
+    font-size: 4rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    text-align: center;
+    margin-bottom: -1.5rem;
+}
+
+#account-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+    padding: 0;
+
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+#account-button:hover {
+    background: var(--surface-secondary);
+}
+
+#account-button svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* The sidebar is fixed, so the layout wrapper only holds the main column */
 .dashboard-layout {
     display: block;

@@ -209,3 +209,16 @@ async function authenticatedFetch(url, options = {}) {
         headers: headers
     });
 }
+
+
+async function deleteAccount() {
+    const response = await authenticatedFetch(`${api_url}/account`, {
+        method: "DELETE"
+    });
+
+    if (!response.ok) {
+        throw new Error("Account deletion failed");
+    }
+
+    return response;
+}

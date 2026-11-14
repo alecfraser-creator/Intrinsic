@@ -46,9 +46,13 @@ refreshFinancials.addEventListener("click", async (event) => {
 // Save company to watchlist
 saveCompany.addEventListener("click", async (event) => {
     event.preventDefault();
-    
+
+    saveCompany.disabled = true;
+    saveCompany.textContent = "Adding company...";
+
     try {
         collectQualAnalysis();
+
         await addCompany(
             currentQuantAnalysis.ticker,
             currentQuantAnalysis,
@@ -61,11 +65,9 @@ saveCompany.addEventListener("click", async (event) => {
         isSaved = true;
         isDirty = false;
 
-        // Ensure the content remains visible
         welcomeMessage.classList.add("is-hidden");
         analysisContent.classList.remove("is-hidden");
 
-        // Hide the save button and display the watchlist actions
         saveCompany.classList.add("is-hidden");
         watchlistActions.classList.remove("is-hidden");
 
@@ -75,8 +77,12 @@ saveCompany.addEventListener("click", async (event) => {
         } else {
             console.error("Error adding to watchlist:", error);
         }
+
+    } finally {
+        saveCompany.disabled = false;
+        saveCompany.textContent = "Add to watchlist";
     }
-})
+});
 
 
 // Update saved company analysis

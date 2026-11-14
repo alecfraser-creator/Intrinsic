@@ -63,7 +63,12 @@
 <body>
 
     <main class="dashboard">
-        <h1 class="dashboard-title">Intrinsic</h1>
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Intrinsic</h1>
+            <button id="account-button" aria-label="Account">
+                <i data-lucide="user-round"></i>
+            </button>
+        </div>
 
         <div class="dashboard-layout">
 
@@ -126,6 +131,8 @@
     <!-- @include unsaved-changes-modal.html -->
 
     <!-- @include auth-modal.html -->
+
+    <!-- @include account-modal.html -->
 
     <!-- Footer -->
     <!-- @include footer.html -->

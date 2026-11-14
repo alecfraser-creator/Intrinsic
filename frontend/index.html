@@ -63,7 +63,12 @@
 <body>
 
     <main class="dashboard">
-        <h1 class="dashboard-title">Intrinsic</h1>
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Intrinsic</h1>
+            <button id="account-button" aria-label="Account">
+                <i data-lucide="user-round"></i>
+            </button>
+        </div>
 
         <div class="dashboard-layout">
 
@@ -1459,6 +1464,121 @@
 
                         </div>
                     </div>
+
+                        <!-- Account Modal -->
+                        <div id="account-modal" class="modal-overlay is-hidden">
+                            <div class="account-modal">
+
+                                <!-- Account Menu -->
+                                <div id="account-menu">
+
+                                    <div class="account-modal-header">
+                                        <h2>Account</h2>
+                                        <button id="close-account-modal" aria-label="Close">
+                                            <i data-lucide="x"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="account-modal-content">
+
+                                        <section class="account-section">
+                                            <h3>Security</h3>
+                                            <button type="button" id="change-password-button" class="account-action">
+                                                <span>Change password</span>
+                                                <i data-lucide="chevron-right"></i>
+                                            </button>
+                                        </section>
+
+                                        <section class="account-section">
+                                            <h3>Session</h3>
+                                            <button type="button" id="sign-out-button" class="account-action">
+                                                <span>Sign out</span>
+                                                <i data-lucide="log-out"></i>
+                                            </button>
+                                            <p id="account-feedback" class="is-hidden"></p>
+                                        </section>
+
+                                        <button type="button" id="delete-account-button" class="account-action danger-action">
+                                            <span>Delete account</span>
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+
+                                    </div>
+                                </div>
+
+
+                                <!-- Change Password View -->
+                                <div id="change-password-view" class="is-hidden">
+
+                                    <div class="account-modal-header">
+                                        <h2>Change password</h2>
+                                        <button type="button" id="close-password-view" aria-label="Back to account">
+                                            <i data-lucide="arrow-left"></i>
+                                        </button>
+                                    </div>
+
+                                    <form id="change-password-form">
+
+                                        <label for="new-password">New password</label>
+                                        <input
+                                            type="password"
+                                            id="new-password"
+                                            autocomplete="new-password"
+                                            required
+                                        >
+
+                                        <label for="confirm-password">Confirm new password</label>
+                                        <input
+                                            type="password"
+                                            id="confirm-password"
+                                            autocomplete="new-password"
+                                            required
+                                        >
+
+                                        <p id="password-error" class="is-hidden"></p>
+                                        <p id="password-success" class="is-hidden"></p>
+
+                                        <button type="submit" id="save-password-button">
+                                            Save password
+                                        </button>
+
+                                    </form>
+                                </div>
+
+
+                                <!-- Delete Account View -->
+                                <div id="delete-account-view" class="is-hidden">
+
+                                    <div class="account-modal-header">
+                                        <h2>Delete account?</h2>
+                                        <button type="button" id="close-delete-account-view" aria-label="Back to account">
+                                            <i data-lucide="arrow-left"></i>
+                                        </button>
+                                    </div>
+
+                                    <p class="delete-account-description">
+                                        This will permanently delete your account and all associated data,
+                                        including your watchlist and analysis history. This action cannot be undone.
+                                    </p>
+
+                                    <div class="delete-account-actions">
+
+                                        <button type="button" id="cancel-delete-account">
+                                            Cancel
+                                        </button>
+
+                                        <button type="button" id="confirm-delete-account">
+                                            Delete account
+                                        </button>
+
+                                    </div>
+
+                                    <p id="delete-account-error" class="is-hidden"></p>
+
+                                </div>
+
+                            </div>
+                        </div>
 
     <!-- Footer -->
     <footer class="site-footer">

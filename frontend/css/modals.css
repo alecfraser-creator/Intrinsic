@@ -363,3 +363,290 @@
 #auth-error.is-hidden {
     display: none;
 }
+
+
+/* ---------- Account Modal ---------- */
+
+#account-modal {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: var(--space-4);
+    background: rgba(0, 0, 0, 0.7);
+
+    z-index: 1200;
+}
+
+#account-modal.is-hidden {
+    display: none;
+}
+
+#account-modal .account-modal {
+    width: 100%;
+    max-width: 400px;
+    padding: var(--space-5);
+
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+}
+
+
+/* ---------- Account Header ---------- */
+
+.account-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: var(--space-5);
+}
+
+.account-modal-header h2 {
+    margin: 0;
+
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.account-modal-header button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+    padding: 0;
+
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.account-modal-header button:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
+.account-modal-header svg {
+    width: 18px;
+    height: 18px;
+}
+
+
+/* ---------- Account Sections ---------- */
+
+.account-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.account-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.account-section h3 {
+    margin: 0;
+
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+
+/* ---------- Account Actions ---------- */
+
+.account-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    padding: var(--space-3);
+
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    text-align: left;
+
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.account-action:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+}
+
+.account-action svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+}
+
+
+/* ---------- Danger Action ---------- */
+
+.danger-action {
+    color: var(--danger);
+}
+
+.danger-action svg {
+    color: var(--danger);
+}
+
+.danger-action:hover {
+    background: rgba(220, 60, 60, 0.06);
+    border-color: var(--danger);
+}
+
+
+/* ---------- Change Password Form ---------- */
+
+#change-password-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+#change-password-form label {
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+#change-password-form input {
+    width: 100%;
+    padding: var(--space-3);
+
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+
+    font: inherit;
+}
+
+#change-password-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+#save-password-button {
+    width: 100%;
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+
+    color: white;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+
+    font: inherit;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+#save-password-button:hover {
+    opacity: 0.85;
+}
+
+
+/* ---------- Password Feedback ---------- */
+
+#password-error,
+#delete-account-error {
+    margin: var(--space-2) 0 0;
+
+    color: var(--danger);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+#password-success {
+    margin: var(--space-2) 0 0;
+
+    color: var(--gold);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+
+/* ---------- Delete Account View ---------- */
+
+.delete-account-description {
+    margin: 0 0 var(--space-5);
+
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.delete-account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.delete-account-actions button {
+    width: 100%;
+    padding: var(--space-3);
+
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+#cancel-delete-account {
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+}
+
+#cancel-delete-account:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
+#confirm-delete-account {
+    color: white;
+    background: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+#confirm-delete-account:hover {
+    opacity: 0.85;
+}
+
+
+/* ---------- Hidden Views ---------- */
+
+#account-menu.is-hidden,
+#change-password-view.is-hidden,
+#delete-account-view.is-hidden {
+    display: none;
+}
