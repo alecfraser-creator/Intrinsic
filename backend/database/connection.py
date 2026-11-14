@@ -9,9 +9,24 @@ db_path_local = Path(__file__).resolve().parent.parent.parent / "data" / "intrin
 db_path_local.parent.mkdir(parents=True, exist_ok=True)
 
 
-def connect():
+def connect(user_id):
     if DATABASE_URL:
-        return psycopg.connect(DATABASE_URL)
+        connection = psycopg.connect(DATABASE_URL)
+        connection.execute(
+            "SET LOCAL ROLE authenticated"
+        )
+
+        connection.execute(
+            """
+            SELECT set_config(
+            'request.jwt.claim.sub',
+            %s,
+            true)
+            """,
+            (user_id,)
+        );
+
+        return connection
     else:
         return sqlite3.connect(db_path_local)
 

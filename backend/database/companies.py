@@ -28,7 +28,7 @@ def _format_timestamp(value):
 
 def insert_company(user_id, ticker, quant_analysis, last_financials_refresh, qual_analysis, historical_data):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         date = datetime.now(timezone.utc)
@@ -95,7 +95,7 @@ def insert_company(user_id, ticker, quant_analysis, last_financials_refresh, qua
 
 def get_saved_company(user_id, ticker):
 
-    connection = connect()
+    connection = connect(user_id)
     try:
         if DATABASE_URL:
             cursor = connection.execute(
@@ -138,7 +138,7 @@ def get_saved_company(user_id, ticker):
 
 def get_old_analysis(user_id, analysis_id):
 
-    connection = connect()
+    connection = connect(user_id)
     try:
         if DATABASE_URL:
             cursor = connection.execute(
@@ -182,7 +182,7 @@ def get_old_analysis(user_id, analysis_id):
 
 def delete_company(user_id, ticker):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         if DATABASE_URL:
@@ -204,7 +204,7 @@ def delete_company(user_id, ticker):
 
 def delete_past_analysis(user_id, analysis_id):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         if DATABASE_URL:
@@ -226,7 +226,7 @@ def delete_past_analysis(user_id, analysis_id):
 
 def get_watchlist_companies(user_id):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         if DATABASE_URL:
@@ -267,7 +267,7 @@ def get_watchlist_companies(user_id):
 
 def insert_historical_analysis(user_id, ticker, quant_analysis, last_financials_refresh, qual_analysis, historical_data, last_saved_at):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         if DATABASE_URL:
@@ -318,7 +318,7 @@ def insert_historical_analysis(user_id, ticker, quant_analysis, last_financials_
 
 def get_all_historical_analyses(user_id):
 
-    connection = connect()
+    connection = connect(user_id)
 
     try:
         if DATABASE_URL:

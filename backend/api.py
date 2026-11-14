@@ -10,7 +10,7 @@ from fastapi import Depends
 from .auth import get_current_user
 
 from .main import analyze_company, recalculate_company_dcf
-from .config import LOCAL_USER_ID
+
 
 from .database.companies import (
     get_saved_company,
@@ -99,7 +99,6 @@ def get_analysis_history(
 
     if isdata is not None:
         return {
-            "user_id": user_id,
             "ticker": isdata["ticker"],
             "quant_analysis": isdata["quant_analysis"],
             "qual_analysis": isdata["qual_analysis"],
@@ -361,12 +360,6 @@ def get_watchlist(user_id: str = Depends(get_current_user)):
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-
-
-
-@app.get("/auth-test")
-def auth_test(user_id: str = Depends(get_current_user)):
-    return {"user_id": user_id}
 
 
 
