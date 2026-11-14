@@ -14,6 +14,8 @@ from .main import analyze_company, recalculate_company_dcf
 from contextlib import asynccontextmanager
 from .database.connection import pool
 
+from .supabase_admin import supabase_admin
+
 
 from .database.companies import (
     get_saved_company,
@@ -23,7 +25,8 @@ from .database.companies import (
     insert_historical_analysis,
     get_all_historical_analyses,
     get_old_analysis,
-    delete_past_analysis
+    delete_past_analysis,
+    delete_all_user_data
 )
 
 
@@ -365,6 +368,12 @@ def get_watchlist(user_id: str = Depends(get_current_user)):
         "companies": companies,
         "history": history
     }
+
+
+@app.delete("/account")
+def delete_account(user_id: str = Depends(get_current_user)):
+    delete_all_user_data(user_id)
+    supabase_admin.auth.admin.delete_user(user_id)
 
 
 
