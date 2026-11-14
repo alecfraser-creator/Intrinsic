@@ -6,6 +6,12 @@ compareSelectButton.addEventListener("click", async () => {
         watchlistComparisonSelection()
     } else {
         isComparisonSelectMode = false
+
+        welcomeMessage.classList.add("is-hidden");
+        analysisContent.classList.add("is-hidden");
+        statusMessage.textContent = "Comparing analyses...";
+        statusMessage.classList.remove("is-hidden");
+
         const analyses = await runComparison()
         
         displayComparison(analyses)
@@ -16,6 +22,7 @@ compareSelectButton.addEventListener("click", async () => {
         comparisonView.classList.remove("is-hidden")
     }
 })
+
 
 watchlistCompanies.addEventListener("click", (event) => {
     const checkbox = event.target.closest(".analysis-select");
@@ -135,7 +142,7 @@ async function runComparison() {
 
         if (parts[0] === "ticker") {
             const ticker = parts[1]
-            const latestAnalysis = await fetchAnalysis(ticker)
+            const latestAnalysis = await fetchSavedAnalysis(ticker)
             analyses.push({
                 "type": "ticker",
                 "analysis": latestAnalysis

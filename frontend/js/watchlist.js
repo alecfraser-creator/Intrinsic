@@ -48,11 +48,13 @@ async function openWatchlistCompany(ticker) {
         return;
     }
     
+    analysisContent.classList.add("is-hidden");
     welcomeMessage.classList.add("is-hidden");
-    statusMessage.classList.add("is-hidden");
 
+    statusMessage.textContent = "Loading analysis...";
+    statusMessage.classList.remove("is-hidden");
     try {
-        const data = await fetchAnalysis(ticker);
+        const data = await fetchSavedAnalysis(ticker);
 
         currentQualAnalysis = data.qual_analysis ?? createEmptyQualAnalysis();
         populateQualAnalysis();

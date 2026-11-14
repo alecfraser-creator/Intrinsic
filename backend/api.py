@@ -11,6 +11,9 @@ from .auth import get_current_user
 
 from .main import analyze_company, recalculate_company_dcf
 
+from contextlib import asynccontextmanager
+from .database.connection import pool
+
 
 from .database.companies import (
     get_saved_company,
@@ -24,7 +27,19 @@ from .database.companies import (
 )
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if pool is not None:
+        pool.open(wait=True)
+
+    yield
+
+    if pool is not None:
+        pool.close()
+
+
+app = FastAPI(lifespan=lifespan)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +73,6 @@ def get_company(ticker: str):
     return {
         "quant_analysis": results,
         "qual_analysis": None,
-        "in_watchlist": False,
         "last_financials_refresh": last_financials_refresh,
         "updated_at": None,
         "historical_data": results["historical_data"],
@@ -82,7 +96,6 @@ def get_saved_analysis(
     return {
         "quant_analysis": isdata["quant_analysis"],
         "qual_analysis": isdata["qual_analysis"],
-        "in_watchlist": True,
         "updated_at": isdata["updated_at"],
         "last_financials_refresh": isdata["last_financials_refresh"],
         "historical_data": isdata["historical_price"],
@@ -102,7 +115,6 @@ def get_analysis_history(
             "ticker": isdata["ticker"],
             "quant_analysis": isdata["quant_analysis"],
             "qual_analysis": isdata["qual_analysis"],
-            "in_watchlist": True,
             "updated_at": isdata["updated_at"],
             "last_financials_refresh": isdata["last_financials_refresh"],
             "historical_data": isdata["historical_price"],
@@ -167,7 +179,6 @@ def fresh_analysis(
     return {
         "quant_analysis": results,
         "qual_analysis": qual_analysis,
-        "in_watchlist": saved_company is not None,
         "last_financials_refresh": last_financials_refresh,
         "historical_data": results["historical_data"],
     }
@@ -315,7 +326,6 @@ def recalculate_dcf(
         return {
             "quant_analysis": quant_analysis,
             "qual_analysis": saved_company["qual_analysis"],
-            "in_watchlist": True,
             "updated_at": saved_company["updated_at"],
             "last_financials_refresh": saved_company["last_financials_refresh"],
             "historical_data": saved_company["historical_price"]
@@ -324,7 +334,6 @@ def recalculate_dcf(
     # Otherwise, return just the newly calculated DCF.
     return {
         "dcf": new_dcf,
-        "in_watchlist": False
     }
 
 

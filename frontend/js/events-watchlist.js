@@ -123,9 +123,7 @@ watchlistAdd.addEventListener("click", () => {
         overlay.classList.remove("is-hidden");
 
         try {
-            const data = await fetchAnalysis(ticker);
-
-            if (data.in_watchlist) {
+            if (watchlistTickers.has(ticker)) {
                 duplicate = true;
                 overlay.textContent = "Company already added to watchlist.";
                 overlay.classList.remove("is-hidden");
@@ -135,6 +133,9 @@ watchlistAdd.addEventListener("click", () => {
                 }, 2000);
                 return 
             }
+            
+            const data = await fetchAnalysis(ticker);
+
 
             await addCompany(
                 ticker,

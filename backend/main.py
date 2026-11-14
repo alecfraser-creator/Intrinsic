@@ -1,10 +1,3 @@
-# next: Review Supabase RLS policies and configure backend database 
-# access so user-level security is enforced at the database level.
-
-# next: make checking if a company is in_watchlist use the frontend set, remove the in_watchlist returns in api.py
-
-# next: Make connection to supabase better, without having to connect at every interaction
-
 # next : Add settings so that user can manage their account
 
 # next : fix deployment crash
