@@ -8,6 +8,8 @@ function displayAnalysis(data) {
     lastFinancialsRefresh = data.last_financials_refresh;
     currentHistoricalData = data.historical_data;
 
+    displayTimestamps(data);
+
     ticker = currentQuantAnalysis.ticker;
     isSaved = watchlistTickers.has(ticker);
 
