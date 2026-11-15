@@ -3,8 +3,11 @@
 .section-heading {
     margin-top: var(--space-6);
     margin-bottom: var(--space-5);
-    padding-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
     border-bottom: 1px solid var(--border-strong);
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
 }
 
 .metrics-subsection + .metrics-subsection {
@@ -15,29 +18,39 @@
 /* ---------- Metrics: ruled rows ---------- */
 
 .metric-info {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 13px;
-    height: 13px;
-    margin-left: 8px;
+    width: 15px;
+    height: 15px;
+    margin-left: var(--space-2);
     padding: 0;
-    border-color: transparent;
+    border: 0;
     border-radius: 50%;
-    background-color: #aaa;
+    background-color: var(--text-faint);
     color: var(--bg);
     font-size: 10px;
+    font-weight: 600;
     line-height: 1;
     cursor: pointer;
     vertical-align: middle;
+    transition: background-color var(--transition-fast);
+}
+
+/* Larger invisible hit area */
+.metric-info::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
 }
 
 .metric-info:hover {
-    background-color: #fff;
+    background-color: var(--gold);
 }
 
 .metric-info:focus-visible {
-    outline: 2px solid #aaa;
+    outline: 2px solid var(--gold);
     outline-offset: 2px;
 }
 
@@ -53,8 +66,13 @@
     align-items: baseline;
     justify-content: space-between;
     gap: var(--space-4);
-    padding: var(--space-3) 0;
+    padding: var(--space-3) var(--space-2);
     border-bottom: 1px solid var(--border);
+    transition: background var(--transition-fast);
+}
+
+.metrics-grid .metric-card:hover {
+    background: rgb(255 255 255 / 2%);
 }
 
 .metric-label {

@@ -1,8 +1,14 @@
+/* ==========================================================================
+   Modals
+   One shared look for the save, unsaved-changes, login and account dialogs.
+   ========================================================================== */
 
-/* ---------- Modal Overlays ---------- */
+/* ---------- Overlay ---------- */
 
 #analysis-update-modal,
-#unsaved-changes-modal {
+#unsaved-changes-modal,
+#auth-modal,
+#account-modal {
     position: fixed;
     inset: 0;
 
@@ -11,63 +17,85 @@
     align-items: center;
 
     padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay);
+    backdrop-filter: blur(3px);
+    animation: modal-fade 0.15s ease;
 }
 
-#analysis-update-modal {
-    z-index: 1000;
-}
-
-#unsaved-changes-modal {
-    z-index: 1100;
-}
+#analysis-update-modal { z-index: 1000; }
+#unsaved-changes-modal { z-index: 1100; }
+#auth-modal,
+#account-modal { z-index: 1200; }
 
 #analysis-update-modal.is-hidden,
-#unsaved-changes-modal.is-hidden {
+#unsaved-changes-modal.is-hidden,
+#auth-modal.is-hidden,
+#account-modal.is-hidden {
     display: none;
 }
 
-
-/* ---------- Shared Modal Content ---------- */
+/* ---------- Dialog panel ---------- */
 
 #analysis-update-modal .modal-content,
-#unsaved-changes-modal .modal-content {
+#unsaved-changes-modal .modal-content,
+#auth-modal .modal-content,
+#account-modal .account-modal {
     width: 100%;
     max-width: 440px;
+    max-height: calc(100vh - 2 * var(--space-4));
+    overflow-y: auto;
     padding: var(--space-5);
 
     background: var(--surface);
     border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+    animation: modal-rise 0.18s ease;
 }
 
+#account-modal .account-modal {
+    max-width: 400px;
+}
 
-/* ---------- Modal Titles ---------- */
+@keyframes modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modal-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Titles and body text ---------- */
 
 #analysis-update-title,
-#unsaved-changes-title {
+#unsaved-changes-title,
+#auth-title,
+.account-modal-header h2,
+#save-success h2,
+#navigation-save-success h2 {
     margin: 0 0 var(--space-2);
 
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 1.25rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
-
-/* ---------- Modal Paragraphs ---------- */
-
 #analysis-update-modal p,
-#unsaved-changes-modal p {
+#unsaved-changes-modal p,
+#auth-description,
+.delete-account-description {
     margin: 0 0 var(--space-5);
 
     color: var(--text-secondary);
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
-
-/* ---------- Update Options ---------- */
+/* ---------- Save / unsaved-changes options ---------- */
 
 .update-options {
     display: flex;
@@ -79,7 +107,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-2);
+    gap: var(--space-1);
 
     width: 100%;
     padding: var(--space-4);
@@ -93,12 +121,17 @@
     font-family: var(--font-sans);
 
     cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.update-options button:hover {
-    background: var(--surface);
+.update-options button:hover:not(:disabled) {
+    background: var(--surface-hover);
     border-color: var(--gold);
+}
+
+.update-options button:disabled {
+    opacity: 0.5;
+    cursor: progress;
 }
 
 .update-options button span {
@@ -112,30 +145,41 @@
     line-height: 1.5;
 }
 
+/* ---------- Quiet text buttons (cancel / discard) ---------- */
 
-/* ---------- Cancel Save Modal ---------- */
-
-#close-analysis-update-modal {
-    margin-top: var(--space-4);
-    padding: var(--space-2) 0;
+#close-analysis-update-modal,
+#discard-and-continue,
+#cancel-navigation {
+    width: 100%;
+    padding: var(--space-3);
 
     background: transparent;
     border: none;
+    border-radius: var(--radius);
 
     color: var(--text-muted);
     font-family: var(--font-sans);
     font-size: 0.85rem;
 
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color var(--transition-fast);
 }
 
-#close-analysis-update-modal:hover {
+#close-analysis-update-modal {
+    margin-top: var(--space-3);
+}
+
+#discard-and-continue {
+    margin-top: var(--space-3);
+}
+
+#close-analysis-update-modal:hover,
+#discard-and-continue:hover,
+#cancel-navigation:hover {
     color: var(--text);
 }
 
-
-/* ---------- Save Success ---------- */
+/* ---------- Save success ---------- */
 
 #save-success,
 #navigation-save-success {
@@ -151,171 +195,108 @@
 }
 
 #save-success [data-lucide="check-circle"],
-#navigation-save-success [data-lucide="check-circle"] {
+#navigation-save-success [data-lucide="check-circle"],
+#save-success svg,
+#navigation-save-success svg {
     width: 42px;
     height: 42px;
     color: var(--gold);
     margin-bottom: var(--space-3);
 }
 
-#save-success h2,
-#navigation-save-success h2 {
-    margin: 0 0 var(--space-2);
-
-    color: var(--text);
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-#save-success p,
-#navigation-save-success p {
-    margin: 0 0 var(--space-5);
-
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
+/* ---------- Primary buttons (gold) ---------- */
 
 #close-save-success,
-#continue-after-save {
+#continue-after-save,
+#auth-submit,
+#save-password-button {
     width: 100%;
+    min-height: 44px;
     padding: var(--space-3);
 
     background: var(--gold);
     border: 1px solid var(--gold);
     border-radius: var(--radius);
 
-    color: var(--bg);
+    color: var(--gold-ink);
     font-family: var(--font-sans);
     font-size: 0.9rem;
     font-weight: 600;
 
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: background var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
 }
 
-#close-save-success:hover,
-#continue-after-save:hover {
-    opacity: 0.85;
+#close-save-success:hover:not(:disabled),
+#continue-after-save:hover:not(:disabled),
+#auth-submit:hover:not(:disabled),
+#save-password-button:hover:not(:disabled) {
+    background: var(--gold-hover);
+    border-color: var(--gold-hover);
 }
 
-
-/* ---------- Discard and Cancel Navigation ---------- */
-
-#discard-and-continue,
-#cancel-navigation {
-    width: 100%;
-    padding: var(--space-3);
-
-    background: transparent;
-    border: none;
-    border-radius: var(--radius);
-
-    color: var(--text-muted);
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-
-    cursor: pointer;
-    transition: color 0.2s ease;
+#close-save-success:disabled,
+#continue-after-save:disabled,
+#auth-submit:disabled,
+#save-password-button:disabled {
+    opacity: 0.55;
+    cursor: progress;
 }
 
-#discard-and-continue {
-    margin-top: var(--space-3);
-}
+/* ---------- Forms: login and change password ---------- */
 
-#discard-and-continue:hover,
-#cancel-navigation:hover {
-    color: var(--text);
-}
-
-
-
-/* ---------- Authentication Modal ---------- */
-
-#auth-modal {
-    position: fixed;
-    inset: 0;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.7);
-
-    z-index: 1200;
-}
-
-#auth-modal.is-hidden {
-    display: none;
-}
-
-#auth-modal .modal-content {
-    width: 100%;
-    max-width: 440px;
-    padding: var(--space-5);
-
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-}
-
-/* ---------- Authentication Title ---------- */
-
-#auth-title {
-    margin: 0 0 var(--space-2);
-
-    color: var(--text);
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-/* ---------- Authentication Description ---------- */
-
-#auth-description {
-    margin: 0 0 var(--space-5);
-
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-/* ---------- Authentication Form ---------- */
-
-#auth-form {
+#auth-form,
+#change-password-form {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
 }
 
-#auth-form label {
-    color: var(--text);
-    font-size: 0.85rem;
+#auth-form label,
+#change-password-form label {
+    margin-top: var(--space-2);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
     font-weight: 500;
 }
 
-#auth-form input {
+#auth-form label:first-child,
+#change-password-form label:first-child {
+    margin-top: 0;
+}
+
+#auth-form input,
+#change-password-form input {
     width: 100%;
-    padding: var(--space-3);
+    height: 44px;
+    padding: 0 var(--space-3);
 
     color: var(--text);
-    background: var(--background);
+    background: var(--bg);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
 
     font: inherit;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-#auth-form input:focus {
+#auth-form input::placeholder {
+    color: var(--text-faint);
+}
+
+#auth-form input:focus,
+#change-password-form input:focus {
     outline: none;
-    border-color: var(--accent);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--gold-soft);
 }
-
-/* ---------- Authentication Buttons ---------- */
 
 #auth-submit,
+#save-password-button {
+    margin-top: var(--space-4);
+}
+
+/* Secondary actions under the login form */
 #auth-toggle,
 #auth-close {
     width: 100%;
@@ -323,25 +304,23 @@
 
     border-radius: var(--radius);
     font: inherit;
+    font-size: 0.88rem;
     cursor: pointer;
-}
-
-#auth-submit {
-    margin-top: var(--space-3);
-
-    color: white;
-    background: var(--accent);
-    border: none;
-    font-weight: 600;
-}
-
-#auth-toggle,
-#auth-close {
-    margin-top: var(--space-2);
 
     color: var(--text-secondary);
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+#auth-toggle {
+    margin-top: var(--space-3);
+    color: var(--gold);
+}
+
+#auth-close {
+    margin-top: var(--space-1);
+    color: var(--text-muted);
 }
 
 #auth-toggle:hover,
@@ -350,53 +329,50 @@
     background: var(--surface-hover);
 }
 
-/* ---------- Authentication Errors ---------- */
+/* ---------- Feedback ---------- */
 
-#auth-error {
+#auth-error,
+#password-error,
+#delete-account-error {
     margin: var(--space-2) 0 0;
+    padding: var(--space-2) var(--space-3);
 
-    color: var(--danger);
+    background: rgb(210 123 114 / 8%);
+    border: 1px solid rgb(210 123 114 / 30%);
+    border-radius: var(--radius);
+
+    color: var(--negative);
     font-size: 0.85rem;
     line-height: 1.4;
 }
 
-#auth-error.is-hidden {
-    display: none;
-}
+#password-success {
+    margin: var(--space-2) 0 0;
+    padding: var(--space-2) var(--space-3);
 
-
-/* ---------- Account Modal ---------- */
-
-#account-modal {
-    position: fixed;
-    inset: 0;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.7);
-
-    z-index: 1200;
-}
-
-#account-modal.is-hidden {
-    display: none;
-}
-
-#account-modal .account-modal {
-    width: 100%;
-    max-width: 400px;
-    padding: var(--space-5);
-
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-line);
     border-radius: var(--radius);
+
+    color: var(--gold);
+    font-size: 0.85rem;
+    line-height: 1.4;
 }
 
+#auth-error.is-hidden,
+#password-error.is-hidden,
+#password-success.is-hidden,
+#delete-account-error.is-hidden {
+    display: none;
+}
 
-/* ---------- Account Header ---------- */
+#account-feedback {
+    margin: var(--space-1) 0 0;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+/* ---------- Account modal ---------- */
 
 .account-modal-header {
     display: flex;
@@ -408,11 +384,6 @@
 
 .account-modal-header h2 {
     margin: 0;
-
-    color: var(--text);
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    font-weight: 600;
 }
 
 .account-modal-header button {
@@ -430,7 +401,7 @@
     border-radius: var(--radius);
 
     cursor: pointer;
-    transition: color 0.2s ease, background 0.2s ease;
+    transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .account-modal-header button:hover {
@@ -442,9 +413,6 @@
     width: 18px;
     height: 18px;
 }
-
-
-/* ---------- Account Sections ---------- */
 
 .account-modal-content {
     display: flex;
@@ -462,14 +430,12 @@
     margin: 0;
 
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    font-style: normal;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.1em;
 }
-
-
-/* ---------- Account Actions ---------- */
 
 .account-action {
     display: flex;
@@ -489,12 +455,17 @@
     text-align: left;
 
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.account-action:hover {
+.account-action:hover:not(:disabled) {
     background: var(--surface-hover);
     border-color: var(--border-strong);
+}
+
+.account-action:disabled {
+    opacity: 0.6;
+    cursor: progress;
 }
 
 .account-action svg {
@@ -503,103 +474,16 @@
     color: var(--text-muted);
 }
 
+/* Danger */
 
-/* ---------- Danger Action ---------- */
-
-.danger-action {
-    color: var(--danger);
-}
-
+.danger-action,
 .danger-action svg {
-    color: var(--danger);
+    color: var(--negative);
 }
 
-.danger-action:hover {
-    background: rgba(220, 60, 60, 0.06);
-    border-color: var(--danger);
-}
-
-
-/* ---------- Change Password Form ---------- */
-
-#change-password-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-#change-password-form label {
-    color: var(--text);
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-#change-password-form input {
-    width: 100%;
-    padding: var(--space-3);
-
-    color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-
-    font: inherit;
-}
-
-#change-password-form input:focus {
-    outline: none;
-    border-color: var(--accent);
-}
-
-#save-password-button {
-    width: 100%;
-    margin-top: var(--space-3);
-    padding: var(--space-3);
-
-    color: white;
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-
-    font: inherit;
-    font-weight: 600;
-
-    cursor: pointer;
-}
-
-#save-password-button:hover {
-    opacity: 0.85;
-}
-
-
-/* ---------- Password Feedback ---------- */
-
-#password-error,
-#delete-account-error {
-    margin: var(--space-2) 0 0;
-
-    color: var(--danger);
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
-#password-success {
-    margin: var(--space-2) 0 0;
-
-    color: var(--gold);
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
-
-/* ---------- Delete Account View ---------- */
-
-.delete-account-description {
-    margin: 0 0 var(--space-5);
-
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.5;
+.danger-action:hover:not(:disabled) {
+    background: rgb(210 123 114 / 8%);
+    border-color: var(--negative);
 }
 
 .delete-account-actions {
@@ -610,6 +494,7 @@
 
 .delete-account-actions button {
     width: 100%;
+    min-height: 44px;
     padding: var(--space-3);
 
     border-radius: var(--radius);
@@ -618,13 +503,13 @@
     font-weight: 600;
 
     cursor: pointer;
-    transition: opacity 0.2s ease, background 0.2s ease;
+    transition: background var(--transition-fast), opacity var(--transition-fast), color var(--transition-fast);
 }
 
 #cancel-delete-account {
     color: var(--text-secondary);
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
 }
 
 #cancel-delete-account:hover {
@@ -633,20 +518,35 @@
 }
 
 #confirm-delete-account {
-    color: white;
-    background: var(--danger);
-    border: 1px solid var(--danger);
+    color: #1d0e0c;
+    background: var(--negative);
+    border: 1px solid var(--negative);
 }
 
-#confirm-delete-account:hover {
-    opacity: 0.85;
+#confirm-delete-account:hover:not(:disabled) {
+    background: #dc8d85;
 }
 
+#confirm-delete-account:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
 
-/* ---------- Hidden Views ---------- */
+/* ---------- Hidden views ---------- */
 
 #account-menu.is-hidden,
 #change-password-view.is-hidden,
 #delete-account-view.is-hidden {
     display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #analysis-update-modal,
+    #unsaved-changes-modal,
+    #auth-modal,
+    #account-modal,
+    .modal-content,
+    .account-modal {
+        animation: none;
+    }
 }

@@ -1,22 +1,36 @@
 /* ---------- Analysis tabs ---------- */
 
+/* Tabs stay in view under the header while a long analysis scrolls */
 .analysis-tabs {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 10;
+
     display: flex;
-    gap: var(--space-6);
-    margin-top: var(--space-4);
+    gap: var(--space-5);
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    background: var(--bg);
     border-bottom: 1px solid var(--border-strong);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.analysis-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .analysis-tab {
     position: relative;
-    padding: var(--space-3) 0;
+    flex: none;
+    padding: var(--space-3) var(--space-1);
     background: transparent;
     border: 0;
     color: var(--text-muted);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     cursor: pointer;
-    transition: color 0.15s ease;
+    transition: color var(--transition-fast);
 }
 
 .analysis-tab:hover {
@@ -38,5 +52,5 @@
 }
 
 .analysis-tab:focus-visible {
-    outline-offset: 2px;
+    outline-offset: -2px;
 }

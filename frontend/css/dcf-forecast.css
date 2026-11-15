@@ -6,6 +6,10 @@
 
 #dcf-forecast-chart-container {
     position: relative;
-    height: 350px;
+    height: 360px;
     margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
 }

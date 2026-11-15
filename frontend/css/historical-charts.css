@@ -1,12 +1,27 @@
+/* ---------- Historical chart cards ---------- */
+
 .historical-chart {
     min-width: 0;
-    padding: 1rem;
+    padding: var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.historical-chart h4 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 .historical-chart-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
 }
 
 .historical-chart canvas {
@@ -14,17 +29,29 @@
 }
 
 
+/* ---------- Price chart ---------- */
+
 #price-chart-container {
+    width: 100%;
+    margin-bottom: var(--space-6);
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+/* Chart.js sizes the canvas to its parent, so the canvas gets a parent
+   of its own that holds only the chart (not the header above it). */
+.price-chart-frame {
     position: relative;
     width: 100%;
-    height: 400px;
-    max-height: 400px;
+    height: 360px;
 }
 
 #price-chart-header {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-1);
     margin-bottom: var(--space-3);
 }
 
@@ -43,16 +70,26 @@
     font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
-    transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+    transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .price-chart-period:hover {
     color: var(--text);
-    background: var(--surface);
+    background: var(--surface-hover);
 }
 
 .price-chart-period.active {
     color: var(--gold);
-    background: rgba(200, 164, 92, 0.08);
-    border-color: rgba(200, 164, 92, 0.25);
+    background: var(--gold-soft);
+    border-color: var(--gold-line);
+}
+
+@media (max-width: 720px) {
+    .historical-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .price-chart-frame {
+        height: 280px;
+    }
 }

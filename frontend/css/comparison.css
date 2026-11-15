@@ -28,7 +28,7 @@
     width: 25px;
     height: 25px;
     color: var(--gold);
-    background: rgba(212, 175, 55, 0.10);
+    background: var(--gold-soft);
     border-radius: 6px;
     font-size: 1rem;
 }
@@ -70,7 +70,7 @@ body.comparison-mode {
 .watchlist-comparison {
     flex-shrink: 0;
     margin-top: auto;
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-7);   /* lifted off the bottom edge */
     border-top: 1px solid var(--border);
     background: var(--surface);
 }
@@ -84,7 +84,7 @@ body.comparison-mode {
     padding: var(--space-3);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
-    background: var(--surface);
+    background: var(--surface-raised);
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 0.875rem;
@@ -100,7 +100,7 @@ body.comparison-mode {
 #compare-analyses.comparison-ready {
     background: var(--gold);
     border-color: var(--gold);
-    color: #171717;
+    color: var(--gold-ink);
 }
 
 #compare-analyses.comparison-ready:hover {
@@ -118,16 +118,21 @@ body.comparison-mode {
    COMPARISON INSTRUCTIONS
 ========================================== */
 
-#comparison-instructions,
-#comparison-selection-count {
-    padding: var(--space-1);
-    background: var(--surface);
+#comparison-instructions {
+    flex-shrink: 0;
+    padding: var(--space-3) var(--space-4);
+    background: var(--gold-soft);
+    border-bottom: 1px solid var(--gold-line);
     color: var(--gold);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
 }
 
 #comparison-selection-count {
-    margin-bottom: 15px;
+    margin-bottom: var(--space-3);
+    color: var(--gold);
+    font-size: 0.8rem;
+    text-align: center;
 }
 
 
@@ -151,7 +156,7 @@ body.comparison-mode #comparison-view {
 
 #comparison-view {
     --comparison-color-one: var(--gold);
-    --comparison-color-two: #5aa9e6;
+    --comparison-color-two: var(--info);
 }
 
 #comparison-view .company-one {
@@ -169,7 +174,7 @@ body.comparison-mode #comparison-view {
 
 #comparison-view .comparison-identities {
     position: sticky;
-    top: 10px;
+    top: var(--header-height);   /* sit directly under the sticky page header */
     z-index: 10;
 
     display: grid;
@@ -177,7 +182,8 @@ body.comparison-mode #comparison-view {
     gap: 24px;
 
     margin-bottom: 24px;
-    background: transparent;
+    padding: var(--space-3) 0;   /* opaque strip so content doesn't show between the cards */
+    background: var(--bg);
 }
 
 #comparison-view .comparison-identities .company-identity {
@@ -187,10 +193,10 @@ body.comparison-mode #comparison-view {
     background: var(--surface);
     border: 1px solid var(--border);
     border-bottom: 2px solid var(--company-color);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
 
     text-align: center;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+    
 }
 
 #comparison-view .comparison-identities h2 {
@@ -253,7 +259,7 @@ body.comparison-mode #comparison-view {
 
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
 }
 
 #comparison-view .company-summary {
@@ -275,6 +281,22 @@ body.comparison-mode #comparison-view {
 
 #comparison-view .company-summary .metric-card:hover {
     opacity: 0.85;
+}
+
+
+/* Half-width cards: tighter key figures that wrap at word boundaries only */
+#comparison-view .summary-item {
+    padding: var(--space-3) var(--space-4);
+}
+
+#comparison-view .summary-item .metric-value {
+    font-size: 1.1rem;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+#comparison-view .summary-item:first-child .metric-value {
+    white-space: nowrap;
 }
 
 
@@ -368,7 +390,7 @@ body.comparison-mode #comparison-view {
 #comparison-view .comparison-price-chart-period.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: #171717;
+    color: var(--gold-ink);
 }
 
 #comparison-view #comparison-price-chart {

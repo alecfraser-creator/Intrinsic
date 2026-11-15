@@ -5,21 +5,16 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-5);
-    margin: var(--space-6) 0 var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-strong);
 }
-
-/* ---------- Quantitative header and actions ---------- */
 
 .quantitative-top {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     gap: var(--space-5);
-    margin: var(--space-6) 0 var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-strong);
+    margin: var(--space-5) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
 }
 
 .quantitative-top .quantitative-header {
@@ -30,8 +25,12 @@
     border: 0;
 }
 
-.quantitative-top .quantitative-header h2 {
-    margin-bottom: var(--space-2);
+.quantitative-top .quantitative-header h2,
+.qualitative-header h2 {
+    margin-bottom: var(--space-1);
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
 }
 
 
@@ -39,9 +38,9 @@
 
 .quantitative-actions {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-2);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
     flex-shrink: 0;
     margin: 0;
 }
@@ -57,7 +56,7 @@
 /* ---------- Refresh financials button ---------- */
 
 #refresh-financials {
-    min-height: 40px;
+    min-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -70,16 +69,16 @@
     border-radius: var(--radius);
 
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
 
     transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        color 0.15s ease,
-        opacity 0.15s ease;
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast),
+        opacity var(--transition-fast);
 }
 
 #refresh-financials:hover:not(:disabled) {
@@ -114,13 +113,6 @@
     }
 
     .quantitative-actions {
-        align-items: flex-start;
-    }
-}
-
-@media (max-width: 420px) {
-    .quantitative-actions {
-        align-items: flex-start;
-        flex-direction: column;
+        flex-wrap: wrap;
     }
 }

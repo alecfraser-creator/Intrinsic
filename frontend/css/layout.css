@@ -1,87 +1,114 @@
 /* ---------- Layout ---------- */
 
+/* The page is a header bar plus a centred content column.
+   The sidebar is fixed, and body padding leaves room for it. */
+
 .dashboard {
     flex: 1;
     width: 100%;
-    max-width: var(--content-width);
-    margin: 0 auto;
-    padding: var(--space-7) var(--space-5) var(--space-8);
     display: flex;
     flex-direction: column;
-    gap: var(--space-7);
 }
 
-.dashboard-title {
-    font-family: var(--font-sans);
-    font-size: 4rem;
-    font-weight: 600;
-    letter-spacing: -0.04em;
-    text-align: center;
-    margin-bottom: -1.5rem;
-}
-
-/* ---------- Dashboard Header ---------- */
+/* ---------- Header bar ---------- */
 
 .dashboard-header {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+
+    height: var(--header-height);
+    /* Align the wordmark with the left edge of the content column */
+    padding: 0 max(var(--space-5), calc((100% - var(--content-width)) / 2 + var(--space-5)));
+
+    background: rgb(17 17 16 / 92%);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
 }
 
 .dashboard-title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+
     font-family: var(--font-sans);
-    font-size: 4rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    letter-spacing: -0.04em;
-    text-align: center;
-    margin-bottom: -1.5rem;
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+.dashboard-title::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
 }
 
 #account-button {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-
     display: flex;
     align-items: center;
     justify-content: center;
 
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     padding: 0;
 
     background: transparent;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-strong);
     border-radius: 50%;
 
-    color: var(--text-primary);
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast);
 }
 
 #account-button:hover {
-    background: var(--surface-secondary);
+    background: var(--surface-hover);
+    border-color: var(--gold);
+    color: var(--text);
 }
 
 #account-button svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
-/* The sidebar is fixed, so the layout wrapper only holds the main column */
+/* ---------- Content column ---------- */
+
 .dashboard-layout {
     display: block;
+    padding: var(--space-6) 0 var(--space-8);
 }
 
-/* Everything that used to sit directly in .dashboard now lives here,
-   so it carries the vertical rhythm */
+/* Everything below the header lives here, so it carries the vertical rhythm */
 .dashboard-main {
     display: flex;
     flex-direction: column;
-    gap: var(--space-7);
+    gap: var(--space-6);
     min-width: 0;
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+}
+
+#normal-dashboard-view,
+#comparison-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-width: 0;
+}
+
+#comparison-view {
+    display: block;
 }
 
 .dashboard-section,

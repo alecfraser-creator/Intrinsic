@@ -5,9 +5,9 @@
     padding: 14px 16px;
     margin-bottom: 20px;
 
-    background: rgba(214, 166, 75, 0.08);
-    border: 1px solid rgba(214, 166, 75, 0.3);
-    border-radius: 8px;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius-lg);
 }
 
 .historical-view-notice-icon {

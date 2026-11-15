@@ -11,35 +11,76 @@
     .watchlist-sidebar {
         position: static;
         width: auto;
-        padding: 0 0 var(--space-4);
-        margin-bottom: var(--space-6);
-        background: transparent;
+        min-width: 0;
+        max-width: none;
         border-right: 0;
         border-bottom: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
         overflow: visible;
+    }
+
+    .resize-handle {
+        display: none;
+    }
+
+    .watchlist-header {
+        height: 52px;
+    }
+
+    .watchlist-company {
+        flex-direction: row;
+        align-items: baseline;
+        gap: var(--space-3);
+    }
+
+    .watchlist-item {
+        padding: var(--space-2) var(--space-2);
+    }
+
+    .watchlist-comparison {
+        padding-bottom: var(--space-4);
+    }
+
+    #watchlist-companies {
+        max-height: 280px;
+        overflow-y: auto;
     }
 }
 
 @media (max-width: 720px) {
-    .dashboard {
-        padding: var(--space-6) var(--space-4) var(--space-7);
-        gap: var(--space-6);
+    .dashboard-header {
+        padding: 0 var(--space-4);
     }
 
-    .search-controls {
-        flex-direction: column;
+    .dashboard-layout {
+        padding: var(--space-5) 0 var(--space-7);
     }
 
-    .search-controls button {
-        width: 100%;
+    .dashboard-main {
+        gap: var(--space-5);
+        padding: 0 var(--space-4);
     }
 
     .metrics-grid {
         grid-template-columns: 1fr;
     }
 
+    /* Key figures stack as ruled rows */
     .company-summary {
-        gap: var(--space-5);
+        grid-template-columns: 1fr;
+    }
+
+    .summary-item {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .summary-item + .summary-item {
+        border-left: 0;
+        border-top: 1px solid var(--border);
     }
 
     /* Allow the company name and its controls to wrap on smaller screens */
@@ -55,14 +96,28 @@
 
     #watchlist-actions {
         width: 100%;
+        grid-template-columns: auto 1fr;
+    }
+
+    #analysis-last-saved {
+        text-align: left;
+    }
+
+    #save_watchlist {
+        width: 100%;
+    }
+
+    .welcome-lenses li {
+        grid-template-columns: 1fr;
+        gap: var(--space-1);
+    }
+
+    .dcf-scenarios {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .company-header {
-        flex-wrap: wrap;
-    }
-
     html {
         scroll-behavior: auto;
     }

@@ -225,6 +225,12 @@ function displayComparisonPriceChart(analyses, period = "1y") {
         };
     });
 
+    // A linear axis rounds its ends to "nice" values, which leaves blank space
+    // before the first price. Pin the axis to the data instead.
+    const xValues = datasets.flatMap(d => d.data.map(point => point.x));
+    const xMin = xValues.length ? Math.min(...xValues) : undefined;
+    const xMax = xValues.length ? Math.max(...xValues) : undefined;
+
     comparisonCharts["comparison-price-chart"]?.destroy();
 
     comparisonCharts["comparison-price-chart"] = new Chart(canvas, {
@@ -240,6 +246,8 @@ function displayComparisonPriceChart(analyses, period = "1y") {
             scales: {
                 x: {
                     type: "linear",
+                    min: xMin,
+                    max: xMax,
                     ticks: {
                         callback: v =>
                             new Date(v).toLocaleDateString(undefined, {

@@ -193,7 +193,22 @@ async function loadWatchlist() {
                 }
 
                 // Populate elements
-                companyHeader.textContent = `${ticker} - ${name}`;
+                // Ticker and name are separate spans so they can be styled apart
+                const companyLabel = document.createElement("span");
+                const companyTicker = document.createElement("span");
+                const companyName = document.createElement("span");
+
+                companyLabel.classList.add("watchlist-company");
+                companyTicker.classList.add("watchlist-ticker");
+                companyName.classList.add("watchlist-name");
+
+                companyTicker.textContent = ticker;
+                companyName.textContent = name;
+                companyName.title = name;
+
+                companyLabel.appendChild(companyTicker);
+                companyLabel.appendChild(companyName);
+                companyHeader.appendChild(companyLabel);
 
                 companyElementDelete.innerHTML = '<i data-lucide="trash-2"></i>';
                 companyElementDelete.setAttribute("aria-label", "Delete company");

@@ -24,7 +24,7 @@
     position: sticky;
     left: 0;
     z-index: 1;
-    background: #1f201f;
+    background: var(--surface-raised);
 }
 
 @media (max-width: 600px) {
@@ -63,11 +63,11 @@
 }
 
 
-#dcf-fcff-calculation-section {
-    margin-top: 24px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+#dcf-fcff-calculation-section,
+#dcf-valuation-calculation-section {
+    margin-top: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
@@ -78,9 +78,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    background: #1f201f;
-    border: 1px solid #2a2b29;
-    border-radius: 10px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     color: var(--text-primary);
     text-align: left;
     cursor: pointer;
@@ -89,11 +89,16 @@
 .fcff-section-toggle > span:first-child {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
+}
+
+.fcff-section-toggle small {
+    color: var(--text-muted);
+    font-size: 0.78rem;
 }
 
 .fcff-section-toggle:hover {
-    background: #2c2b27;
+    background: var(--surface-hover);
 }
 
 .fcff-section-chevron {
@@ -105,7 +110,7 @@
 }
 
 .fcff-section-toggle.is-active {
-    border-radius: 10px 10px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .fcff-section-toggle.is-active .fcff-section-chevron {
@@ -115,8 +120,8 @@
 #dcf-fcff-calculation-content,
 #dcf-valuation-calculation-content {
     padding: 20px;
-    background: #1f201f;
-    border: 1px solid #2a2b29;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
     border-top: none;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }

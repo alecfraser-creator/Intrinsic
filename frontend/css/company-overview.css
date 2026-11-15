@@ -4,15 +4,13 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-strong);
 }
 
 .company-top {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--space-4);
+    gap: var(--space-5);
 }
 
 .company-identity {
@@ -20,23 +18,35 @@
 }
 
 .company-header h2 {
-    font-size: clamp(2.2rem, 4.5vw, 3rem);
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 500;
     line-height: 1.05;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     overflow-wrap: anywhere;
 }
 
+/* Ticker as a small badge */
 .company-ticker {
-    margin-top: var(--space-2);
+    display: inline-block;
+    margin-top: var(--space-3);
+    padding: 2px var(--space-2);
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius);
+    background: var(--gold-soft);
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--gold);
 }
 
+/* Key figures as one ruled strip */
 .company-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
 }
 
 .company-summary .metric-value {
@@ -47,8 +57,25 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-width: 0;
+    padding: var(--space-4) var(--space-5);
+}
+
+.summary-item + .summary-item {
+    border-left: 1px solid var(--border);
+}
+
+.summary-item .metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .summary-item .metric-value {
-    font-size: 1.15rem;
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }

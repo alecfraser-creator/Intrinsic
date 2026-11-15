@@ -5,13 +5,9 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-5);
-    margin: var(--space-6) 0 var(--space-5);
-    padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--border-strong);
-}
-
-.qualitative-header h2 {
-    margin-bottom: var(--space-2);
+    margin: var(--space-5) 0 var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
 }
 
 .qualitative-description {
@@ -41,7 +37,7 @@
     padding: var(--space-5) var(--space-2);
     color: var(--text);
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     line-height: 1.4;
     cursor: pointer;
     list-style: none;
@@ -119,17 +115,13 @@
 }
 
 .qualitative-fields textarea:hover {
-    border-color: #555149;
+    border-color: var(--text-faint);
 }
 
 .qualitative-fields textarea:focus {
     outline: none;
     border-color: var(--gold);
-}
-
-.qualitative-fields textarea:focus-visible {
-    outline: 1px solid var(--gold);
-    outline-offset: 1px;
+    box-shadow: 0 0 0 3px var(--gold-soft);
 }
 
 

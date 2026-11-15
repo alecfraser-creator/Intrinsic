@@ -2,7 +2,7 @@
 /* ---------- DCF assumptions ---------- */
 
 #dcf-assumptions-section {
-    margin-top: var(--space-7);
+    margin-top: var(--space-6);
     padding-top: var(--space-5);
     border-top: 1px solid var(--border-strong);
 }
@@ -18,7 +18,9 @@
 }
 
 .dcf-assumptions-title .section-heading {
-    margin-bottom: var(--space-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
 }
 
 /* Header actions */
@@ -31,7 +33,7 @@
 
 .dcf-assumptions-actions button {
     padding: 8px 14px;
-    border-radius: 6px;
+    border-radius: var(--radius);
     font: inherit;
     font-size: 0.8rem;
     font-weight: 600;
@@ -57,11 +59,17 @@
 #recalculate-dcf {
     border: 1px solid var(--gold);
     background: var(--gold);
-    color: #171613;
+    color: var(--gold-ink);
 }
 
-#recalculate-dcf:hover {
-    filter: brightness(1.08);
+#recalculate-dcf:hover:not(:disabled) {
+    background: var(--gold-hover);
+    border-color: var(--gold-hover);
+}
+
+#recalculate-dcf:disabled {
+    opacity: 0.6;
+    cursor: progress;
 }
 
 #reset-dcf-assumptions {
@@ -149,7 +157,7 @@
 }
 
 .dcf-assumption-status.is-custom {
-    color: #c8a45c;
+    color: var(--gold);
 }
 
 .dcf-assumption-status.is-default::before {
@@ -387,10 +395,10 @@
 .assumption-input {
     width: 85px;
     padding: 6px 8px;
-    background: #242320;
-    border: 1px solid #2a2926;
+    background: var(--surface-hover);
+    border: 1px solid var(--border-strong);
     border-radius: 4px;
-    color: #eae7df;
+    color: var(--text);
     font: inherit;
     font-size: 0.9rem;
     text-align: center;
@@ -400,7 +408,7 @@
 }
 
 .assumption-input:focus {
-    border-color: #c8a45c;
+    border-color: var(--gold);
 }
 
 /* ---------- DCF calculation explanation inputs ---------- */
@@ -409,10 +417,10 @@
     width: 100%;
     max-width: 90px;
     padding: 6px 8px;
-    background: #242320;
-    border: 1px solid #2a2926;
+    background: var(--surface-hover);
+    border: 1px solid var(--border-strong);
     border-radius: 4px;
-    color: #eae7df;
+    color: var(--text);
     font: inherit;
     font-size: 0.85rem;
     font-variant-numeric: tabular-nums;
@@ -430,7 +438,7 @@
 
 .dcf-calculation-input:focus {
     border-color: var(--gold);
-    background: #2c2a25;
+    background: var(--surface-raised);
 }
 
 /* Remove number input spinners */

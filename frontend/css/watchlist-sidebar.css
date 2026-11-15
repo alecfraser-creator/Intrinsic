@@ -10,84 +10,145 @@
     width: var(--sidebar-width);
     min-width: 200px;
     max-width: 450px;
-    padding: var(--space-6) var(--space-4);
+    padding: 0;
     background: var(--surface);
     border-right: 1px solid var(--border);
     overflow-y: auto;
-    z-index: 10;
+    z-index: 30;
 }
 
 .resize-handle {
     position: absolute;
     top: 0;
-    right: 0;
-    width: 3px;
+    right: -2px;
+    width: 5px;
     height: 100%;
     cursor: col-resize;
     z-index: 20;
+    transition: background var(--transition-fast);
 }
 
-.watchlist-sidebar h2 {
-    margin-bottom: var(--space-3);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--border-strong);
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text);
+.resize-handle:hover {
+    background: var(--gold-line);
 }
+
+/* Header: same height as the page header so the two bars line up */
 
 .watchlist-header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-3);
+    height: var(--header-height);
+    padding: 0 var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.watchlist-sidebar h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 #watchlist-add {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
 
     background-color: transparent;
-    color: #e5e7eb;
-    border: 1px solid #3a3a3a;
-    border-radius: 6px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
 
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 300;
     line-height: 1;
     cursor: pointer;
 
-    transition: background-color 0.2s, border-color 0.2s;
+    transition: background-color var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast);
 }
 
 #watchlist-add:hover {
-    background-color: #2a2a2a;
-    border-color: #555;
+    background-color: var(--surface-hover);
+    border-color: var(--gold);
+    color: var(--gold);
 }
 
 .watchlist-input {
     width: 100%;
     box-sizing: border-box;
-    background: #1a1a1a;
-    color: #f5f5f5;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 8px 10px;
+    height: 34px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 0 var(--space-3);
     font: inherit;
-    font-size: 14px;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
     outline: none;
     text-transform: uppercase;
+    box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.watchlist-input::placeholder {
+    color: var(--text-faint);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+/* ---------- List and states ---------- */
+
+#watchlist-companies {
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
 }
 
 .watchlist-empty {
+    padding: var(--space-3) var(--space-2);
     font-size: 0.85rem;
     line-height: 1.6;
     color: var(--text-muted);
+}
+
+.watchlist-empty:empty {
+    display: none;
+}
+
+.watchlist-state-action {
+    margin: var(--space-1) var(--space-2) 0;
+    padding: 0 var(--space-4);
+    height: 34px;
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.watchlist-state-action:hover {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+}
+
+/* Comparing only makes sense for saved analyses */
+.watchlist-sidebar.is-signed-out .watchlist-comparison {
+    display: none;
 }
 
 /* ---------- Company rows ---------- */
@@ -95,29 +156,53 @@
 .watchlist-item {
     width: 100%;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: var(--space-3);
+    gap: var(--space-2);
     padding: var(--space-3) var(--space-2);
     background: transparent;
     border: 0;
-    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius);
     color: var(--text);
     font: inherit;
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--transition-fast);
 }
 
 .watchlist-item:hover {
-    background: rgb(255 255 255 / 3%);
-    opacity: 1;
+    background: var(--surface-hover);
+}
+
+.watchlist-company {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+}
+
+.watchlist-ticker {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text);
+}
+
+.watchlist-name {
+    overflow: hidden;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .watchlistItem-actions {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
+
 /* Delete button */
 
 .watchlistItem-delete {
@@ -128,26 +213,27 @@
     background: transparent;
     color: var(--text-muted);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius);
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    transition: color var(--transition-fast), background var(--transition-fast), opacity var(--transition-fast);
 }
 
-.watchlist-item:hover .watchlistItem-delete {
+.watchlist-item:hover .watchlistItem-delete,
+.watchlist-item:focus-within .watchlistItem-delete {
     opacity: 1;
     pointer-events: auto;
 }
 
 .watchlistItem-delete:hover {
-    color: #ef4444;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--negative);
+    background: rgb(255 255 255 / 6%);
 }
 
 .watchlistItem-delete svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
 }
 
 /* History toggle */
@@ -158,17 +244,16 @@
     justify-content: center;
     background: transparent;
     border: none;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     padding: 4px;
-    border-radius: 4px;
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: color 0.2s ease, transform 0.2s ease;
+    transition: color var(--transition-fast), transform var(--transition-fast), background var(--transition-fast);
 }
 
 .history-toggle:hover {
     color: var(--gold);
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
+    background: rgb(255 255 255 / 6%);
 }
 
 .history-toggle svg {
@@ -183,55 +268,57 @@
 /* ---------- Analysis history ---------- */
 
 .watchlist-history {
-    padding: 10px 8px 14px;
-    border-bottom: 1px solid var(--border);
+    margin: 0 0 var(--space-2) var(--space-3);
+    padding: var(--space-1) 0 var(--space-2) var(--space-3);
+    border-left: 1px solid var(--border-strong);
 }
 
 /* Shared latest and historical analysis entries */
 
-
-.latestAnalysisContainer {
-    display: flex;
-    justify-content: center;
-}
-
 .analysis-entry {
     display: flex;
-    gap: 4px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-1);
     justify-content: space-between;
     align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
 
     color: var(--text);
     cursor: pointer;
 
-    transition: background 0.15s ease,
-                border-color 0.15s ease,
-                color 0.15s ease;
+    transition: background var(--transition-fast),
+                border-color var(--transition-fast);
 }
 
 .analysis-entry:hover {
     background: var(--surface-hover);
-    border-color: var(--gold);
-    color: var(--text);
+    border-color: var(--border-strong);
 }
 
 .analysis-entry.is-active {
     border-color: var(--gold);
 }
 
+.latest-analysis {
+    background: var(--surface-raised);
+    border-color: var(--border);
+}
+
 .analysis-entry > div {
-    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.82rem;
     font-weight: 600;
 }
 
 .analysis-entry span {
-    font-size: 0.8rem;
-    color: var(--text);
+    font-size: 0.74rem;
+    font-weight: 400;
+    color: var(--text-muted);
 }
 
 /* Historical entries container */
@@ -240,15 +327,14 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 0;
+    padding: var(--space-1) 0 0;
 }
 
 .previous-analysis-container > span {
-    padding: 6px 0;
-    font-size: 0.8rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.78rem;
     color: var(--text-muted);
 }
-
 
 /* Historical analysis delete button */
 
@@ -260,14 +346,15 @@
     background: transparent;
     color: var(--text-muted);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius);
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    transition: color var(--transition-fast), background var(--transition-fast), opacity var(--transition-fast);
 }
 
-.analysis-entry:hover .historical-analysis-delete {
+.analysis-entry:hover .historical-analysis-delete,
+.analysis-entry:focus-within .historical-analysis-delete {
     opacity: 1;
     pointer-events: auto;
 }
@@ -278,10 +365,9 @@
     justify-content: space-between;
 }
 
-
 .historical-analysis-delete:hover {
-    color: #ef4444;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--negative);
+    background: rgb(255 255 255 / 6%);
 }
 
 .historical-analysis-delete svg {
@@ -289,8 +375,17 @@
     height: 14px;
 }
 
+/* Touch screens have no hover: keep the delete buttons reachable */
+@media (hover: none) {
+    .watchlistItem-delete,
+    .historical-analysis-delete {
+        opacity: 0.7;
+        pointer-events: auto;
+    }
+}
 
-/*Comparing mode*/
+/* Comparing mode */
+
 .analysis-select {
     display: flex;
     align-items: center;
@@ -300,11 +395,11 @@
     color: var(--text-muted);
     padding: 2px;
     cursor: pointer;
-    transition: color 0.15s ease;
+    transition: color var(--transition-fast);
 }
 
 .analysis-select:hover {
-    padding: 0px;
+    color: var(--gold);
 }
 
 .analysis-select svg {

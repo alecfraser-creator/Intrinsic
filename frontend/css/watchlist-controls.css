@@ -12,7 +12,7 @@
 #in_watchlist,
 #update_analysis,
 #remove_watchlist {
-    min-height: 40px;
+    min-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -20,7 +20,7 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 500;
     white-space: nowrap;
     transition:
@@ -39,10 +39,16 @@
 #save_watchlist {
     background: transparent;
     color: var(--gold);
+    border-color: var(--gold-line);
     cursor: pointer;
 }
 
-#save_watchlist:hover {
+#save_watchlist:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+#save_watchlist:hover:not(:disabled) {
     background: var(--surface);
     border-color: var(--gold);
     color: var(--gold-hover);
@@ -52,40 +58,46 @@
     background: var(--border);
 }
 
-/* Saved-state actions: two stacked rows, same width */
+/* Saved-state actions: status pill + primary action on one row,
+   with the last-saved time underneath, right-aligned */
 #watchlist-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    column-gap: var(--space-3);
+    row-gap: var(--space-2);
     width: max-content;
 }
 
-/* Row 1: "In watchlist" + bin */
 .watchlist-status-controls {
     display: flex;
-    align-items: center;
-    gap: var(--space-2);
 }
 
+/* "In watchlist" is a status, not an action: no button chrome */
 #in_watchlist {
-    flex: 1;
-    background: var(--surface);
-    color: var(--text-muted);
+    background: var(--gold-soft);
+    border-color: transparent;
+    color: var(--gold);
     cursor: default;
-    opacity: 0.85;
 }
 
 #in_watchlist:disabled {
-    opacity: 0.85;
+    opacity: 1;
 }
 
-/* Row 2: Save analysis + timestamp underneath */
+/* The save button joins the grid; its timestamp sits on the second row */
 .save-analysis-control {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
+    display: contents;
+}
+
+#update_analysis {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+#analysis-last-saved {
+    grid-column: 1 / -1;
+    grid-row: 2;
 }
 
 /* Primary action: filled gold */
@@ -111,7 +123,7 @@
     font-family: var(--font-sans);
     font-size: 0.75rem;
     line-height: 1.4;
-    text-align: center;
+    text-align: right;
     white-space: nowrap;
 }
 

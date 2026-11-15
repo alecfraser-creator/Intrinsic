@@ -3,7 +3,7 @@
 .dcf-scenarios {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-5);
+    gap: var(--space-4);
 }
 
 .dcf-scenario {
@@ -12,8 +12,8 @@
     align-items: flex-start;
     gap: var(--space-2);
 
-    padding: var(--space-4);
-    background: transparent;
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-top: 2px solid var(--border-strong);
     border-radius: var(--radius);
@@ -29,12 +29,12 @@
 }
 
 .dcf-scenario:hover {
-    background: rgb(255 255 255 / 2%);
+    background: var(--surface-hover);
     border-color: var(--border-strong);
 }
 
 .dcf-scenario.is-active {
-    background: rgb(200 164 92 / 5%);
+    background: var(--gold-soft);
     border-color: var(--gold);
     border-top-color: var(--gold);
 }
