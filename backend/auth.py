@@ -52,3 +52,14 @@ def get_current_user(
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
+        HTTPBearer(auto_error=False)
+    )
+):
+    if credentials is None:
+        return None
+
+    return get_current_user(credentials)

@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import Depends
-from .auth import get_current_user
+from .auth import get_current_user, get_optional_user
 
 from .main import analyze_company, recalculate_company_dcf
 
@@ -132,37 +132,39 @@ def get_analysis_history(
 
 
 
-@app.put("/watchlist/{ticker}")
+
+@app.post("/watchlist/{ticker}/refresh")
 def fresh_analysis(
     ticker: str,
-    user_id: str = Depends(get_current_user)
+    user_id: str | None = Depends(get_optional_user)
 ):
-    
-    saved_company = get_saved_company(user_id, ticker)
-
     existing_assumptions = None
     existing_scenarios = None
     existing_terminal_growth_input = None
     qual_analysis = None
 
-    if saved_company is not None:
-        saved_quant_analysis = saved_company["quant_analysis"]
-        qual_analysis = saved_company["qual_analysis"]
+    # Only access the database when authenticated
+    if user_id:
+        saved_company = get_saved_company(user_id, ticker)
 
-        saved_dcf = saved_quant_analysis.get("dcf", {})
-        existing_scenarios = saved_dcf.get("scenarios")
-        existing_terminal_growth_input = saved_dcf.get(
-            "terminal_growth_input"
-        )
+        if saved_company is not None:
+            saved_quant_analysis = saved_company["quant_analysis"]
+            qual_analysis = saved_company["qual_analysis"]
 
-        existing_assumptions = (
-            existing_scenarios
-            .get("base", {})
-            .get("assumptions", {})
-            .get("forecast_assumptions")
-            if existing_scenarios
-            else None
-        )
+            saved_dcf = saved_quant_analysis.get("dcf", {})
+            existing_scenarios = saved_dcf.get("scenarios")
+            existing_terminal_growth_input = saved_dcf.get(
+                "terminal_growth_input"
+            )
+
+            existing_assumptions = (
+                existing_scenarios
+                .get("base", {})
+                .get("assumptions", {})
+                .get("forecast_assumptions")
+                if existing_scenarios
+                else None
+            )
 
     results = analyze_company(
         ticker,

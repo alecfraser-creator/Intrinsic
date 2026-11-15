@@ -15,8 +15,8 @@ refreshFinancials.addEventListener("click", async (event) => {
 
     try {
         const response = await fetch(
-            `${api_url}/watchlist/${ticker}`,
-            { method: "PUT" }
+            `${api_url}/watchlist/${ticker}/refresh`,
+            { method: "POST" }
         );
 
         if (!response.ok) {
