@@ -269,23 +269,14 @@ def update_database(
 
 
 
+
 @app.post("/company/{ticker}/recalculate-dcf")
 def recalculate_dcf(
     ticker: str,
-    data: dict = None,
-    user_id: str = Depends(get_current_user)
+    data: dict = None
 ):
-
-    saved_company = get_saved_company(user_id, ticker)
-
-    # Prefer DCF data supplied by the frontend.
-    # Otherwise, use the saved DCF if available.
-    current_dcf = (data or {}).get("dcf")
-
-    if current_dcf is None and saved_company is not None:
-        current_dcf = saved_company["quant_analysis"].get("dcf", {})
-
-    current_dcf = current_dcf or {}
+    # Get DCF data supplied by the frontend.
+    current_dcf = (data or {}).get("dcf") or {}
 
     existing_scenarios = current_dcf.get("scenarios")
     existing_terminal_growth_input = current_dcf.get(
@@ -301,7 +292,7 @@ def recalculate_dcf(
         else None
     )
 
-    # Recalculate DCF
+    # Recalculate DCF.
     new_dcf = recalculate_company_dcf(
         ticker,
         existing_assumptions=existing_assumptions,
@@ -315,28 +306,8 @@ def recalculate_dcf(
             detail="Unable to recalculate DCF"
         )
 
-    # If company is saved, merge the new DCF into its analysis.
-    if saved_company is not None:
-
-        quant_analysis = saved_company["quant_analysis"]
-
-        quant_analysis["dcf"] = new_dcf
-
-        quant_analysis["valuation"][
-            "Discounted Cash Flow (DCF) Valuation"
-        ] = new_dcf["intrinsic_value_per_share"]
-
-        return {
-            "quant_analysis": quant_analysis,
-            "qual_analysis": saved_company["qual_analysis"],
-            "updated_at": saved_company["updated_at"],
-            "last_financials_refresh": saved_company["last_financials_refresh"],
-            "historical_data": saved_company["historical_price"]
-        }
-
-    # Otherwise, return just the newly calculated DCF.
     return {
-        "dcf": new_dcf,
+        "dcf": new_dcf
     }
 
 
