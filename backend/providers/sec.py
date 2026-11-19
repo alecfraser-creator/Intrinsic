@@ -75,55 +75,89 @@ def _date_cols(df):
     return sorted(cols, reverse=True)  # newest first
 
 
+
 def da_from_filing(filing):
-    """{period_end 'YYYY-MM-DD': value} from the filing's cash-flow statement."""
+    """Return {period_end 'YYYY-MM-DD': value} from the filing's cash-flow statement."""
     try:
         df = filing.obj().financials.cash_flow_statement().to_dataframe()
     except Exception as error:
         print(f"D&A filing read failed ({getattr(filing, 'accession_no', '?')}): {error}")
         return {}
+
+    if df is None or df.empty:
+        return {}
+
     row = _da_row(df)
     if row is None:
         return {}
+
     out = {}
     for date, col in _date_cols(df):
         value = row[col]
         if pd.notna(value):
             out[date] = float(value)
+
     return out
+
 
 
 def da_from_filings(company, n_annual=4):
     """Annual dict {'YYYY': value} and TTM, read from 10-K / latest 10-Q."""
     annual = {}
-    ten_ks = [
-        f for f in company.get_filings(form="10-K").latest(n_annual + 4)
-        if str(getattr(f, "form", "")).upper() == "10-K"
-    ][:n_annual]
+
+    try:
+        filings = company.get_filings(form="10-K").latest(n_annual + 4)
+
+        if filings is None:
+            return {}, None
+
+        ten_ks = [
+            f for f in filings
+            if str(getattr(f, "form", "")).upper() == "10-K"
+        ][:n_annual]
+
+    except Exception as error:
+        print(f"10-K D&A filing retrieval failed: {error}")
+        return {}, None
+
     if not ten_ks:
         return {}, None
+
     for filing in ten_ks:  # newest first, so restated values win
         for date, value in da_from_filing(filing).items():
             annual.setdefault(date[:4], value)
+
     if not annual:
         return {}, None
+
     last_fy_year = max(annual)
     ttm = annual[last_fy_year]
+
     try:
+        q_filings = company.get_filings(form="10-Q").latest(4)
+
         q = next(
-            (f for f in company.get_filings(form="10-Q").latest(4)
-             if str(getattr(f, "form", "")).upper() == "10-Q"),
+            (
+                f for f in (q_filings or [])
+                if str(getattr(f, "form", "")).upper() == "10-Q"
+            ),
             None,
         )
+
         if q is not None and str(q.filing_date) > str(ten_ks[0].filing_date):
             vals = da_from_filing(q)
             dates = sorted(vals, reverse=True)
+
             print("10-Q D&A columns:", {d: vals[d] for d in dates})
+
             if len(dates) >= 2:
                 ttm = annual[last_fy_year] + vals[dates[0]] - vals[dates[1]]
+
     except Exception as error:
         print(f"TTM from 10-Q failed: {error}")
+
     return annual, ttm
+
 
 
 def get_sec_data(ticker):
@@ -230,8 +264,10 @@ def get_sec_data(ticker):
             "shares_outstanding_annual": shares_outstanding_annual,
         }
 
-    except Exception as error:
-        print(f"SEC data retrieval failed for {ticker}: {error}")
+    except Exception:
+        import traceback
+        print(f"SEC data retrieval failed for {ticker}")
+        traceback.print_exc()
         return None
 
 
@@ -470,7 +506,10 @@ def format_insider_name(name):
 def extract_ceo_from_proxy(company):
     try:
         filing = company.get_filings(form="DEF 14A").latest()
-        proxy = filing.obj()
+        if filing: 
+            proxy = filing.obj()
+        else:
+            proxy = None
 
         name = getattr(proxy, "peo_name", None)
         if isinstance(name, str) and name.strip():
